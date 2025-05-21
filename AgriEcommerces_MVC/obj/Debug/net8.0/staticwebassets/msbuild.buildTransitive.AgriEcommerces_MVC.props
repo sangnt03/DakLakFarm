@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\AgriEcommerces_MVC.props" />
+</Project>

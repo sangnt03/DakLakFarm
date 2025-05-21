@@ -1,0 +1,69 @@
+﻿<div class="swiper main-swiper">
+    <div class="swiper-wrapper">
+        <!-- Slide 1 -->
+        <div class="swiper-slide">
+            <div class="row banner-content p-5">
+                <div class="col-md-7">
+                    <div class="categories mb-3 pb-3">100% từ thiên nhiên</div>
+                    <h3 class="display-4">Nông Sản Sạch</h3>
+                    <p>Chuyên cung cấp các loại nông sạch, chất lượng từ các nhà vườn uy tín ở Đăk Lăk.</p>
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1 px-4 py-3 mt-3">Mua Ngay</a>
+                </div>
+                <div class="col-md-5 text-end">
+                    <img src="~/images/product-thumb-1.png" class="img-fluid" alt="Slide 1" style="max-height:320px;" />
+                </div>
+            </div>
+        </div>
+        <div class="swiper-slide">
+            <div class="row banner-content p-5">
+                <div class="content-wrapper col-md-7">
+                    <div class="categories mb-3 pb-3">100% natural</div>
+                    <h3 class="banner-title">Fresh Smoothie &amp; Summer Juice</h3>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Dignissim massa diam elementum.</p>
+                    <a href="#" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1">
+                        Shop Collection
+                    </a>
+                </div>
+                <div class="img-wrapper col-md-5">
+                    <img src="~/images/product-thumb-1.png" class="img-fluid" alt="Fresh Smoothie & Summer Juice" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="swiper-slide">
+            <div class="row banner-content p-5">
+                <div class="content-wrapper col-md-7">
+                    <div class="categories mb-3 pb-3">100% natural</div>
+                    <h3 class="banner-title">Heinz Tomato Ketchup</h3>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Dignissim massa diam elementum.</p>
+                    <a href="#" class="btn btn-outline-dark btn-lg text-uppercase fs-6 rounded-1">
+                        Shop Collection
+                    </a>
+                </div>
+                <div class="img-wrapper col-md-5">
+                    <img src="~/images/product-thumb-2.png" class="img-fluid" alt="Heinz Tomato Ketchup" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="swiper-pagination"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const swiper = new Swiper('.main-swiper', {
+            // Optional parameters
+            loop: true,
+            autoplay: {
+                delay: 3000, // 3 giây
+                disableOnInteraction: false, // vẫn tự động chuyển khi người dùng tương tác
+            },
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+        });
+    });
+</script>

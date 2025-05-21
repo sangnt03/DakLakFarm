@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+    Layout = "_Layout";   // trỏ vào Views/Shared/_Layout.cshtml
+}
+
+<div class="container-fluid py-5">
+    <div class="row gx-4 gy-4 align-items-start">
+        <!-- Slider (8 cột) -->
+        <div class="col-lg-8">
+            @await Html.PartialAsync("partial_index/_Slide")
+        </div>
+
+        <!-- Banners (4 cột) -->
+        <div class="col-lg-4">
+            @await Html.PartialAsync("partial_index/_SmallBanners")
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("partial_index/_CategoryCarousel", (IEnumerable<AgriEcommerces_MVC.Models.category>)ViewBag.Categories)
+
+
+@await Html.PartialAsync("partial_index/_BrandCarousel")
+
+@* @await Html.PartialAsync("partial_index/_AllProducts") *@
+
+@await Html.PartialAsync("partial_index/_QCBanner")
+
+@await Html.PartialAsync("partial_index/_MostPopulerProducts")
+
+@await Html.PartialAsync("partial_index/_DailyOffers")
+
+
+@await Html.PartialAsync("partial_index/_LatestBlog")

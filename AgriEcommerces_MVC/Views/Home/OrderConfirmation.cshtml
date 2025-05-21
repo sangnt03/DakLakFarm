@@ -1,0 +1,40 @@
+﻿@model AgriEcommerces_MVC.Models.order
+@{
+    ViewData["Title"] = "Xác nhận đơn hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h2>@ViewData["Title"]</h2>
+    <div class="alert alert-success">
+        Đơn hàng #@Model.orderid đã được đặt thành công và @Model.status.
+    </div>
+    <h4>Thông tin đơn hàng</h4>
+    <p><strong>Mã đơn hàng:</strong> @Model.orderid</p>
+    <p><strong>Ngày đặt:</strong> @Model.orderdate?.ToString("dd/MM/yyyy HH:mm")</p>
+    <p><strong>Địa chỉ giao hàng:</strong> @Model.shippingaddress</p>
+    <p><strong>Tổng tiền:</strong> @Model.totalamount.ToString("N3") VNĐ</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Giá</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.orderdetails)
+            {
+                <tr>
+                    <td>@item.product.productname</td>
+                    <td>@item.quantity</td>
+                    <td>@item.unitprice.ToString("N3") VNĐ</td>
+                    <td>@item.SumPrice.ToString("N3") VNĐ</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Tiếp tục mua sắm</a>
+</div>

@@ -1,0 +1,45 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.category>
+
+<section class="py-5 overflow-hidden">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+
+                <div class="section-header d-flex flex-wrap justify-content-between mb-5">
+                    <h2 class="section-title">Danh Mục Sản Phẩm</h2>
+
+                    <div class="d-flex align-items-center">
+                        <a asp-controller="Products"
+                           asp-action="Index"
+                           class="btn-link text-decoration-none">
+                            View All Categories →
+                        </a>
+                        <div class="swiper-buttons">
+                            <button class="swiper-prev category-carousel-prev btn btn-yellow">❮</button>
+                            <button class="swiper-next category-carousel-next btn btn-yellow">❯</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="category-carousel swiper">
+                    <div class="swiper-wrapper">
+                        @foreach (var c in Model)
+                        {
+                                <a asp-controller="Products"
+                                   asp-action="Category"
+                                   asp-route-id="@c.categoryid"
+                                   class="nav-link category-item swiper-slide">
+                                @* nếu bạn có icon riêng cho category, thay đường dẫn dưới đây *@
+                                    <img src="~/images/icon-vegetables-broccoli.png"
+                                         alt="@c.categoryname"
+                                         class="img-fluid mb-2" />
+                                <h3 class="category-title">@c.categoryname</h3>
+                                </a>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

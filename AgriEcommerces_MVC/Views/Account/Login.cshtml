@@ -1,0 +1,51 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout  = "_Layout";
+    
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow mt-5">
+                <div class="card-body p-4">
+                    <h3 class="card-title text-center mb-4">Đăng nhập</h3>
+
+                    <form asp-action="Login" method="post">
+                        <div asp-validation-summary="All" class="alert alert-danger d-none" role="alert"></div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="email" class="form-control" placeholder="name@example.com" />
+                            <label asp-for="email">Email</label>
+                            <span asp-validation-for="email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="password" class="form-control" placeholder="Mật khẩu" type="password" />
+                            <label asp-for="password">Mật khẩu</label>
+                            <span asp-validation-for="password" class="text-danger small"></span>
+                        </div>
+
+                        @* hidden returnUrl nếu có *@
+                        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+                        {
+                            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+                        }
+
+                        <button type="submit" class="btn btn-primary w-100 py-2">Đăng nhập</button>
+
+                        <div class="text-center mt-3">                          
+                            <p>Chưa có tài khoản?</p><a asp-action="Register" class="link-secondary"> Đăng ký</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_Scripts")
+}
+

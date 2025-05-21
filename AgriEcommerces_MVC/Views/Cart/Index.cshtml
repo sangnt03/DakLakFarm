@@ -1,0 +1,72 @@
+﻿@model AgriEcommerces_MVC.Models.ViewModel.CartViewModel
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (!Model.Items.Any())
+    {
+        <p>Giỏ hàng trống.</p>
+    }
+    else
+    {
+        <div class="cart-body" id="cart-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var it in Model.Items)
+                    {
+                        var imgRaw = it.ImageUrl;
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(imgRaw))
+                                {
+                                    <img src="@Url.Content(imgRaw)" width="60" alt="@it.ProductName" class="img-fluid" />
+                                }
+                                else
+                                {
+                                    <span>Không có ảnh</span>
+                                }
+                            </td>
+                            <td>@it.ProductName</td>
+                            <td>@it.UnitPrice.ToString("N0") vnđ</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2 qty-btn" data-id="@it.ProductId" data-action="minus">−</button>
+                                    <span class="qty-value">@it.Quantity</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2 qty-btn" data-id="@it.ProductId" data-action="plus">+</button>
+                                </div>
+                            </td>
+                            <td>@it.Total.ToString("N0") vnđ</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="@it.ProductId">Xóa</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">Tổng cộng:</th>
+                        <th>@Model.GrandTotal.ToString("N0") vnđ</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+            <a asp-controller="Home" asp-action="Payment" class="btn btn-success">
+                Tiến hành thanh toán
+            </a>
+        </div>
+    }
+</div>

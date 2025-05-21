@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    @* CSS links, Google Fonts,… *@
+    @await Html.PartialAsync("_Style")
+
+    @* Cho phép mỗi view thêm CSS riêng nếu cần *@
+    @RenderSection("Styles", required: false)
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    @* Header chính *@
+    @await Html.PartialAsync("_Header")
+
+    @* Offcanvas overlays: giỏ hàng và tìm kiếm *@
+    @await Html.PartialAsync("_OffcanvasCart")
+    @await Html.PartialAsync("_OffcanvasSearch")
+
+    @* Nội dung chính của từng view *@
+    <main class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    @* Footer chung *@
+    @await Html.PartialAsync("_Footer")
+
+    @* Các script chung (Bootstrap bundle, jQuery, validation…) *@
+    @await Html.PartialAsync("_Scripts")
+
+    @* Cho phép mỗi view thêm JS riêng nếu cần *@
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

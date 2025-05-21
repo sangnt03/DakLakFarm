@@ -1,0 +1,108 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <PackageReference Include="System.Text.Json" Version="9.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Admin\Controllers\" />
+    <Folder Include="Areas\Admin\Data\" />
+    <Folder Include="Areas\Admin\Models\" />
+    <Folder Include="Areas\Admin\Views\" />
+    <Folder Include="Areas\Farmer\Data\" />
+    <Folder Include="Data\" />
+    <Folder Include="wwwroot\images\uploads\" />
+    <Folder Include="wwwroot\lib\bootstrap\" />
+    <Folder Include="wwwroot\lib\bootstrap\dist\css\" />
+    <Folder Include="wwwroot\lib\bootstrap\dist\js\" />
+    <Folder Include="wwwroot\lib\jquery-validation-unobtrusive\" />
+    <Folder Include="wwwroot\lib\jquery-validation\" />
+    <Folder Include="wwwroot\lib\jquery-validation\dist\" />
+    <Folder Include="wwwroot\lib\jquery\" />
+    <Folder Include="wwwroot\lib\jquery\dist\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\css\ajax-loader.gif" />
+    <None Include="wwwroot\css\normalize.css" />
+    <None Include="wwwroot\css\vendor.css" />
+    <None Include="wwwroot\images\ad-bg-pattern.png" />
+    <None Include="wwwroot\images\ad-image-1.png" />
+    <None Include="wwwroot\images\ad-image-2.png" />
+    <None Include="wwwroot\images\ad-image-3.png" />
+    <None Include="wwwroot\images\ad-image-4.png" />
+    <None Include="wwwroot\images\app-store.jpg" />
+    <None Include="wwwroot\images\background-pattern.jpg" />
+    <None Include="wwwroot\images\banner-image-1.jpg" />
+    <None Include="wwwroot\images\banner-image-2.jpg" />
+    <None Include="wwwroot\images\bg-dot-pattern.png" />
+    <None Include="wwwroot\images\bg-leaves-img-pattern.png" />
+    <None Include="wwwroot\images\bg-leaves-pattern.png" />
+    <None Include="wwwroot\images\bg-light.jpg" />
+    <None Include="wwwroot\images\bg-pattern-2.png" />
+    <None Include="wwwroot\images\chocolat\close.png" />
+    <None Include="wwwroot\images\chocolat\fullscreen-black.png" />
+    <None Include="wwwroot\images\chocolat\fullscreen.png" />
+    <None Include="wwwroot\images\chocolat\left.png" />
+    <None Include="wwwroot\images\chocolat\loader.gif" />
+    <None Include="wwwroot\images\chocolat\right.png" />
+    <None Include="wwwroot\images\gift.svg" />
+    <None Include="wwwroot\images\google-play.jpg" />
+    <None Include="wwwroot\images\icon-animal-products-drumsticks.png" />
+    <None Include="wwwroot\images\icon-bread-baguette.png" />
+    <None Include="wwwroot\images\icon-bread-herb-flour.png" />
+    <None Include="wwwroot\images\icon-soft-drinks-bottle.png" />
+    <None Include="wwwroot\images\icon-vegetables-broccoli.png" />
+    <None Include="wwwroot\images\icon-wine-glass-bottle.png" />
+    <None Include="wwwroot\images\logo.png" />
+    <None Include="wwwroot\images\phone.png" />
+    <None Include="wwwroot\images\post-thumb-1.jpg" />
+    <None Include="wwwroot\images\post-thumb-2.jpg" />
+    <None Include="wwwroot\images\post-thumb-3.jpg" />
+    <None Include="wwwroot\images\product-thumb-1.png" />
+    <None Include="wwwroot\images\product-thumb-11.jpg" />
+    <None Include="wwwroot\images\product-thumb-12.jpg" />
+    <None Include="wwwroot\images\product-thumb-13.jpg" />
+    <None Include="wwwroot\images\product-thumb-14.jpg" />
+    <None Include="wwwroot\images\product-thumb-2.png" />
+    <None Include="wwwroot\images\reviewer-1.jpg" />
+    <None Include="wwwroot\images\reviewer-2.jpg" />
+    <None Include="wwwroot\images\reviewer-3.jpg" />
+    <None Include="wwwroot\images\singel-product-item.jpg" />
+    <None Include="wwwroot\images\slide-1.jpg" />
+    <None Include="wwwroot\images\slide-2.jpg" />
+    <None Include="wwwroot\images\slide-3.jpg" />
+    <None Include="wwwroot\images\slide-4.jpg" />
+    <None Include="wwwroot\images\thumb-avocado.png" />
+    <None Include="wwwroot\images\products\banana.png" />
+    <None Include="wwwroot\images\thumb-biscuits.png" />
+    <None Include="wwwroot\images\thumb-cucumber.png" />
+    <None Include="wwwroot\images\thumb-herb.jpg" />
+    <None Include="wwwroot\images\thumb-honey.jpg" />
+    <None Include="wwwroot\images\thumb-junk.jpg" />
+    <None Include="wwwroot\images\thumb-milk.png" />
+    <None Include="wwwroot\images\thumb-orange-juice.png" />
+    <None Include="wwwroot\images\thumb-raspberries.png" />
+    <None Include="wwwroot\images\thumb-tomatoes.png" />
+    <None Include="wwwroot\images\thumb-tomatoketchup.png" />
+    <None Include="wwwroot\images\thumb-tuna.jpg" />
+    <None Include="wwwroot\js\jquery-1.11.0.min.js" />
+    <None Include="wwwroot\js\modernizr.js" />
+    <None Include="wwwroot\js\plugins.js" />
+    <None Include="wwwroot\js\script.js" />
+  </ItemGroup>
+
+</Project>

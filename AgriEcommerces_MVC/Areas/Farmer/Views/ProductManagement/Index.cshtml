@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+}
+
+<h2>@ViewData["Title"]</h2>
+<button id="btnCreate" class="btn btn-primary mb-3">+ Thêm sản phẩm</button>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th style="width: 10%;">Ảnh</th>
+            <th style="width: 15%;">Tên</th>
+            <th style="width: 15%;">Danh mục</th>
+            <th style="width: 5%;">Giá</th>
+            <th style="width: 5%;">SL</th>
+            <th style="width: 8%;">Đơn vị</th>
+            <th style="width: 30%;">Mô tả</th>
+            <th style="width: 15%;">Ngày tạo</th>
+            <th style="width: 12%;">Thao tác</th>
+        </tr>
+    </thead>
+    <tbody id="productTableBody">
+        <!-- JS sẽ render -->
+    </tbody>
+</table>
+
+@Html.Partial("_ProductFormPartial")
+
+@section Scripts {
+    <script src="~/js/farmer-product.js"></script>
+    <style>
+        /* CSS để kiểm soát cột "Mô tả" */
+        #productTableBody td:nth-child(7) {
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Đảm bảo các cột khác không bị ảnh hưởng */
+        table {
+            table-layout: fixed;
+        }
+    </style>
+}

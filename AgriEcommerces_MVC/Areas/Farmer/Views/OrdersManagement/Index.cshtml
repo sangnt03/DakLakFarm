@@ -1,0 +1,90 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.orderdetail>
+@using System
+@using Microsoft.AspNetCore.Mvc
+@using AgriEcommerces_MVC.Models
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Sản phẩm</th>
+            <th>SL</th>
+            <th>Giá</th>
+            <th>Thành tiền</th>
+            <th>Người mua</th>
+            <th>SĐT</th>
+            <th>Địa chỉ</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var groupedOrders = Model.GroupBy(d => d.orderid);
+            foreach (var group in groupedOrders)
+            {
+                var firstDetail = group.First();
+                <tr>
+                    <td>@firstDetail.orderid</td>
+                    <td>
+                        @foreach (var detail in group)
+                        {
+                            @detail.product.productname
+                            if (!group.Last().Equals(detail))
+                            {
+                                <br />
+                            }
+                        }
+                    </td>
+                    <td>
+                        @foreach (var detail in group)
+                        {
+                            @detail.quantity
+                            if (!group.Last().Equals(detail))
+                            {
+                                <br />
+                            }
+                        }
+                    </td>
+                    <td>
+                        @foreach (var detail in group)
+                        {
+                            @(detail.unitprice.ToString("N3") + " VNĐ")
+                            if (!group.Last().Equals(detail))
+                            {
+                                <br />
+                            }
+                        }
+                    </td>
+                    <td>@(group.Sum(d => d.quantity * d.unitprice).ToString("N3") + " VNĐ")</td>
+                    <td>@firstDetail.order.customername</td>
+                    <td>@firstDetail.order.customerphone</td>
+                    <td>@firstDetail.order.shippingaddress</td>
+                    <td>@firstDetail.order.status</td>
+                    <td>
+                        @if (!string.Equals(firstDetail.order.status, "Đã duyệt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <form asp-area="Farmer"
+                                  asp-controller="OrdersManagement"
+                                  asp-action="Approve"
+                                  method="post"
+                                  asp-route-id="@firstDetail.orderdetailid">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-success">Đã Duyệt</span>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

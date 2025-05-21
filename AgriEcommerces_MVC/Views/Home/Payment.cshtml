@@ -1,0 +1,197 @@
+﻿@model AgriEcommerces_MVC.Models.ViewModel.PaymentViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <p>@error.ErrorMessage</p>
+            }
+        </div>
+    }
+
+    @if (Model.Cart == null || !Model.Cart.Items.Any())
+    {
+        <div class="alert alert-warning">
+            Giỏ hàng của bạn đang trống. <a asp-controller="Home" asp-action="Index">Quay lại mua sắm</a>
+        </div>
+    }
+    else
+    {
+        <form asp-action="Payment" method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Thông tin giao hàng</h4>
+                    <div class="mb-3">
+                      <label asp-for="customername" class="form-label">Tên người mua</label>
+                      <input asp-for="customername" class="form-control" />
+                      <span asp-validation-for="customername" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                      <label asp-for="customerphone" class="form-label">Số điện thoại</label>
+                      <input asp-for="customerphone" class="form-control" />
+                      <span asp-validation-for="customerphone" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="province" class="form-label">Tỉnh/Thành</label>
+                        <select asp-for="province" class="form-select" required>
+                            <option value="">Chọn tỉnh/thành</option>
+                            @* …populate bằng AJAX như trước… *@
+                        </select>
+                        <span asp-validation-for="province" class="text-danger"></span>
+                    </div>
+
+                    <!-- Chọn quận/huyện -->
+                    <div class="mb-3">
+                        <label asp-for="district" class="form-label">Quận/Huyện</label>
+                        <select asp-for="district" class="form-select" required>
+                            <option value="">Chọn quận/huyện</option>
+                        </select>
+                        <span asp-validation-for="district" class="text-danger"></span>
+                    </div>
+
+                    <!-- Chọn xã/phường -->
+                    <div class="mb-3">
+                        <label asp-for="ward" class="form-label">Xã/Phường</label>
+                        <select asp-for="ward" class="form-select" required>
+                            <option value="">Chọn xã/phường</option>
+                        </select>
+                        <span asp-validation-for="ward" class="text-danger"></span>
+                    </div>
+
+                    <!-- Nhập địa chỉ cụ thể -->
+                    <div class="mb-3">
+                        <label asp-for="address" class="form-label">Địa chỉ cụ thể</label>
+                        <input asp-for="address" class="form-control" required />
+                        <span asp-validation-for="address" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h4>Thông tin đơn hàng</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Giá</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Cart.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@Url.Content(item.ImageUrl)" width="60" height="60" alt="@item.ProductName" class="img-fluid" />
+                                        }
+                                        else
+                                        {
+                                            <span>Không có ảnh</span>
+                                        }
+                                    </td>
+                                    <td>@item.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitPrice.ToString("N3") vnđ</td>
+                                    <td>@item.Total.ToString("N3") vnđ</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4">Tổng cộng:</th>
+                                <th>@Model.Cart.GrandTotal.ToString("N3") vnđ</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <button type="submit" class="btn btn-success">Xác nhận đặt hàng</button>
+                </div>
+            </div>
+        </form>
+    }
+    @* scripts để tải tỉnh/thành, quận/huyện, xã/phường dùng AJAX trong wwwroot/data/provinces.json *@
+    @section Scripts {
+        <script>
+            $(document).ready(function () {
+                $.getJSON('/data/provinces.json')
+                    .done(function (data) {
+                        $.each(data, function (i, item) {
+                            $('#province').append($('<option>', {
+                                value: item.name,
+                                text: item.name,
+                                'data-code': item.code
+                            }));
+                        });
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        console.error('Lỗi khi tải tỉnh/thành:', textStatus, errorThrown);
+                        alert('Không thể tải danh sách tỉnh/thành. Vui lòng thử lại sau.');
+                    });
+
+                $('#province').change(function () {
+                    var provinceCode = $(this).find(':selected').data('code');
+                    $('#district').empty().append('<option value="">Chọn quận/huyện</option>');
+                    $('#ward').empty().append('<option value="">Chọn xã/phường</option>');
+
+                    if (provinceCode) {
+                        $.getJSON('/data/provinces.json')
+                            .done(function (data) {
+                                var province = data.find(p => p.code == provinceCode);
+                                if (province && province.districts) {
+                                    $.each(province.districts, function (i, item) {
+                                        $('#district').append($('<option>', {
+                                            value: item.name,
+                                            text: item.name,
+                                            'data-code': item.code
+                                        }));
+                                    });
+                                }
+                            });
+                    }
+                });
+
+                $('#district').change(function () {
+                    var districtCode = $(this).find(':selected').data('code');
+                    $('#ward').empty().append('<option value="">Chọn xã/phường</option>');
+
+                    if (districtCode) {
+                        $.getJSON('/data/provinces.json')
+                            .done(function (data) {
+                                var province = data.find(p => p.districts && p.districts.some(d => d.code == districtCode));
+                                if (province) {
+                                    var district = province.districts.find(d => d.code == districtCode);
+                                    if (district && district.wards) {
+                                        $.each(district.wards, function (i, item) {
+                                            $('#ward').append($('<option>', {
+                                                value: item.name,
+                                                text: item.name
+                                            }));
+                                        });
+                                    }
+                                }
+                            });
+                    }
+                });
+
+                $('form').submit(function (e) {
+                    alert("load đưuọc rồi nè");
+                    if (!$('#province').val() || !$('#district').val() || !$('#ward').val() || !$('input[name="address"]').val()) {
+                        e.preventDefault();
+                        alert('Vui lòng điền đầy đủ thông tin giao hàng.');
+                    }
+                }); 
+            });
+        </script>
+    }
+</div>

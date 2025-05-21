@@ -1,0 +1,29 @@
+﻿@using AgriEcommerces_MVC.Helpers
+@using AgriEcommerces_MVC.Models
+
+@{
+    const string CART_KEY = "Cart";
+
+    var cart = Context.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
+}
+
+<div class="offcanvas offcanvas-end offcanvas-cart" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel">
+
+    <div class="offcanvas-header justify-content-between">
+        <h5 id="offcanvasCartLabel">Giỏ hàng của bạn</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div id="offcanvasCartBody" class="p-3">
+            @Html.Partial("_CartBody", cart)
+        </div>
+    </div>
+</div>
+<style>
+    @@media (min-width: 992px) {
+      .offcanvas-cart {
+        width: 40% !important;
+        max-width: 40% !important;
+      }
+    }
+</style>

@@ -1,0 +1,665 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\css\\ajax-loader.gif",
+      "PackagePath": "staticwebassets\\css\\ajax-loader.gif"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\css\\normalize.css",
+      "PackagePath": "staticwebassets\\css\\normalize.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\css\\style.css",
+      "PackagePath": "staticwebassets\\css\\style.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\css\\vendor.css",
+      "PackagePath": "staticwebassets\\css\\vendor.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\data\\provinces.json",
+      "PackagePath": "staticwebassets\\data\\provinces.json"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\Cart.jpg",
+      "PackagePath": "staticwebassets\\images\\Cart.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\LogoIn4.jpg",
+      "PackagePath": "staticwebassets\\images\\LogoIn4.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\LogoInformation.jpg",
+      "PackagePath": "staticwebassets\\images\\LogoInformation.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\ad-bg-pattern.png",
+      "PackagePath": "staticwebassets\\images\\ad-bg-pattern.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\ad-image-1.png",
+      "PackagePath": "staticwebassets\\images\\ad-image-1.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\ad-image-2.png",
+      "PackagePath": "staticwebassets\\images\\ad-image-2.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\ad-image-3.png",
+      "PackagePath": "staticwebassets\\images\\ad-image-3.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\ad-image-4.png",
+      "PackagePath": "staticwebassets\\images\\ad-image-4.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\app-store.jpg",
+      "PackagePath": "staticwebassets\\images\\app-store.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\background-pattern.jpg",
+      "PackagePath": "staticwebassets\\images\\background-pattern.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\banner-image-1.jpg",
+      "PackagePath": "staticwebassets\\images\\banner-image-1.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\banner-image-2.jpg",
+      "PackagePath": "staticwebassets\\images\\banner-image-2.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\bg-dot-pattern.png",
+      "PackagePath": "staticwebassets\\images\\bg-dot-pattern.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\bg-leaves-img-pattern.png",
+      "PackagePath": "staticwebassets\\images\\bg-leaves-img-pattern.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\bg-leaves-pattern.png",
+      "PackagePath": "staticwebassets\\images\\bg-leaves-pattern.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\bg-light.jpg",
+      "PackagePath": "staticwebassets\\images\\bg-light.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\bg-pattern-2.png",
+      "PackagePath": "staticwebassets\\images\\bg-pattern-2.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\close.png",
+      "PackagePath": "staticwebassets\\images\\chocolat\\close.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\fullscreen-black.png",
+      "PackagePath": "staticwebassets\\images\\chocolat\\fullscreen-black.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\fullscreen.png",
+      "PackagePath": "staticwebassets\\images\\chocolat\\fullscreen.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\left.png",
+      "PackagePath": "staticwebassets\\images\\chocolat\\left.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\loader.gif",
+      "PackagePath": "staticwebassets\\images\\chocolat\\loader.gif"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\chocolat\\right.png",
+      "PackagePath": "staticwebassets\\images\\chocolat\\right.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\gift.svg",
+      "PackagePath": "staticwebassets\\images\\gift.svg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\google-play.jpg",
+      "PackagePath": "staticwebassets\\images\\google-play.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-animal-products-drumsticks.png",
+      "PackagePath": "staticwebassets\\images\\icon-animal-products-drumsticks.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-bread-baguette.png",
+      "PackagePath": "staticwebassets\\images\\icon-bread-baguette.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-bread-herb-flour.png",
+      "PackagePath": "staticwebassets\\images\\icon-bread-herb-flour.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-soft-drinks-bottle.png",
+      "PackagePath": "staticwebassets\\images\\icon-soft-drinks-bottle.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-vegetables-broccoli.png",
+      "PackagePath": "staticwebassets\\images\\icon-vegetables-broccoli.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\icon-wine-glass-bottle.png",
+      "PackagePath": "staticwebassets\\images\\icon-wine-glass-bottle.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\logo.png",
+      "PackagePath": "staticwebassets\\images\\logo.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\logocu.png",
+      "PackagePath": "staticwebassets\\images\\logocu.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\logonew.png",
+      "PackagePath": "staticwebassets\\images\\logonew.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\phone.png",
+      "PackagePath": "staticwebassets\\images\\phone.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\post-thumb-1.jpg",
+      "PackagePath": "staticwebassets\\images\\post-thumb-1.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\post-thumb-2.jpg",
+      "PackagePath": "staticwebassets\\images\\post-thumb-2.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\post-thumb-3.jpg",
+      "PackagePath": "staticwebassets\\images\\post-thumb-3.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-1.png",
+      "PackagePath": "staticwebassets\\images\\product-thumb-1.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-11.jpg",
+      "PackagePath": "staticwebassets\\images\\product-thumb-11.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-12.jpg",
+      "PackagePath": "staticwebassets\\images\\product-thumb-12.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-13.jpg",
+      "PackagePath": "staticwebassets\\images\\product-thumb-13.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-14.jpg",
+      "PackagePath": "staticwebassets\\images\\product-thumb-14.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\product-thumb-2.png",
+      "PackagePath": "staticwebassets\\images\\product-thumb-2.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\Bo_sap.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\Bo_sap.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\banana.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\banana.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\bo034.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\bo034.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\bosap.png",
+      "PackagePath": "staticwebassets\\images\\products\\bosap.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\cafeCuli.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\cafeCuli.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\caferubusta.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\caferubusta.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\càearabica.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\càearabica.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\hatdieurangmuoi.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\hatdieurangmuoi.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\mitthai.png",
+      "PackagePath": "staticwebassets\\images\\products\\mitthai.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\saurieng.jpg",
+      "PackagePath": "staticwebassets\\images\\products\\saurieng.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\products\\tieu.png",
+      "PackagePath": "staticwebassets\\images\\products\\tieu.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\reviewer-1.jpg",
+      "PackagePath": "staticwebassets\\images\\reviewer-1.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\reviewer-2.jpg",
+      "PackagePath": "staticwebassets\\images\\reviewer-2.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\reviewer-3.jpg",
+      "PackagePath": "staticwebassets\\images\\reviewer-3.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\singel-product-item.jpg",
+      "PackagePath": "staticwebassets\\images\\singel-product-item.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\slide-1.jpg",
+      "PackagePath": "staticwebassets\\images\\slide-1.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\slide-2.jpg",
+      "PackagePath": "staticwebassets\\images\\slide-2.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\slide-3.jpg",
+      "PackagePath": "staticwebassets\\images\\slide-3.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\slide-4.jpg",
+      "PackagePath": "staticwebassets\\images\\slide-4.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-avocado.png",
+      "PackagePath": "staticwebassets\\images\\thumb-avocado.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-biscuits.png",
+      "PackagePath": "staticwebassets\\images\\thumb-biscuits.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-cucumber.png",
+      "PackagePath": "staticwebassets\\images\\thumb-cucumber.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-herb.jpg",
+      "PackagePath": "staticwebassets\\images\\thumb-herb.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-honey.jpg",
+      "PackagePath": "staticwebassets\\images\\thumb-honey.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-junk.jpg",
+      "PackagePath": "staticwebassets\\images\\thumb-junk.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-milk.png",
+      "PackagePath": "staticwebassets\\images\\thumb-milk.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-orange-juice.png",
+      "PackagePath": "staticwebassets\\images\\thumb-orange-juice.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-raspberries.png",
+      "PackagePath": "staticwebassets\\images\\thumb-raspberries.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-tomatoes.png",
+      "PackagePath": "staticwebassets\\images\\thumb-tomatoes.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-tomatoketchup.png",
+      "PackagePath": "staticwebassets\\images\\thumb-tomatoketchup.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\images\\thumb-tuna.jpg",
+      "PackagePath": "staticwebassets\\images\\thumb-tuna.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\farmer-product.js",
+      "PackagePath": "staticwebassets\\js\\farmer-product.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\jquery-1.11.0.min.js",
+      "PackagePath": "staticwebassets\\js\\jquery-1.11.0.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\modernizr.js",
+      "PackagePath": "staticwebassets\\js\\modernizr.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\plugins.js",
+      "PackagePath": "staticwebassets\\js\\plugins.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\script.js",
+      "PackagePath": "staticwebassets\\js\\script.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\LICENSE",
+      "PackagePath": "staticwebassets\\lib\\bootstrap"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-theme.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-theme.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-theme.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-theme.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-theme.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-theme.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-theme.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-theme.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\LICENSE.txt"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation\\LICENSE.md",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\LICENSE.md"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery\\LICENSE.txt",
+      "PackagePath": "staticwebassets\\lib\\jquery\\LICENSE.txt"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery\\dist\\jquery.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery\\dist\\jquery.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.js"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\lib\\jquery\\dist\\jquery.min.map",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.map"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\04008578-292f-4661-a40d-95122928e773.jpg",
+      "PackagePath": "staticwebassets\\uploads\\04008578-292f-4661-a40d-95122928e773.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\071812d8-d744-4402-8c32-3bdd4f0e2b0b.jpg",
+      "PackagePath": "staticwebassets\\uploads\\071812d8-d744-4402-8c32-3bdd4f0e2b0b.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\28bcdf91-9538-4682-aca0-02f3021991f4.png",
+      "PackagePath": "staticwebassets\\uploads\\28bcdf91-9538-4682-aca0-02f3021991f4.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\34028555-ae9b-4414-9dd6-91db7cea6336.jpg",
+      "PackagePath": "staticwebassets\\uploads\\34028555-ae9b-4414-9dd6-91db7cea6336.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\57b95181-9d55-4916-8ff0-13bf30fe830b.jpg",
+      "PackagePath": "staticwebassets\\uploads\\57b95181-9d55-4916-8ff0-13bf30fe830b.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\5b251a70-c04b-4eeb-8064-919e88d87909.jpg",
+      "PackagePath": "staticwebassets\\uploads\\5b251a70-c04b-4eeb-8064-919e88d87909.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\66897520-569d-4793-8342-77d95a90980c.jpg",
+      "PackagePath": "staticwebassets\\uploads\\66897520-569d-4793-8342-77d95a90980c.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\6a18d17a-d4e8-4a81-bfc7-1a6f77e4073e.jpg",
+      "PackagePath": "staticwebassets\\uploads\\6a18d17a-d4e8-4a81-bfc7-1a6f77e4073e.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\87929f66-03a7-47e7-940e-b6503c93235f.png",
+      "PackagePath": "staticwebassets\\uploads\\87929f66-03a7-47e7-940e-b6503c93235f.png"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\93507ce8-c82f-4254-8feb-3656ce9ee4a7.jpg",
+      "PackagePath": "staticwebassets\\uploads\\93507ce8-c82f-4254-8feb-3656ce9ee4a7.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\a219d490-54b9-4882-8efd-c64ee9c9029d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\a219d490-54b9-4882-8efd-c64ee9c9029d.jpg"
+    },
+    {
+      "Id": "D:\\DoAnChuyenNganh\\CuoiKy\\AgriEcommerces_MVC\\AgriEcommerces_MVC\\wwwroot\\uploads\\df30d0e1-9e81-4561-b604-75d753715769.jpg",
+      "PackagePath": "staticwebassets\\uploads\\df30d0e1-9e81-4561-b604-75d753715769.jpg"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.AgriEcommerces_MVC.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.AgriEcommerces_MVC.props",
+      "PackagePath": "build\\AgriEcommerces_MVC.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.AgriEcommerces_MVC.props",
+      "PackagePath": "buildMultiTargeting\\AgriEcommerces_MVC.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.AgriEcommerces_MVC.props",
+      "PackagePath": "buildTransitive\\AgriEcommerces_MVC.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

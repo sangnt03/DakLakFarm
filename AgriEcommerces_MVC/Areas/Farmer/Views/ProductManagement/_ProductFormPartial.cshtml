@@ -1,0 +1,57 @@
+﻿@* Modal form dùng chung cho Create/Edit *@
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="productForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Modal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="productName" class="form-label">Tên sản phẩm</label>
+                    <input type="text" class="form-control" id="productName" name="ProductName" required maxlength="100" />
+                </div>
+                <!-- Container hiển thị ảnh hiện tại khi edit -->
+                <div class="mb-3">
+                    <label class="form-label">Hình ảnh hiện tại</label>
+                    <div id="currentImages" class="d-flex flex-wrap gap-2 mb-2"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="productImages" class="form-label">Thêm/Tải lên hình ảnh mới</label>
+                    <input type="file"
+                           class="form-control"
+                           id="productImages"
+                           name="ProductImages"
+                           multiple
+                           accept="image/jpeg,image/png,image/gif" />
+                </div>
+                <div class="mb-3">
+                    <label for="categoryId" class="form-label">Danh mục</label>
+                    <select class="form-select" id="categoryId" name="CategoryId" required>
+                        <!-- JS sẽ đổ option vào đây -->
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Giá</label>
+                    <input type="number" class="form-control" id="price" name="Price" step="0.01" min="0.01" required />
+                </div>
+                <div class="mb-3">
+                    <label for="quantityAvailable" class="form-label">Số lượng</label>
+                    <input type="number" class="form-control" id="quantityAvailable" name="QuantityAvailable" min="0" required />
+                </div>
+                <div class="mb-3">
+                    <label for="unit" class="form-label">Đơn vị</label>
+                    <input type="text" class="form-control" id="unit" name="Unit" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Mô tả</label>
+                    <textarea class="form-control" id="description" name="Description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,124 @@
+﻿
+<ul class="list-group mb-3">
+    @foreach (var item in Model.Items)
+    {
+        <li class="list-group-item">
+            <div class="row align-items-center">
+                <div class="col-6 d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@Url.Content(item.ImageUrl)"
+                             alt="@item.ProductName"
+                             class="img-fluid rounded me-3"
+                             style="max-width: 80px;" />
+                    }
+                    else
+                    {
+                        <span class="me-3">Không có ảnh</span>
+                    }
+                    <div>
+                        <h5 class="mb-1">@item.ProductName</h5>
+                        <small class="text-muted">
+                            @item.Quantity x @item.UnitPrice.ToString("N3") VNĐ
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <!-- Nhóm nút + và – -->
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2 qty-btn" data-id="@item.ProductId" data-action="minus">−</button>
+                            <span class="qty-value">@item.Quantity</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2 qty-btn" data-id="@item.ProductId" data-action="plus">+</button>
+                        </div>
+                        <!-- Nút Xóa -->
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger remove-btn"
+                                data-id="@item.ProductId">
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </li>
+    }
+    <li class="list-group-item d-flex justify-content-between">
+        <strong>Tổng cộng</strong>
+        <strong>@Model.GrandTotal.ToString("N3") vnđ</strong>
+    </li>
+</ul>
+
+<a asp-controller="Home" asp-action="Payment" class="btn btn-primary w-100">Thanh toán</a>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.addEventListener('click', async e => {
+            const minusOrPlus = e.target.closest('button[data-type]');
+            const addBtn      = e.target.closest('.add-to-cart');
+
+            // 1) Xử lý + / − trong product list
+            if (minusOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
+              // là nút trên trang Products, data-type="minus" hoặc "plus"
+              e.preventDefault();
+              const wrapper = minusOrPlus.closest('.quantity-wrapper');
+              const input   = wrapper.querySelector('input.input-number');
+              let v = parseInt(input.value, 10) || 0;
+              if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
+              else if (v > 1) v--;
+              input.value = v < 1 ? 1 : v;
+              return;
+            }
+
+            // 2) Xử lý Add to Cart
+            if (addBtn) {
+              e.preventDefault();
+              const id      = addBtn.getAttribute('data-id');
+              const wrapper = addBtn.closest('.product-item');
+              const input   = wrapper.querySelector('input.input-number');
+              let qty       = parseInt(input.value, 10);
+              if (isNaN(qty) || qty < 1) qty = 1;
+
+              const url   = '@Url.Action("AddAjax", "Cart")';
+              const resp  = await fetch(`${url}?id=${id}&qty=${qty}`);
+              if (!resp.ok) return console.error('AddAjax lỗi', resp.status);
+              const html  = await resp.text();
+
+              document.getElementById('offcanvasCartBody').innerHTML = html;
+              new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+              return;
+            }
+
+            // 3) Các nút trong offcanvas (qty-btn, remove-btn) vẫn như cũ...
+            const qtyBtn = e.target.closest('.qty-btn');
+            if (qtyBtn) {
+              e.preventDefault();
+              const id     = qtyBtn.getAttribute('data-id');
+              const action = qtyBtn.getAttribute('data-action');
+              const li     = qtyBtn.closest('li');
+              const span   = li.querySelector('.qty-value');
+              let qty      = parseInt(span.textContent, 10) || 0;
+              qty = (action === 'plus' ? qty + 1 : qty - 1);
+              if (qty < 0) qty = 0;
+
+              const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+              const r2 = await fetch(`${updateUrl}?id=${id}&qty=${qty}`);
+              const h2 = await r2.text();
+              document.getElementById('offcanvasCartBody').innerHTML = h2;
+              return;
+            }
+
+            const remBtn = e.target.closest('.remove-btn');
+            if (remBtn) {
+              e.preventDefault();
+              const id = remBtn.getAttribute('data-id');
+              const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+              const r3 = await fetch(`${updateUrl}?id=${id}&qty=0`);
+              const h3 = await r3.text();
+              document.getElementById('offcanvasCartBody').innerHTML = h3;
+            }
+          });
+        });
+    </script>
+}
