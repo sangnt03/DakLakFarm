@@ -89,7 +89,9 @@
                             else
 
                             {
-                                <li class="dropdown-header text-muted">Xin chào, @User.Identity.Name</li>
+                                <li class="dropdown-header text-muted">
+                                    <a class="nav-link" asp-controller="Home" asp-action="Profile">Trang cá nhân</a>
+                                </li>
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>
                                     <form asp-area=""
@@ -154,11 +156,11 @@
                                 </li>
                                 
                                 <li class="nav-item active"><a class="navbar-brand" asp-controller="Products" asp-action="Index">Sản phẩm</a></li>
-                                <li class="nav-item active"><a class="navbar-brand" href="#accessories">Giới Thiệu</a></li>
+                                <li class="nav-item active"><a class="navbar-brand" asp-controller="Home" asp-action="GioiThieu">Giới Thiệu</a></li>
                                 
-                                <li class="nav-item active"><a class="navbar-brand" href="#brand">Thương hiệu</a></li>
-                                <li class="nav-item active"><a class="navbar-brand" href="#sale">Liên Hệ</a></li>
-                                <li class="nav-item active"><a class="navbar-brand" href="#blog">Blog</a></li>
+                                <li class="nav-item active"><a class="navbar-brand" asp-controller="Home" asp-action="ThuongHieu" >Thương hiệu</a></li>
+                                
+                                <li class="nav-item active"><a class="navbar-brand" asp-controller="Home" asp-action="Blog">Blog</a></li>
                             </ul>
                         </div>
                     </div>

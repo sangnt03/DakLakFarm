@@ -1,0 +1,233 @@
+﻿@model List<AgriEcommerces_MVC.Models.SellerRequest>
+@{
+    ViewData["Title"] = "Duyệt Seller Requests";
+}
+
+<style>
+    .coastal-simple-container {
+        background: linear-gradient(135deg, #f0f8ff 0%, #e1f5fe 100%);
+        min-height: 100vh;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .coastal-simple-header {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(3, 169, 244, 0.1);
+        border-left: 4px solid #03a9f4;
+    }
+
+    .coastal-simple-title {
+        color: #0277bd;
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .coastal-simple-table-wrapper {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(3, 169, 244, 0.1);
+        overflow-x: auto;
+    }
+
+    .coastal-simple-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .coastal-simple-table thead th {
+        background: #03a9f4;
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        border: none;
+        font-size: 14px;
+    }
+
+    .coastal-simple-table thead th:first-child {
+        border-radius: 8px 0 0 0;
+    }
+
+    .coastal-simple-table thead th:last-child {
+        border-radius: 0 8px 0 0;
+    }
+
+    .coastal-simple-table tbody tr {
+        border-bottom: 1px solid #e3f2fd;
+        transition: background-color 0.3s ease;
+    }
+
+    .coastal-simple-table tbody tr:hover {
+        background-color: #f0f8ff;
+    }
+
+    .coastal-simple-table tbody tr:nth-child(even) {
+        background-color: rgba(227, 242, 253, 0.3);
+    }
+
+    .coastal-simple-table tbody tr:nth-child(even):hover {
+        background-color: #e3f2fd;
+    }
+
+    .coastal-simple-table tbody td {
+        padding: 12px 15px;
+        color: #01579b;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .coastal-user-id {
+        background: #e3f2fd;
+        color: #0277bd;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        display: inline-block;
+    }
+
+    .coastal-email {
+        color: #0288d1;
+        font-weight: 500;
+    }
+
+    .coastal-date {
+        color: #546e7a;
+        font-size: 13px;
+    }
+
+    .coastal-btn-approve {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 5px;
+    }
+
+    .coastal-btn-approve:hover {
+        background: #45a049;
+        transform: translateY(-1px);
+    }
+
+    .coastal-btn-reject {
+        background: #f44336;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .coastal-btn-reject:hover {
+        background: #da190b;
+        transform: translateY(-1px);
+    }
+
+    .coastal-form-inline {
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .coastal-empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #0288d1;
+        font-size: 16px;
+        opacity: 0.7;
+    }
+
+    @@media (max-width: 768px) {
+        .coastal-simple-container {
+            padding: 10px;
+        }
+
+        .coastal-simple-title {
+            font-size: 20px;
+        }
+
+        .coastal-simple-table-wrapper {
+            padding: 15px;
+        }
+
+        .coastal-simple-table thead th,
+        .coastal-simple-table tbody td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .coastal-btn-approve,
+        .coastal-btn-reject {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+    }
+</style>
+
+<div class="coastal-simple-container">
+    <div class="coastal-simple-header">
+        <h3 class="coastal-simple-title">@ViewData["Title"]</h3>
+    </div>
+
+    <div class="coastal-simple-table-wrapper">
+        @if (Model != null && Model.Any())
+        {
+            <table class="coastal-simple-table">
+                <thead>
+                    <tr>
+                        <th>UserId</th>
+                        <th>Email/Username</th>
+                        <th>Ngày yêu cầu</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="coastal-user-id">@r.UserId</span>
+                            </td>
+                            <td>
+                                <span class="coastal-email">@r.User.email</span>
+                            </td>
+                            <td>
+                                <span class="coastal-date">@r.RequestDate.ToString("dd/MM/yyyy HH:mm")</span>
+                            </td>
+                            <td>
+                                <form asp-action="Approve" method="post" class="coastal-form-inline">
+                                    <input type="hidden" name="requestId" value="@r.RequestId" />
+                                    <button class="coastal-btn-approve">Duyệt</button>
+                                </form>
+                                <form asp-action="Reject" method="post" class="coastal-form-inline">
+                                    <input type="hidden" name="requestId" value="@r.RequestId" />
+                                    <button class="coastal-btn-reject">Từ chối</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="coastal-empty-state">
+                Không có yêu cầu seller nào cần duyệt
+            </div>
+        }
+    </div>
+</div>

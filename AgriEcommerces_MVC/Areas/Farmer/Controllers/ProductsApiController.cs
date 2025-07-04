@@ -37,6 +37,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 .Select(p => new ProductDto
                 {
                     ProductId = p.productid,
+                    UserId = p.userid,
                     CategoryId = p.categoryid,
                     CategoryName = p.category.categoryname,
                     ProductName = p.productname,
@@ -70,6 +71,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 .Select(p => new ProductDto
                 {
                     ProductId = p.productid,
+                    UserId = p.userid,
                     CategoryId = p.categoryid,
                     CategoryName = p.category.categoryname,
                     ProductName = p.productname,
@@ -164,6 +166,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 var dto = new ProductDto
                 {
                     ProductId = entity.productid,
+                    UserId = entity.userid,
                     CategoryId = entity.categoryid,
                     CategoryName = category.categoryname,
                     ProductName = entity.productname,
@@ -197,81 +200,171 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
         }
 
         // PUT api/farmer/products/{id}
-        [HttpPut("{id}")]    
+        [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromForm] ProductEditViewModel model)
         {
-            // 1) Validate model fields (không còn ImageIdsToDelete)
-            if (!ModelState.IsValid)
-                return BadRequest(new { Error = "Dữ liệu không hợp lệ", Details = ModelState });
-
-            // 2) Lấy sản phẩm và kiểm tra quyền
-            var entity = await _db.products.FindAsync(id);
-            if (entity == null || entity.userid != FarmerId)
-                return NotFound();
-
-            // 3) Cập nhật các thông tin cơ bản
-            entity.categoryid = model.CategoryId;
-            entity.productname = model.ProductName;
-            entity.description = model.Description;
-            entity.unit = model.Unit;
-            entity.price = model.Price;
-            entity.quantityavailable = model.QuantityAvailable;
-            await _db.SaveChangesAsync();
-
-            // 4) Xử lý ảnh: nếu có file mới -> xóa ảnh cũ và thêm ảnh mới
-            var files = Request.Form.Files.GetFiles("ProductImages");
-            if (files != null && files.Count > 0)
+            try
             {
-                // a) Xóa bản ghi và file ảnh cũ
-                var oldImages = await _db.productimages
-                    .Where(pi => pi.productid == id)
-                    .ToListAsync();
-                foreach (var img in oldImages)
+                // 1) Validate model fields
+                if (!ModelState.IsValid)
+                    return BadRequest(new { Error = "Dữ liệu không hợp lệ", Details = ModelState });
+
+                // 2) Lấy sản phẩm và kiểm tra quyền
+                var entity = await _db.products.FindAsync(id);
+                if (entity == null || entity.userid != FarmerId)
+                    return NotFound(new { Error = "Không tìm thấy sản phẩm hoặc không có quyền truy cập" });
+
+                // 3) Kiểm tra danh mục tồn tại
+                var category = await _db.categories.FindAsync(model.CategoryId);
+                if (category == null)
+                    return BadRequest(new { Error = "Danh mục không tồn tại" });
+
+                // 4) Cập nhật các thông tin cơ bản
+                entity.categoryid = model.CategoryId;
+                entity.productname = model.ProductName;
+                entity.description = model.Description;
+                entity.unit = model.Unit;
+                entity.price = model.Price;
+                entity.quantityavailable = model.QuantityAvailable;
+
+                // 5) Xử lý ảnh: nếu có file mới -> xóa ảnh cũ và thêm ảnh mới
+                var files = Request.Form.Files.Where(f => f.Name == "ProductImages").ToList();
+                if (files != null && files.Count > 0)
                 {
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", img.imageurl.TrimStart('/'));
-                    if (System.IO.File.Exists(filePath))
-                        System.IO.File.Delete(filePath);
-                }
-                _db.productimages.RemoveRange(oldImages);
-                await _db.SaveChangesAsync();
+                    // Validate file extensions và sizes
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    const long maxFileSize = 5 * 1024 * 1024;
 
-                // b) Thêm ảnh mới
-                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-                if (!Directory.Exists(uploadDir))
-                    Directory.CreateDirectory(uploadDir);
-
-                foreach (var file in files)
-                {
-                    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                    var fname = $"{Guid.NewGuid()}{ext}";
-                    var savePath = Path.Combine(uploadDir, fname);
-                    using (var stream = System.IO.File.Create(savePath))
-                        await file.CopyToAsync(stream);
-
-                    _db.productimages.Add(new productimage
+                    foreach (var file in files)
                     {
-                        productid = entity.productid,
-                        imageurl = "/uploads/" + fname,
-                        uploadedat = DateTime.Now
-                    });
+                        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(extension))
+                            return BadRequest(new { Error = $"Định dạng file {file.FileName} không được hỗ trợ. Chỉ chấp nhận: {string.Join(", ", allowedExtensions)}" });
+                        if (file.Length > maxFileSize)
+                            return BadRequest(new { Error = $"Kích thước file {file.FileName} vượt quá giới hạn 5MB" });
+                    }
+
+                    // a) Xóa bản ghi và file ảnh cũ
+                    var oldImages = await _db.productimages
+                        .Where(pi => pi.productid == id)
+                        .ToListAsync();
+
+                    foreach (var img in oldImages)
+                    {
+                        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", img.imageurl.TrimStart('/'));
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            try
+                            {
+                                System.IO.File.Delete(filePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log error but continue
+                                Console.WriteLine($"Cannot delete file {filePath}: {ex.Message}");
+                            }
+                        }
+                    }
+                    _db.productimages.RemoveRange(oldImages);
+
+                    // b) Thêm ảnh mới
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                    if (!Directory.Exists(uploadDir))
+                        Directory.CreateDirectory(uploadDir);
+
+                    foreach (var file in files)
+                    {
+                        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                        var fname = $"{Guid.NewGuid()}{ext}";
+                        var savePath = Path.Combine(uploadDir, fname);
+                        using (var stream = System.IO.File.Create(savePath))
+                            await file.CopyToAsync(stream);
+
+                        _db.productimages.Add(new productimage
+                        {
+                            productid = entity.productid,
+                            imageurl = "/uploads/" + fname,
+                            uploadedat = DateTime.Now
+                        });
+                    }
                 }
+
                 await _db.SaveChangesAsync();
+                return Ok(new { Message = "Cập nhật sản phẩm thành công" });
             }
-
-            return NoContent();
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx)
+            {
+                return BadRequest(new
+                {
+                    Error = "Lỗi cơ sở dữ liệu: " + pgEx.Message,
+                    Detail = pgEx.Detail ?? "Không có chi tiết lỗi",
+                    SqlState = pgEx.SqlState
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Error = "Lỗi không xác định: " + ex.Message,
+                    Detail = ex.StackTrace
+                });
+            }
         }
-
 
         // DELETE api/farmer/products/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var entity = await _db.products.FindAsync(id);
-            if (entity == null || entity.userid != FarmerId) return NotFound();
+            try
+            {
+                var entity = await _db.products
+                    .Include(p => p.productimages)
+                    .FirstOrDefaultAsync(p => p.productid == id && p.userid == FarmerId);
 
-            _db.products.Remove(entity);
-            await _db.SaveChangesAsync();
-            return NoContent();
+                if (entity == null)
+                    return NotFound(new { Error = "Không tìm thấy sản phẩm hoặc không có quyền truy cập" });
+
+                // Xóa file ảnh trước
+                foreach (var img in entity.productimages)
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", img.imageurl.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(filePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log error but continue
+                            Console.WriteLine($"Cannot delete file {filePath}: {ex.Message}");
+                        }
+                    }
+                }
+
+                // Xóa bản ghi (cascade sẽ xóa productimages)
+                _db.products.Remove(entity);
+                await _db.SaveChangesAsync();
+
+                return Ok(new { Message = "Xóa sản phẩm thành công" });
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx)
+            {
+                return BadRequest(new
+                {
+                    Error = "Lỗi cơ sở dữ liệu: " + pgEx.Message,
+                    Detail = pgEx.Detail ?? "Không có chi tiết lỗi",
+                    SqlState = pgEx.SqlState
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Error = "Lỗi không xác định: " + ex.Message,
+                    Detail = ex.StackTrace
+                });
+            }
         }
     }
 }

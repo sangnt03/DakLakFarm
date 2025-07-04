@@ -9,6 +9,7 @@ namespace AgriEcommerces_MVC.Models.ViewModel
         [BindNever]
         [ValidateNever]
         public CartViewModel Cart { get; set; }
+        public int? SellerId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng chọn tỉnh/thành")]
         public string province { get; set; }

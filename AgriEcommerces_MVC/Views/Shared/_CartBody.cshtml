@@ -1,124 +1,165 @@
-﻿
-<ul class="list-group mb-3">
-    @foreach (var item in Model.Items)
-    {
-        <li class="list-group-item">
-            <div class="row align-items-center">
-                <div class="col-6 d-flex align-items-center">
-                    @if (!string.IsNullOrEmpty(item.ImageUrl))
-                    {
-                        <img src="@Url.Content(item.ImageUrl)"
-                             alt="@item.ProductName"
-                             class="img-fluid rounded me-3"
-                             style="max-width: 80px;" />
-                    }
-                    else
-                    {
-                        <span class="me-3">Không có ảnh</span>
-                    }
-                    <div>
-                        <h5 class="mb-1">@item.ProductName</h5>
-                        <small class="text-muted">
-                            @item.Quantity x @item.UnitPrice.ToString("N3") VNĐ
-                        </small>
-                    </div>
-                </div>
+﻿@using AgriEcommerces_MVC.Models.ViewModel
+@model CartViewModel
 
-                <div class="col-6">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <!-- Nhóm nút + và – -->
-                        <div class="d-flex align-items-center">
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-2 qty-btn" data-id="@item.ProductId" data-action="minus">−</button>
-                            <span class="qty-value">@item.Quantity</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2 qty-btn" data-id="@item.ProductId" data-action="plus">+</button>
+@if (!Model.Items.Any())
+{
+    <p>Giỏ hàng của bạn đang trống.</p>
+}
+else
+{
+    <div id="cartContainer">
+        @foreach (var group in Model.Items.GroupBy(i => i.SellerId))
+        {
+            <div class="cart-group mb-4">
+                <h5>Sản phẩm của shop: @group.Key</h5>
+                <ul class="list-group mb-3">
+                    @foreach (var item in group)
+                    {
+                        <li class="list-group-item">
+                            <div class="row align-items-center">
+                                <div class="col-6 d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@Url.Content(item.ImageUrl)"
+                                             alt="@item.ProductName"
+                                             class="img-fluid rounded me-3"
+                                             style="max-width: 80px;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="me-3">Không có ảnh</span>
+                                    }
+                                    <div>
+                                        <h5 class="mb-1">@item.ProductName</h5>
+                                        <small class="text-muted">
+                                            @item.Quantity x @item.UnitPrice.ToString("N0") VNĐ
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary me-2 qty-btn" data-id="@item.ProductId" data-action="minus">−</button>
+                                            <span class="qty-value">@item.Quantity</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2 qty-btn" data-id="@item.ProductId" data-action="plus">+</button>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="@item.ProductId">
+                                            Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    <li class="list-group-item d-flex justify-content-between">
+                        <strong>Tổng tiền:</strong>
+                        <div>
+                        <strong>@group.Sum(i => i.Total).ToString("N0") VNĐ</strong>
+                        <a asp-controller="Home" asp-action="Payment" asp-route-sellerId="@group.Key" class="btn btn-primary btn-sm ms-3">
+                            Thanh toán
+                        </a>
                         </div>
-                        <!-- Nút Xóa -->
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger remove-btn"
-                                data-id="@item.ProductId">
-                            Xóa
-                        </button>
-                    </div>
-                </div>
+                    </li>
+                </ul>
+                <hr />
             </div>
-        </li>
-    }
-    <li class="list-group-item d-flex justify-content-between">
-        <strong>Tổng cộng</strong>
-        <strong>@Model.GrandTotal.ToString("N3") vnđ</strong>
-    </li>
-</ul>
+        }
+    </div>
+}
 
-<a asp-controller="Home" asp-action="Payment" class="btn btn-primary w-100">Thanh toán</a>
+@* <a asp-controller="Home" asp-action="Payment" class="btn btn-primary w-100">Thanh toán</a> *@
 
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-          document.body.addEventListener('click', async e => {
-            const minusOrPlus = e.target.closest('button[data-type]');
-            const addBtn      = e.target.closest('.add-to-cart');
+            document.body.addEventListener('click', async e => {
+                // 1) Xử lý nút + / - trong trang sản phẩm (nếu có)
+                const minusOrPlus = e.target.closest('button[data-type]');
+                if (minusになりOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
+                    e.preventDefault();
+                    const wrapper = minusOrPlus.closest('.quantity-wrapper');
+                    const input = wrapper.querySelector('input.input-number');
+                    let v = parseInt(input.value, 10) || 0;
+                    if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
+                    else if (v > 1) v--;
+                    input.value = v < 1 ? 1 : v;
+                    return;
+                }
 
-            // 1) Xử lý + / − trong product list
-            if (minusOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
-              // là nút trên trang Products, data-type="minus" hoặc "plus"
-              e.preventDefault();
-              const wrapper = minusOrPlus.closest('.quantity-wrapper');
-              const input   = wrapper.querySelector('input.input-number');
-              let v = parseInt(input.value, 10) || 0;
-              if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
-              else if (v > 1) v--;
-              input.value = v < 1 ? 1 : v;
-              return;
-            }
+                // 2) Xử lý Add to Cart
+                const addBtn = e.target.closest('.add-to-cart');
+                if (addBtn) {
+                    e.preventDefault();
+                    const id = addBtn.getAttribute('data-id');
+                    const wrapper = addBtn.closest('.product-item');
+                    const input = wrapper.querySelector('input.input-number');
+                    let qty = parseInt(input.value, 10);
+                    if (isNaN(qty) || qty < 1) qty = 1;
 
-            // 2) Xử lý Add to Cart
-            if (addBtn) {
-              e.preventDefault();
-              const id      = addBtn.getAttribute('data-id');
-              const wrapper = addBtn.closest('.product-item');
-              const input   = wrapper.querySelector('input.input-number');
-              let qty       = parseInt(input.value, 10);
-              if (isNaN(qty) || qty < 1) qty = 1;
+                    const url = '@Url.Action("AddAjax", "Cart")';
+                    const resp = await fetch(`${url}?id=${id}&qty=${qty}`);
+                    if (!resp.ok) return console.error('AddAjax lỗi', resp.status);
+                    const html = await resp.text();
+                    document.getElementById('offcanvasCartBody').innerHTML = html;
+                    new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+                    document.getElementById('cartContainer').innerHTML = html;
+                    return;
+                }
 
-              const url   = '@Url.Action("AddAjax", "Cart")';
-              const resp  = await fetch(`${url}?id=${id}&qty=${qty}`);
-              if (!resp.ok) return console.error('AddAjax lỗi', resp.status);
-              const html  = await resp.text();
+                // 3) Xử lý nút + / - trong giỏ hàng (chính và offcanvas)
+                const qtyBtn = e.target.closest('.qty-btn');
+                if (qtyBtn) {
+                    e.preventDefault();
+                    const id = qtyBtn.getAttribute('data-id');
+                    const action = qtyBtn.getAttribute('data-action');
+                    const li = qtyBtn.closest('li');
+                    if (!li) {
+                        console.error('Không tìm thấy thẻ <li> chứa nút qty-btn');
+                        return;
+                    }
+                    const span = li.querySelector('.qty-value');
+                    if (!span) {
+                        console.error('Không tìm thấy phần tử .qty-value trong <li>');
+                        return;
+                    }
+                    let qty = parseInt(span.textContent, 10) || 0;
+                    qty = (action === 'plus') ? qty + 1 : qty - 1;
+                    if (qty < 0) qty = 0;
 
-              document.getElementById('offcanvasCartBody').innerHTML = html;
-              new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
-              return;
-            }
+                    const updateUrl = action === 'minus' ? '@Url.Action("DecrementAjax", "Cart")' : '@Url.Action("UpdateAjax", "Cart")';
+                    const url = qty === 0 ? `@Url.Action("UpdateAjax", "Cart")?id=${id}&qty=0` : `${updateUrl}?id=${id}${action === 'plus' ? `&qty=${qty}` : ''}`;
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.error(`Lỗi khi ${action === 'plus' ? 'tăng' : 'giảm'} số lượng`, response.status);
+                        return;
+                    }
+                    const html = await response.text();
+                    if (document.getElementById('offcanvasCartBody')) {
+                        document.getElementById('offcanvasCartBody').innerHTML = html;
+                    }
+                    document.getElementById('cartContainer').innerHTML = html;
+                    return;
+                }
 
-            // 3) Các nút trong offcanvas (qty-btn, remove-btn) vẫn như cũ...
-            const qtyBtn = e.target.closest('.qty-btn');
-            if (qtyBtn) {
-              e.preventDefault();
-              const id     = qtyBtn.getAttribute('data-id');
-              const action = qtyBtn.getAttribute('data-action');
-              const li     = qtyBtn.closest('li');
-              const span   = li.querySelector('.qty-value');
-              let qty      = parseInt(span.textContent, 10) || 0;
-              qty = (action === 'plus' ? qty + 1 : qty - 1);
-              if (qty < 0) qty = 0;
-
-              const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
-              const r2 = await fetch(`${updateUrl}?id=${id}&qty=${qty}`);
-              const h2 = await r2.text();
-              document.getElementById('offcanvasCartBody').innerHTML = h2;
-              return;
-            }
-
-            const remBtn = e.target.closest('.remove-btn');
-            if (remBtn) {
-              e.preventDefault();
-              const id = remBtn.getAttribute('data-id');
-              const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
-              const r3 = await fetch(`${updateUrl}?id=${id}&qty=0`);
-              const h3 = await r3.text();
-              document.getElementById('offcanvasCartBody').innerHTML = h3;
-            }
-          });
+                // 4) Xử lý nút xóa
+                const remBtn = e.target.closest('.remove-btn');
+                if (remBtn) {
+                    e.preventDefault();
+                    const id = remBtn.getAttribute('data-id');
+                    const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+                    const response = await fetch(`${updateUrl}?id=${id}&qty=0`);
+                    if (!response.ok) {
+                        console.error('Lỗi khi xóa sản phẩm', response.status);
+                        return;
+                    }
+                    const html = await response.text();
+                    if (document.getElementById('offcanvasCartBody')) {
+                        document.getElementById('offcanvasCartBody').innerHTML = html;
+                    }
+                    document.getElementById('cartContainer').innerHTML = html;
+                }
+            });
         });
     </script>
 }

@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Đăng ký bán hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h3>@ViewData["Title"]</h3>
+
+    <div id="message" class="mb-3"></div>
+
+    <form id="reqForm">
+        @Html.AntiForgeryToken()
+        <p>Nếu bạn muốn bán nông sản, nhấn “Gửi yêu cầu” để Admin xét duyệt.</p>
+        <button type="submit" id="btnSend" class="btn btn-primary">
+            Gửi yêu cầu
+        </button>
+        <a asp-controller="Home" asp-action="Profile" class="btn btn-secondary ms-2">
+            Trở về Trang cá nhân
+        </a>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('reqForm')
+            .addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                var token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                var res = await fetch('@Url.Action("CreateAjax", "SellerRequest")', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!res.ok) {
+                    alert('Không thể gửi yêu cầu. Vui lòng thử lại.');
+                    return;
+                }
+
+                var data = await res.json();
+                alert(data.message);
+
+                if (data.success) {
+                    window.location.href = '@Url.Action("Profile", "Home")';
+                }
+            });
+    </script>
+}

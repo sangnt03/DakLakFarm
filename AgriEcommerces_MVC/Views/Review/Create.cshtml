@@ -1,0 +1,411 @@
+﻿@model AgriEcommerces_MVC.Models.review
+
+@{
+    ViewData["Title"] = "Đánh giá sản phẩm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h3 class="mb-0 fw-bold">
+                        <i class="fas fa-star me-2"></i>
+                        @ViewData["Title"]
+                    </h3>
+                </div>
+                <div class="card-body p-4 bg-light">
+                    <!-- Hiển thị lỗi nếu TempData["Error"] có giá trị -->
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger text-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    <form asp-controller="Review" asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Hidden field để gửi productid -->
+                        <input type="hidden" asp-for="productid" id="productid" />
+
+                        <!-- Hidden field cho rating -->
+                        <input type="hidden" id="rating-input" asp-for="rating" value="@Model.rating" />
+
+                        <!-- Phần chấm điểm 5 sao -->
+                        <div class="form-group mb-4">
+                            <label class="form-label h5 text-dark fw-bold text-center d-block">
+                                <i class="fas fa-star text-warning me-2"></i>
+                                Chấm điểm sản phẩm
+                                <span class="text-danger"> *</span>
+                            </label>
+                            <div class="star-rating-container text-center py-4">
+                                <div class="star-rating" id="star-rating">
+                                    <span class="star" data-value="1"><i class="fas fa-star"></i></span>
+                                    <span class="star" data-value="2"><i class="fas fa-star"></i></span>
+                                    <span class="star" data-value="3"><i class="fas fa-star"></i></span>
+                                    <span class="star" data-value="4"><i class="fas fa-star"></i></span>
+                                    <span class="star" data-value="5"><i class="fas fa-star"></i></span>
+                                </div>
+                                <div class="rating-text mt-3">
+                                    <span id="rating-label" class="fs-5 fw-semibold">
+                                        Nhấn vào sao để đánh giá
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="rating-error" class="text-danger text-center" style="display: none;">
+                                Vui lòng chọn số sao để đánh giá
+                            </div>
+                        </div>
+
+                        <!-- Phần nhập bình luận (tùy chọn) -->
+                        <div class="form-group mb-4">
+                            <label asp-for="comment" class="form-label h5 text-dark fw-bold">
+                                <i class="fas fa-comment text-warning me-2"></i>
+                                Chia sẻ trải nghiệm (tùy chọn)
+                            </label>
+                            <div class="form-text text-muted mb-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Bạn có thể bỏ trống nếu chỉ muốn chấm điểm (tối đa 500 ký tự)
+                            </div>
+                            <textarea asp-for="comment"
+                                      class="form-control form-control-lg"
+                                      rows="7"
+                                      maxlength="500"
+                                      placeholder="Chia sẻ cảm nhận của bạn…"></textarea>
+                            <div id="comment-counter" class="text-muted text-end mt-1">
+                                <span id="comment-count">0</span>/500 ký tự
+                            </div>
+                        </div>
+
+                        <!-- Nút Gửi và Quay lại -->
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                            <button type="submit"
+                                    class="btn btn-warning btn-lg px-5 text-dark fw-bold">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Gửi đánh giá
+                            </button>
+                            <a asp-controller="Home" asp-action="MyOrders"
+                               class="btn btn-outline-dark btn-lg px-5">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Quay lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stars = document.querySelectorAll('.star');
+            const ratingInput = document.getElementById('rating-input');
+            const ratingLabel = document.getElementById('rating-label');
+            const ratingError = document.getElementById('rating-error');
+            const commentTextarea = document.querySelector('textarea[name="comment"]');
+            const commentCount = document.getElementById('comment-count');
+            const form = document.querySelector('form');
+
+            const ratingTexts = {
+                1: '⭐ Rất kém - 1 sao',
+                2: '⭐⭐ Kém - 2 sao',
+                3: '⭐⭐⭐ Bình thường - 3 sao',
+                4: '⭐⭐⭐⭐ Tốt - 4 sao',
+                5: '⭐⭐⭐⭐⭐ Tuyệt vời - 5 sao'
+            };
+
+            let currentRating = parseInt(ratingInput.value) || 0;
+            if (currentRating > 0) {
+                updateStarDisplay(currentRating);
+            }
+
+            function updateCommentCount() {
+                const length = commentTextarea.value.length;
+                commentCount.textContent = length;
+                if (length > 500) {
+                    commentCount.parentElement.classList.add('text-danger');
+                } else {
+                    commentCount.parentElement.classList.remove('text-danger');
+                }
+            }
+
+            function updateStarDisplay(rating) {
+                stars.forEach((st) => {
+                    const v = parseInt(st.getAttribute('data-value'));
+                    if (v <= rating) {
+                        st.classList.add('active');
+                    } else {
+                        st.classList.remove('active');
+                    }
+                });
+                if (rating > 0) {
+                    ratingLabel.textContent = ratingTexts[rating];
+                    ratingLabel.style.color = '#ffc107';
+                    ratingLabel.style.fontWeight = 'bold';
+                } else {
+                    ratingLabel.textContent = 'Nhấn vào sao để đánh giá';
+                    ratingLabel.style.color = '#666';
+                    ratingLabel.style.fontWeight = 'normal';
+                }
+            }
+
+            stars.forEach((star) => {
+                star.addEventListener('click', function () {
+                    const val = parseInt(this.getAttribute('data-value'));
+                    ratingInput.value = val;
+                    currentRating = val;
+                    updateStarDisplay(val);
+                    ratingError.style.display = 'none';
+                });
+
+                star.addEventListener('mouseenter', function () {
+                    const hoverVal = parseInt(this.getAttribute('data-value'));
+                    stars.forEach((st) => {
+                        const v = parseInt(st.getAttribute('data-value'));
+                        if (v <= hoverVal) {
+                            st.style.color = '#ffc107';
+                            st.style.transform = 'scale(1.1)';
+                        } else {
+                            st.style.color = '#e0e0e0';
+                            st.style.transform = 'scale(1)';
+                        }
+                    });
+                    if (currentRating === 0) {
+                        ratingLabel.textContent = ratingTexts[hoverVal];
+                        ratingLabel.style.color = '#ffb300';
+                    }
+                });
+
+                star.addEventListener('mouseleave', function () {
+                    updateStarDisplay(currentRating);
+                });
+            });
+
+            commentTextarea.addEventListener('input', updateCommentCount);
+            updateCommentCount();
+
+            form.addEventListener('submit', function (e) {
+                let isValid = true;
+                if (parseInt(ratingInput.value) < 1 || parseInt(ratingInput.value) > 5) {
+                    ratingError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    ratingError.style.display = 'none';
+                }
+                if (commentTextarea.value.length > 500) {
+                    isValid = false;
+                }
+                if (!isValid) {
+                    e.preventDefault();
+                    if (parseInt(ratingInput.value) < 1) {
+                        document.querySelector('.star-rating-container').scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+}
+
+
+
+@section Styles {
+
+    <style>
+        /* Card chứa toàn bộ form */
+        .card {
+            border: 3px solid #ffc107;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #fff;
+            transform: scale(0.67); /* Giảm kích thước xuống 2/3 */
+            transform-origin: top center; /* Điểm gốc khi thu nhỏ */
+            width: 149.25%; /* Điều chỉnh chiều rộng để bù cho việc thu nhỏ */
+            margin-left: -24.625%; /* Căn giữa card: (149.25% - 100%) / 2 */
+            min-height: 600px; /* Tăng chiều cao tối thiểu của card */
+        }
+
+        /* Header của card */
+        .card-header {
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+            border: none;
+            padding: 16.67px; /* 25px * 2/3 */
+        }
+
+        /* Body của card */
+        .card-body {
+            background: #fefefe;
+            padding: 40px; /* Tăng padding để giao diện cao hơn */
+            min-height: 500px; /* Đảm bảo phần body có chiều cao lớn hơn */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Phân bổ không gian đều */
+        }
+
+        /* Container chứa ngôi sao */
+        .star-rating-container {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff9d4 100%);
+            border: 1.33px solid #ffc107; /* 2px * 2/3 */
+            border-radius: 13.33px; /* 20px * 2/3 */
+            margin: 20px 0; /* Tăng margin để tạo khoảng cách */
+            padding: 20px; /* Tăng padding để cao hơn */
+        }
+
+        /* Danh sách ngôi sao */
+        .star-rating {
+            display: inline-flex;
+            gap: 5.33px; /* 8px * 2/3 */
+            justify-content: center;
+        }
+
+        /* Mỗi ngôi sao */
+        .star {
+            cursor: pointer;
+            font-size: 2rem; /* 3rem * 2/3 */
+            color: #e0e0e0;
+            transition: all 0.3s ease;
+            text-shadow: 1.33px 1.33px 2.67px rgba(0,0,0,0.1); /* 2px 2px 4px * 2/3 */
+            display: inline-block;
+        }
+
+            /* Hiệu ứng khi hover vào ngôi sao */
+            .star:hover {
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 6.67px rgba(255, 193, 7, 0.8)); /* 10px * 2/3 */
+            }
+
+            /* Ngôi sao khi được chọn */
+            .star.active {
+                color: #ffc107;
+                text-shadow: 1.33px 1.33px 2.67px rgba(255, 193, 7, 0.5); /* 2px 2px 4px * 2/3 */
+                animation: starPulse 0.6s ease-in-out;
+            }
+
+                .star.active:hover {
+                    color: #ffb300;
+                }
+
+        /* Hiệu ứng animation khi chọn ngôi sao */
+        @@keyframes starPulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+                filter: drop-shadow(0 0 10px rgba(255, 193, 7, 1)); /* 15px * 2/3 */
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Text hiển thị trạng thái đánh giá */
+        .rating-text {
+            color: #333;
+        }
+
+        /* Input form */
+        .form-control {
+            border-radius: 10px; /* 15px * 2/3 */
+            border: 1.33px solid #ffc107; /* 2px * 2/3 */
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+            .form-control:focus {
+                border-color: #ffb300;
+                box-shadow: 0 0 0 0.17rem rgba(255, 193, 7, 0.25); /* 0.25rem * 2/3 */
+                transform: translateY(-1.33px); /* 2px * 2/3 */
+            }
+
+        /* Label của form */
+        .form-label {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px; /* 15px * 2/3 */
+        }
+
+        /* Nút bấm */
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+            border: 1.33px solid #ffc107; /* 2px * 2/3 */
+            border-radius: 16.67px; /* 25px * 2/3 */
+            transition: all 0.3s ease;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.33px; /* 0.5px * 2/3 */
+        }
+
+            .btn-warning:hover {
+                background: linear-gradient(135deg, #ffb300 0%, #ff8f00 100%);
+                border-color: #ffb300;
+                transform: translateY(-2px); /* 3px * 2/3 */
+                box-shadow: 0 5.33px 16.67px rgba(255, 193, 7, 0.4); /* 8px 25px * 2/3 */
+            }
+
+        .btn-outline-dark {
+            border: 1.33px solid #333; /* 2px * 2/3 */
+            border-radius: 16.67px; /* 25px * 2/3 */
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.33px; /* 0.5px * 2/3 */
+        }
+
+            .btn-outline-dark:hover {
+                background: #333;
+                transform: translateY(-2px); /* 3px * 2/3 */
+                box-shadow: 0 5.33px 16.67px rgba(0, 0, 0, 0.3); /* 8px 25px * 2/3 */
+            }
+
+        /* Responsive cho màn hình nhỏ */
+        @@media (max-width: 768px) {
+            .star {
+                font-size: 1.67rem; /* 2.5rem * 2/3 */
+                gap: 3.33px; /* 5px * 2/3 */
+            }
+
+            .card-body {
+                padding: 20px; /* Giảm padding cho thiết bị nhỏ */
+                min-height: 400px; /* Điều chỉnh chiều cao */
+            }
+
+            .star-rating-container {
+                padding: 10px;
+                margin: 10px 0;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .star {
+                font-size: 1.33rem; /* 2rem * 2/3 */
+            }
+        }
+
+        /* Thông báo lỗi */
+        .text-danger {
+            font-weight: 500;
+        }
+
+        /* Hiệu ứng khi hover vào card */
+        .card {
+            transition: all 0.3s ease;
+        }
+
+            .card:hover {
+                transform: translateY(-3.33px) scale(0.67); /* 5px * 2/3 */
+                box-shadow: 0 10px 23.33px rgba(255, 193, 7, 0.2); /* 15px 35px * 2/3 */
+            }
+    </style>
+}

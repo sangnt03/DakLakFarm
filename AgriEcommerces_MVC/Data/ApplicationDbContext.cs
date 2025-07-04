@@ -29,6 +29,8 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<review> reviews { get; set; }
 
     public virtual DbSet<user> users { get; set; }
+    public virtual DbSet<SellerRequest> sellerrequests { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

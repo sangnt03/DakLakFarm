@@ -1,0 +1,317 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.category>
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+<style>
+    .coastal-management-container {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 50%, #e1f5fe 100%);
+        min-height: 100vh;
+        padding: 30px 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .coastal-content-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .coastal-header {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(3, 169, 244, 0.1);
+        border: 1px solid rgba(129, 212, 250, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .coastal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #03a9f4, #81d4fa, #4fc3f7, #03a9f4);
+        animation: wave-flow 3s ease-in-out infinite;
+    }
+
+    @@keyframes wave-flow {
+        0%, 100% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+    }
+
+    .coastal-title {
+        color: #0277bd;
+        font-size: 32px;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(3, 169, 244, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .coastal-title::before {
+        content: '🌊';
+        font-size: 28px;
+    }
+
+    .coastal-add-btn {
+        background: linear-gradient(135deg, #03a9f4 0%, #0288d1 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(3, 169, 244, 0.3);
+        margin-top: 20px;
+    }
+
+    .coastal-add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(3, 169, 244, 0.4);
+        background: linear-gradient(135deg, #0288d1 0%, #0277bd 100%);
+        color: white;
+        text-decoration: none;
+    }
+
+    .coastal-add-btn::before {
+        content: '+';
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .coastal-table-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 25px rgba(3, 169, 244, 0.1);
+        border: 1px solid rgba(129, 212, 250, 0.3);
+        overflow: hidden;
+    }
+
+    .coastal-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(3, 169, 244, 0.1);
+    }
+
+    .coastal-table thead {
+        background: linear-gradient(135deg, #03a9f4 0%, #0288d1 100%);
+    }
+
+    .coastal-table thead th {
+        color: white;
+        font-weight: 600;
+        padding: 18px 20px;
+        text-align: left;
+        font-size: 16px;
+        border: none;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .coastal-table thead th:first-child {
+        border-radius: 0;
+    }
+
+    .coastal-table thead th:last-child {
+        border-radius: 0;
+    }
+
+    .coastal-table tbody tr {
+        background: rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(129, 212, 250, 0.2);
+    }
+
+    .coastal-table tbody tr:hover {
+        background: rgba(227, 242, 253, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(3, 169, 244, 0.1);
+    }
+
+    .coastal-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .coastal-table tbody td {
+        padding: 16px 20px;
+        border: none;
+        color: #01579b;
+        font-size: 15px;
+        vertical-align: middle;
+    }
+
+    .coastal-action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-right: 8px;
+    }
+
+    .coastal-edit-btn {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+    }
+
+    .coastal-edit-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+        color: white;
+        text-decoration: none;
+    }
+
+    .coastal-delete-btn {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+    }
+
+    .coastal-delete-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+        color: white;
+        text-decoration: none;
+    }
+
+    .coastal-id-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #0277bd;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-block;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .coastal-category-name {
+        font-weight: 500;
+        color: #01579b;
+    }
+
+    .coastal-empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #0288d1;
+        font-size: 18px;
+        opacity: 0.7;
+    }
+
+    .coastal-empty-state::before {
+        content: '🌊';
+        display: block;
+        font-size: 48px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    @@media (max-width: 768px) {
+        .coastal-title {
+            font-size: 24px;
+        }
+
+        .coastal-table-container {
+            padding: 20px;
+            margin: 0 10px;
+        }
+
+        .coastal-table {
+            font-size: 14px;
+        }
+
+        .coastal-table thead th,
+        .coastal-table tbody td {
+            padding: 12px 10px;
+        }
+
+        .coastal-action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+    }
+</style>
+
+<div class="coastal-management-container">
+    <div class="coastal-content-wrapper">
+        <div class="coastal-header">
+            <h2 class="coastal-title">@ViewData["Title"]</h2>
+            <p>
+                <a class="coastal-add-btn" asp-action="Create">Thêm danh mục</a>
+            </p>
+        </div>
+
+        <div class="coastal-table-container">
+            @if (Model != null && Model.Any())
+            {
+                <table class="coastal-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên danh mục</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="coastal-id-badge">@item.categoryid</span>
+                                </td>
+                                <td>
+                                    <span class="coastal-category-name">@item.categoryname</span>
+                                </td>
+                                <td>
+                                    <a class="coastal-action-btn coastal-edit-btn" asp-action="Edit" asp-route-id="@item.categoryid">
+                                        Sửa
+                                    </a>
+                                    <a class="coastal-action-btn coastal-delete-btn" asp-action="Delete" asp-route-id="@item.categoryid"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này không?');">
+                                        Xóa
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="coastal-empty-state">
+                    Chưa có danh mục nào được tạo
+                </div>
+            }
+        </div>
+    </div>
+</div>

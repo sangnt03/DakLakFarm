@@ -14,14 +14,14 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <PackageReference Include="Ollama" Version="1.15.0" />
+    <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Admin\Controllers\" />
-    <Folder Include="Areas\Admin\Data\" />
-    <Folder Include="Areas\Admin\Models\" />
-    <Folder Include="Areas\Admin\Views\" />
+    <Folder Include="Areas\Farmer\Models\" />
+    <Folder Include="Areas\Management\Data\" />
     <Folder Include="Areas\Farmer\Data\" />
     <Folder Include="Data\" />
     <Folder Include="wwwroot\images\uploads\" />

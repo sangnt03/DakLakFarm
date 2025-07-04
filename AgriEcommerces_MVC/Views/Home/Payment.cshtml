@@ -26,49 +26,43 @@
     else
     {
         <form asp-action="Payment" method="post">
+            <!-- Giữ giá trị SellerId nếu có -->
+            <input type="hidden" asp-for="SellerId" />
+
             <div class="row">
                 <div class="col-md-6">
                     <h4>Thông tin giao hàng</h4>
                     <div class="mb-3">
-                      <label asp-for="customername" class="form-label">Tên người mua</label>
-                      <input asp-for="customername" class="form-control" />
-                      <span asp-validation-for="customername" class="text-danger"></span>
+                        <label asp-for="customername" class="form-label">Tên người mua</label>
+                        <input asp-for="customername" class="form-control" />
+                        <span asp-validation-for="customername" class="text-danger"></span>
                     </div>
-                    
                     <div class="mb-3">
-                      <label asp-for="customerphone" class="form-label">Số điện thoại</label>
-                      <input asp-for="customerphone" class="form-control" />
-                      <span asp-validation-for="customerphone" class="text-danger"></span>
+                        <label asp-for="customerphone" class="form-label">Số điện thoại</label>
+                        <input asp-for="customerphone" class="form-control" />
+                        <span asp-validation-for="customerphone" class="text-danger"></span>
                     </div>
-
                     <div class="mb-3">
                         <label asp-for="province" class="form-label">Tỉnh/Thành</label>
-                        <select asp-for="province" class="form-select" required>
+                        <select asp-for="province" id="province" class="form-select" required>
                             <option value="">Chọn tỉnh/thành</option>
-                            @* …populate bằng AJAX như trước… *@
                         </select>
                         <span asp-validation-for="province" class="text-danger"></span>
                     </div>
-
-                    <!-- Chọn quận/huyện -->
                     <div class="mb-3">
                         <label asp-for="district" class="form-label">Quận/Huyện</label>
-                        <select asp-for="district" class="form-select" required>
+                        <select asp-for="district" id="district" class="form-select" required>
                             <option value="">Chọn quận/huyện</option>
                         </select>
                         <span asp-validation-for="district" class="text-danger"></span>
                     </div>
-
-                    <!-- Chọn xã/phường -->
                     <div class="mb-3">
                         <label asp-for="ward" class="form-label">Xã/Phường</label>
-                        <select asp-for="ward" class="form-select" required>
+                        <select asp-for="ward" id="ward" class="form-select" required>
                             <option value="">Chọn xã/phường</option>
                         </select>
                         <span asp-validation-for="ward" class="text-danger"></span>
                     </div>
-
-                    <!-- Nhập địa chỉ cụ thể -->
                     <div class="mb-3">
                         <label asp-for="address" class="form-label">Địa chỉ cụ thể</label>
                         <input asp-for="address" class="form-control" required />
@@ -77,6 +71,10 @@
                 </div>
                 <div class="col-md-6">
                     <h4>Thông tin đơn hàng</h4>
+                    @if (Model.SellerId.HasValue)
+                    {
+                        <p>Đơn của người bán: <strong>@Model.SellerId</strong></p>
+                    }
                     <table class="table">
                         <thead>
                             <tr>
@@ -103,15 +101,15 @@
                                     </td>
                                     <td>@item.ProductName</td>
                                     <td>@item.Quantity</td>
-                                    <td>@item.UnitPrice.ToString("N3") vnđ</td>
-                                    <td>@item.Total.ToString("N3") vnđ</td>
+                                    <td>@item.UnitPrice.ToString("N0") VNĐ</td>
+                                    <td>@item.Total.ToString("N0") VNĐ</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr>
                                 <th colspan="4">Tổng cộng:</th>
-                                <th>@Model.Cart.GrandTotal.ToString("N3") vnđ</th>
+                                <th>@Model.Cart.GrandTotal.ToString("N0") VNĐ</th>
                             </tr>
                         </tfoot>
                     </table>
@@ -120,7 +118,7 @@
             </div>
         </form>
     }
-    @* scripts để tải tỉnh/thành, quận/huyện, xã/phường dùng AJAX trong wwwroot/data/provinces.json *@
+
     @section Scripts {
         <script>
             $(document).ready(function () {
@@ -185,12 +183,11 @@
                 });
 
                 $('form').submit(function (e) {
-                    alert("load đưuọc rồi nè");
                     if (!$('#province').val() || !$('#district').val() || !$('#ward').val() || !$('input[name="address"]').val()) {
                         e.preventDefault();
                         alert('Vui lòng điền đầy đủ thông tin giao hàng.');
                     }
-                }); 
+                });
             });
         </script>
     }

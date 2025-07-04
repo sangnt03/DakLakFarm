@@ -1,0 +1,23 @@
+﻿@model AgriEcommerces_MVC.Models.category
+
+@{
+    ViewData["Title"] = "Chỉnh sửa danh mục";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="categoryid" />
+
+    <div class="form-group mb-3">
+        <label asp-for="categoryname" class="form-label">Tên danh mục</label>
+        <input asp-for="categoryname" class="form-control" />
+        <span asp-validation-for="categoryname" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Cập nhật</button>
+    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.Extensions.Logging;
+using AgriEcommerces_MVC.Areas.Farmer.Services;
+using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
+
+// 2) Đăng ký OrderService
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 // 2) MVC + Razor Runtime Compilation
 builder.Services
@@ -41,6 +46,9 @@ builder.Services.AddAuthentication(options =>
         // nếu URL bắt đầu bằng /Farmer thì xài FarmerAuth
         if (context.Request.Path.StartsWithSegments("/Farmer", StringComparison.OrdinalIgnoreCase))
             return "FarmerAuth";
+        // nếu URL bắt đầu bằng /Management thì xài mân
+        if (context.Request.Path.StartsWithSegments("/Management", StringComparison.OrdinalIgnoreCase))
+            return "ManagerAuth";
 
         // mặc định dùng Customer cho tất cả URL khác
         return "Customer";
@@ -65,7 +73,16 @@ builder.Services.AddAuthentication(options =>
     opts.LogoutPath = "/Farmer/FarmerAccount/Logout";
     opts.AccessDeniedPath = "/Farmer/FarmerAccount/AccessDenied";
     // …các setting khác…
-});
+})
+// 3) Scheme “AdminAuth” cho Admin area
+.AddCookie("ManagerAuth", opts =>
+ {
+     opts.Cookie.Name = ".AgriEcomManagerAuth";
+     opts.LoginPath = "/Management/Account/Login";
+     opts.LogoutPath = "/Management/Account/Logout";
+     opts.AccessDeniedPath = "/Management/Account/AccessDenied";
+     // …các setting khác…
+ });
 
 builder.Services.AddAuthorization();
 
@@ -109,7 +126,11 @@ app.MapAreaControllerRoute(
     areaName: "Farmer",
     pattern: "Farmer/{controller=FarmerAccount}/{action=Login}/{id?}"
 );
-
+app.MapAreaControllerRoute(
+    name: "manager_area",
+    areaName: "Management",
+    pattern: "Management/{controller=Account}/{action=Login}/{id?}"
+);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"

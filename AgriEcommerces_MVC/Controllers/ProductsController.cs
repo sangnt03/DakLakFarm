@@ -18,11 +18,12 @@ namespace AgriEcommerces_MVC.Controllers
             // include luôn collection productimages để lấy hình
             var products = await _db.products
                                     .Include(p => p.productimages)
+                                    .Include(p => p.reviews)
                                     .ToListAsync();
             return View(products);
         }
         // GET /Products/Category/5
-        [HttpGet("Products/Category/{id:int}")]
+        //[HttpGet("Products/Category/{id:int}")]
         public async Task<IActionResult> Category(int id)
         {
             // Lấy list các category để build dropdown nếu cần
@@ -32,9 +33,25 @@ namespace AgriEcommerces_MVC.Controllers
             // Lọc products theo categoryid
             var products = await _db.products
                                     .Include(p => p.productimages)
+                                    .Include(p => p.reviews)
                                     .Where(p => p.categoryid == id)
                                     .ToListAsync();
             return View("Category", products);
         }
+        // GET /Products/Details/5
+        //[HttpGet("Products/Details/{id:int}")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var product = await _db.products
+                .Include(p => p.productimages)
+                .Include(p => p.category)
+                .Include(p => p.reviews)
+                    .ThenInclude(r => r.customer)    // <-- Đảm bảo nạp đủ thông tin khách hàng
+                .FirstOrDefaultAsync(p => p.productid == id);
+
+            if (product == null) return NotFound();
+            return View("Details", product);
+        }
+
     }
 }

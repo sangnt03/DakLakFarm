@@ -11,13 +11,13 @@ namespace AgriEcommerces_MVC.Areas.Farmer.ViewModels
 
         [Required]
         [StringLength(100)]
-        public string ProductName { get; set; }
+        public string ProductName { get; set; } = string.Empty;
 
         [StringLength(500)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [StringLength(20)]
-        public string Unit { get; set; }
+        public string? Unit { get; set; }
 
         [Required]
         [Range(0.01, double.MaxValue)]
@@ -25,6 +25,11 @@ namespace AgriEcommerces_MVC.Areas.Farmer.ViewModels
 
         [Required]
         [Range(0, int.MaxValue)]
-        public int QuantityAvailable { get; set; }  
+        public int QuantityAvailable { get; set; }
+
+        /// <summary>
+        /// Danh sách ảnh mới để upload (tùy chọn khi edit)
+        /// </summary>
+        public List<IFormFile>? ProductImages { get; set; }
     }
 }

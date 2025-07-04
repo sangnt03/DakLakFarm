@@ -1,0 +1,206 @@
+﻿@model AgriEcommerces_MVC.Models.ViewModel.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập Quản Lý";
+}
+
+<style>
+    .coastal-login-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #e3f2fd 0%, #b3e5fc 50%, #81d4fa 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .coastal-login-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(3, 169, 244, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid rgba(129, 212, 250, 0.3);
+    }
+
+    .coastal-title {
+        text-align: center;
+        color: #0277bd;
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(3, 169, 244, 0.1);
+    }
+
+    .coastal-subtitle {
+        text-align: center;
+        color: #0288d1;
+        font-size: 14px;
+        margin-bottom: 30px;
+        opacity: 0.8;
+    }
+
+    .coastal-form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+
+    .coastal-label {
+        display: block;
+        color: #01579b;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        transition: color 0.3s ease;
+    }
+
+    .coastal-input {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #b3e5fc;
+        border-radius: 12px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: rgba(227, 242, 253, 0.3);
+        color: #01579b;
+    }
+
+    .coastal-input:focus {
+        outline: none;
+        border-color: #03a9f4;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .coastal-input::placeholder {
+        color: #81d4fa;
+        opacity: 0.7;
+    }
+
+    .coastal-checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+        gap: 10px;
+    }
+
+    .coastal-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #03a9f4;
+        border-radius: 4px;
+    }
+
+    .coastal-checkbox-label {
+        color: #0288d1;
+        font-size: 14px;
+        user-select: none;
+        cursor: pointer;
+    }
+
+    .coastal-btn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #03a9f4 0%, #0288d1 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(3, 169, 244, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .coastal-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(3, 169, 244, 0.4);
+        background: linear-gradient(135deg, #0288d1 0%, #0277bd 100%);
+    }
+
+    .coastal-btn:active {
+        transform: translateY(0);
+    }
+
+    .text-danger {
+        color: #e91e63 !important;
+        font-size: 13px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .coastal-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #b3e5fc, transparent);
+        margin: 25px 0;
+        border: none;
+    }
+
+    .coastal-wave-decoration {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #03a9f4, #81d4fa, #03a9f4);
+        border-radius: 2px;
+    }
+
+    .coastal-login-card {
+        position: relative;
+    }
+
+    @@keyframes wave {
+        0%, 100% { transform: translateX(-50%) scaleX(1); }
+        50% { transform: translateX(-50%) scaleX(1.1); }
+    }
+
+    .coastal-wave-decoration {
+        animation: wave 3s ease-in-out infinite;
+    }
+</style>
+
+<div class="coastal-login-container">
+    <div class="coastal-login-card">
+        <div class="coastal-wave-decoration"></div>
+
+        <h1 class="coastal-title">Đăng nhập Quản Lý</h1>
+        <p class="coastal-subtitle">Chào mừng trở lại</p>
+
+        <hr class="coastal-divider" />
+
+        <form asp-area="Management" asp-controller="Account" asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <div class="coastal-form-group">
+                <label asp-for="email" class="coastal-label">Email</label>
+                <input asp-for="email" class="coastal-input" placeholder="Nhập địa chỉ email của bạn" />
+                <span asp-validation-for="email" class="text-danger"></span>
+            </div>
+
+            <div class="coastal-form-group">
+                <label asp-for="password" class="coastal-label">Mật khẩu</label>
+                <input asp-for="password" type="password" class="coastal-input" placeholder="Nhập mật khẩu" />
+                <span asp-validation-for="password" class="text-danger"></span>
+            </div>
+
+            <div class="coastal-checkbox-group">
+                <input type="checkbox" class="coastal-checkbox" id="rememberMe">
+                <label class="coastal-checkbox-label" for="rememberMe">Nhớ tài khoản</label>
+            </div>
+
+            <button type="submit" class="coastal-btn">Đăng nhập</button>
+
+            @if (!string.IsNullOrEmpty(Model?.ReturnUrl))
+            {
+                <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+            }
+        </form>
+    </div>
+</div>

@@ -24,4 +24,6 @@ public partial class orderdetail
 
     [NotMapped]
     public decimal SumPrice => quantity * unitprice;
+
+
 }

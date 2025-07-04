@@ -1,0 +1,74 @@
+﻿@model List<AgriEcommerces_MVC.Models.order>
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h3>@ViewData["Title"]</h3>
+
+    @if (!Model.Any())
+    {
+        <p>Bạn chưa có đơn hàng nào. <a asp-controller="Home" asp-action="Index">Mua sắm ngay!</a></p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 80px;">Mã đơn</th>
+                    <th style="width: 150px;">Ngày đặt</th>
+                    <th style="width: 130px;">Trạng thái</th>
+                    <th style="width: 130px;">Tổng tiền</th>
+                    <th style="width: 220px;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    <tr>
+                        <td>@o.orderid</td>
+                        <td>@(o.orderdate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                        <td>@o.status</td>
+                        <td>@o.totalamount.ToString("N0") VNĐ</td>
+                        <td style="white-space: nowrap;">
+                            <!-- Nút Xem chi tiết -->
+                            <a asp-action="OrderDetails" asp-route-id="@o.orderid" class="btn btn-sm btn-primary mb-1">
+                                Xem chi tiết
+                            </a>
+
+                            <!-- Nút Đã nhận được hàng -->
+                            @if (o.status == "Đang vận chuyển")
+                            {
+                                <form asp-action="ConfirmReceived" asp-route-orderid="@o.orderid" method="post"
+                                      onsubmit="return confirm('Bạn chắc chắn đã nhận được hàng?');" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-success mb-1">
+                                        Đã nhận được hàng
+                                    </button>
+                                </form>
+                            }
+
+                            <!-- Nút Đánh giá -->
+                            @if (o.status == "Đã nhận hàng")
+                            {
+                                @foreach (var detail in o.orderdetails)
+                                {
+                                    @* Chỉ render link khi detail.productid > 0 *@
+                                    @if (detail.productid > 0)
+                                    {
+                                        <a asp-controller="Review"
+                                           asp-action="Create"
+                                           asp-route-productid="@detail.productid"
+                                           class="btn btn-sm btn-outline-danger mb-1">
+                                            Đánh giá @detail.product.productname
+                                        </a>
+                                    }
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

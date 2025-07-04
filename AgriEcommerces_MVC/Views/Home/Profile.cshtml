@@ -1,0 +1,104 @@
+﻿@using System.Security.Claims
+@model AgriEcommerces_MVC.Models.user
+
+@{
+    ViewData["Title"] = "Thông Tin Người Dùng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h2>@ViewData["Title"]</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Mã khách hàng</dt>
+                <dd class="col-sm-9">DLfarm-@Model.userid</dd>
+
+                <dt class="col-sm-3">Tên khách hàng</dt>
+                <dd class="col-sm-9">@Model.fullname</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@Model.email</dd>
+
+                <dt class="col-sm-3">Số điện thoại</dt>
+                <dd class="col-sm-9">@Model.phonenumber</dd>
+
+                <dt class="col-sm-3">Vai trò</dt>
+                <dd class="col-sm-9">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <span class="badge bg-danger">Quản trị viên</span>
+                    }
+                    else if (User.IsInRole("Farmer"))
+                    {
+                        <span class="badge bg-success">Nông dân</span>
+                    }
+                    else if (User.IsInRole("Customer"))
+                    {
+                        <span class="badge bg-primary">Khách hàng</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Người dùng</span>
+                    }
+
+            </dl>
+        </div>
+    </div>
+
+    <a asp-action="MyOrders" class="btn btn-primary">
+        <i class="bi bi-clock-history"></i> Lịch sử mua hàng
+    </a>
+    <a asp-action="EditProfile" class="btn btn-outline-danger">
+        <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin
+    </a>
+    <a asp-action="ChangePassword" class="btn btn-primary">
+        <i class="bi bi-key"></i> Đổi mật khẩu
+    </a>
+    @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
+    {
+        <a id="btnRegister"
+           asp-controller="SellerRequest"
+           asp-action="Create"
+           class="btn btn-outline-success">
+            <i class="bi bi-box-arrow-right"></i> Đăng ký bán hàng
+        </a>
+    }
+
+    @if (User.Identity.IsAuthenticated && User.IsInRole("Farmer"))
+    {
+        <a asp-area="Farmer"
+           asp-controller="FarmerDashboard"
+           asp-action="Index"
+           class="btn btn-outline-danger">
+            <i class="bi bi-box-arrow-right"></i> Trang Quản lý
+        </a>
+    }
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('btnRegister');
+            if (!btn) return; // nếu không có nút thì thôi
+
+            // Gọi API kiểm tra xem user đã có Pending request chưa
+            fetch('@Url.Action("HasPending", "SellerRequest")')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.hasPending) {
+                        // Bỏ điều hướng mặc định, chỉ show alert
+                        btn.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            alert('Bạn đã gửi yêu cầu rồi. Vui lòng chờ Quản lý duyệt.');
+                        });
+                    }
+                    // Ngược lại: không gán handler, link hoạt động bình thường
+                })
+                .catch(err => {
+                    console.error('Lỗi khi kiểm tra request:', err);
+                    // Bạn có thể thêm alert ở đây nếu muốn
+                });
+        });
+    </script>
+}

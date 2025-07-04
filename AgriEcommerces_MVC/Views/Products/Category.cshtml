@@ -7,6 +7,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+
 <section class="py-5">
     <div class="container-fluid">
         <div class="row">
@@ -109,11 +110,58 @@
                                         <h3>@p.productname</h3>
 
                                         <span class="rating">
-                                            <svg width="24" height="24" class="text-primary">
-                                                <use xlink:href="~/favicon.ico"></use>
-                                            </svg>
+                                            @{
+                                                double avgRating = 0.0;
+                                                int totalReviews = 0;
+                                                if (p.reviews != null && p.reviews.Any())
+                                                {
+                                                    totalReviews = p.reviews.Count();
+                                                    avgRating = p.reviews.Average(r => r.rating);
+                                                }
+
+                                                int fullStars = (int)Math.Floor(avgRating);
+                                                bool hasHalfStar = false;
+                                                if ((avgRating - fullStars) >= 0.5)
+                                                {
+                                                    hasHalfStar = true;
+                                                }
+                                                int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                                            }
+
+                                            <div class="mb-2">
+                                                <span class="rating">
+                                                    @* Vẽ full stars *@
+                                                    @for (int i = 0; i < fullStars; i++)
+                                                    {
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    }
+                                                    @* Vẽ half star nếu có *@
+                                                    @if (hasHalfStar)
+                                                    {
+                                                        <i class="fas fa-star-half-alt text-warning"></i>
+                                                    }
+                                                    @* Vẽ empty stars *@
+                                                    @for (int i = 0; i < emptyStars; i++)
+                                                    {
+                                                        <i class="far fa-star text-muted"></i>
+                                                    }
+                                                </span>
+
+                                                @* Hiển thị số đánh giá (tuỳ chọn) và điểm trung bình 1 chữ số thập phân *@
+                                                @if (totalReviews > 0)
+                                                {
+                                                    <small class="text-muted ms-1">
+                                                        <span class="fw-bold">@avgRating.ToString("0.0")<space>⭐</space></span>
+                                                    </small>
+
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted ms-1">(Chưa có đánh giá)</small>
+                                                }
+                                            </div>
                                         </span>
-                                        <span class="price">@p.price.ToString("N3") VNĐ/@p.unit</span>
+                                        <span class="price">@p.price.ToString("N0") VNĐ/@p.unit</span>
 
                                         <div class="d-flex align-items-center justify-content-between mt-3">
                                             <div class="d-flex align-items-center quantity-wrapper">

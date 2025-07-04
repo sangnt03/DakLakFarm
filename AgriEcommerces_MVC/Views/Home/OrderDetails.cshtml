@@ -1,0 +1,59 @@
+﻿@model AgriEcommerces_MVC.Models.order
+@{
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.orderid}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h3>@ViewData["Title"]</h3>
+
+    <p>
+        <strong>Ngày đặt:</strong> @(Model.orderdate?.ToString("dd/MM/yyyy HH:mm") ?? "-")<br />
+        <strong>Trạng thái:</strong> @Model.status<br />
+        <strong>Địa chỉ giao:</strong> @Model.shippingaddress
+    </p>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Ảnh</th>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+                <th>Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.orderdetails)
+            {
+                <tr>
+                    <td>
+                        @{
+                            var img = d.product.productimages.FirstOrDefault()?.imageurl;
+                        }
+                        @if (!string.IsNullOrEmpty(img))
+                        {
+                            <img src="@Url.Content(img.StartsWith("~/") ? img : "~" + img)" width="50" />
+                        }
+                        else
+                        {
+                            <span>Không có ảnh</span>
+                        }
+                    </td>
+                    <td>@d.product.productname</td>
+                    <td>@d.quantity</td>
+                    <td>@string.Format("{0:N0}", d.unitprice) VNĐ</td>
+                    <td>@string.Format("{0:N0}", d.quantity * d.unitprice) VNĐ</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="text-end">Tổng cộng:</th>
+                <th>@string.Format("{0:N0}", Model.totalamount) VNĐ</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <a asp-action="MyOrders" class="btn btn-primary">&larr; Quay lại danh sách đơn hàng</a>
+</div>

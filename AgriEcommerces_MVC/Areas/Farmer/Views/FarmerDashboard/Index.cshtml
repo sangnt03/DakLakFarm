@@ -1,6 +1,572 @@
-﻿@{
-    ViewData["Title"] = "Trang Cho Shop";
-    
+﻿@using AgriEcommerces_MVC.Areas.Farmer.ViewModel
+@model List<RevenusViewModel>
+
+@{
+    ViewData["Title"] = "Dashboard doanh thu ";
+    var labels = Model.Select(m => m.Period.ToString("MMM yyyy")).ToArray();
+    var values = Model.Select(m => m.TotalRevenue).ToArray();
 }
 
-<h5 class="text-center">Farmer Dashboard</h5>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2 class="dashboard-title">
+            📊 @ViewData["Title"]
+        </h2>
+    </div>
+
+    <div class="filter-card">
+        <form id="filterForm" method="get" class="filter-form">
+            <div class="filter-group">
+                <label class="filter-label">📅 Năm:</label>
+                <select name="year" class="form-control">
+                    @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+                    {
+                        if (y == (int)ViewBag.Year)
+                        {
+                            <option value="@y" selected>@y</option>
+                        }
+                        else
+                        {
+                            <option value="@y">@y</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">🗓️ Tháng:</label>
+                <select id="monthSelect" name="month" class="form-control">
+                    @* Phần "--Tất cả--" *@
+                    @if (ViewBag.Month == null)
+                    {
+                        <option value="" selected>--Tất cả--</option>
+                    }
+                    else
+                    {
+                        <option value="">--Tất cả--</option>
+                    }
+
+                    @* Các tháng 1–12 *@
+                    @for (int m = 1; m <= 12; m++)
+                    {
+                        if (ViewBag.Month != null && ViewBag.Month == m)
+                        {
+                            <option value="@m" selected>Tháng @m</option>
+                        }
+                        else
+                        {
+                            <option value="@m">Tháng @m</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <button type="submit" class="btn-filter">
+                🔍 Lọc dữ liệu
+            </button>
+        </form>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert-info">
+            <div style="font-size: 1.5rem;">ℹ️</div>
+            <div>
+                <strong>Không có dữ liệu</strong><br>
+                Không có dữ liệu doanh thu cho năm @ViewBag.Year, tháng @(ViewBag.Month?.ToString() ?? "tất cả").
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">@Model.Count</div>
+                <div class="stat-label">Kỳ báo cáo</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.Sum(x => x.TotalRevenue).ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</div>
+                <div class="stat-label">Tổng doanh thu</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@(Model.Any() ? Model.Average(x => x.TotalRevenue).ToString("C0", new System.Globalization.CultureInfo("vi-VN")) : "0")</div>
+                <div class="stat-label">Trung bình/kỳ</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-container {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #fffbeb 100%);
+        min-height: 100vh;
+        padding: 30px 20px;
+        position: relative;
+    }
+    
+    .dashboard-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    
+    .dashboard-header {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(16, 185, 129, 0.2);
+        border-radius: 20px;
+        padding: 35px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #34d399, #fbbf24, #f59e0b);
+    }
+    
+    .dashboard-title {
+        color: #059669;
+        font-size: 2.4rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: linear-gradient(135deg, #059669, #10b981, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .filter-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(52, 211, 153, 0.2);
+        border-radius: 18px;
+        padding: 28px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 35px rgba(16, 185, 129, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .filter-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #34d399, #fbbf24);
+    }
+    
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 25px;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .filter-label {
+        color: #047857;
+        font-weight: 700;
+        font-size: 1rem;
+        white-space: nowrap;
+        text-shadow: 0 1px 3px rgba(4, 120, 87, 0.1);
+    }
+    
+    .form-control {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(52, 211, 153, 0.3);
+        border-radius: 12px;
+        color: #064e3b;
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        min-width: 130px;
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.05);
+    }
+    
+    .form-control:focus {
+        background: rgba(255, 255, 255, 1);
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.3rem rgba(16, 185, 129, 0.15), 0 4px 15px rgba(16, 185, 129, 0.1);
+        color: #064e3b;
+        outline: none;
+        transform: translateY(-1px);
+    }
+    
+    .form-control option {
+        background: #f0fdf4;
+        color: #064e3b;
+        font-weight: 600;
+    }
+    
+    .btn-filter {
+        background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #fbbf24 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 700;
+        padding: 12px 28px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-filter:hover {
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #f59e0b 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-filter:active {
+        transform: translateY(-1px);
+    }
+    
+    .chart-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(52, 211, 153, 0.2);
+        border-radius: 20px;
+        padding: 35px;
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981, #34d399, #fbbf24);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 420px;
+        margin-top: 25px;
+    }
+    
+    .alert-info {
+        background: rgba(254, 252, 232, 0.9);
+        border: 2px solid rgba(251, 191, 36, 0.3);
+        border-radius: 16px;
+        color: #92400e;
+        padding: 25px;
+        border-left: 5px solid #f59e0b;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 0 8px 25px rgba(251, 191, 36, 0.1);
+        font-weight: 600;
+    }
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+        margin-bottom: 35px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(52, 211, 153, 0.2);
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 6px 25px rgba(16, 185, 129, 0.08);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #34d399, #fbbf24);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15);
+        border-color: rgba(52, 211, 153, 0.4);
+    }
+    
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #059669, #10b981, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+        text-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+    }
+    
+    .stat-label {
+        color: #047857;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+    }
+    
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @@keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .dashboard-header {
+        animation: fadeInUp 0.7s ease-out;
+    }
+    
+    .filter-card {
+        animation: slideInLeft 0.6s ease-out;
+        animation-delay: 0.1s;
+    }
+    
+    .stats-overview {
+        animation: fadeInUp 0.6s ease-out;
+        animation-delay: 0.2s;
+    }
+    
+    .chart-card {
+        animation: fadeInUp 0.7s ease-out;
+        animation-delay: 0.3s;
+    }
+    
+    @@media (max-width: 768px) {
+        .dashboard-container {
+            padding: 20px 15px;
+        }
+        
+        .dashboard-title {
+            font-size: 1.8rem;
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+        
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+        }
+        
+        .filter-group {
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .form-control {
+            min-width: auto;
+            flex: 1;
+        }
+        
+        .chart-container {
+            height: 320px;
+        }
+        
+        .stats-overview {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .dashboard-header,
+        .filter-card,
+        .chart-card {
+            padding: 25px;
+        }
+    }
+    
+    @@media (max-width: 480px) {
+        .dashboard-container {
+            padding: 15px 10px;
+        }
+        
+        .dashboard-title {
+            font-size: 1.6rem;
+        }
+        
+        .chart-container {
+            height: 280px;
+        }
+        
+        .dashboard-header,
+        .filter-card,
+        .chart-card {
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 1.6rem;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Disable monthSelect khi submit nếu chọn "Tất cả"
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
+            var sel = document.getElementById('monthSelect');
+            if (sel.value === '') {
+                sel.disabled = true;
+            }
+        });
+
+        // Vẽ Chart.js với theme Mint & Lemon
+        var ctx = document.getElementById('revenueChart')?.getContext('2d');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels)),
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values)),
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        hoverBackgroundColor: 'rgba(251, 191, 36, 0.8)',
+                        hoverBorderColor: 'rgba(245, 158, 11, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#047857',
+                                font: {
+                                    size: 15,
+                                    weight: '700'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#059669',
+                            bodyColor: '#064e3b',
+                            borderColor: 'rgba(16, 185, 129, 0.5)',
+                            borderWidth: 2,
+                            cornerRadius: 12,
+                            callbacks: {
+                                label: ctx => 'Doanh thu: ' +
+                                    new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency', currency: 'VND'
+                                    }).format(ctx.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#047857',
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(52, 211, 153, 0.15)',
+                                drawBorder: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#047857',
+                                font: {
+                                    size: 13,
+                                    weight: '600'
+                                },
+                                callback: v => new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency', currency: 'VND', notation: 'compact'
+                                }).format(v)
+                            },
+                            grid: {
+                                color: 'rgba(52, 211, 153, 0.15)',
+                                drawBorder: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+    </script>
+}

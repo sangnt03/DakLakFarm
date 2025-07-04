@@ -4,8 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] – Farmer Area</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='rainbow' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B6B'/%3E%3Cstop offset='20%25' stop-color='%23FF8E53'/%3E%3Cstop offset='40%25' stop-color='%23FCD34D'/%3E%3Cstop offset='60%25' stop-color='%2310B981'/%3E%3Cstop offset='80%25' stop-color='%234F46E5'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='%23000'/%3E%3Cpath d='M20 50c0-25 20-30 30-30s30 5 30 30c0 20-12 30-30 30-18 0-30-10-30-30z' fill='url(%23rainbow)'/%3E%3Cpath d='M35 45c8-12 12-18 15-18s7 6 15 18c-8 8-12 12-15 12s-7-4-15-12z' fill='%23FFFFFF' opacity='0.3'/%3E%3C/svg%3E" />
 
-    <!-- Bootstrap 5 CSS (bỏ integrity & crossorigin) -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
           rel="stylesheet" />
 
@@ -13,8 +14,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
           rel="stylesheet"
           integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
+          crossorigin="anonymous" />
 </head>
 <body class="d-flex flex-column min-vh-100">
 
@@ -25,9 +25,15 @@
                asp-controller="FarmerDashboard"
                asp-action="Index">
                 Farmer Dashboard
-            </a>           
+            </a>
             <div class="collapse navbar-collapse" id="navFarmer">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-area="Farmer"
+                           asp-controller="KetQuaDuDoan"
+                           asp-action="Index">Xem dự đoán giá</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link"
                            asp-area="Farmer"
@@ -64,7 +70,7 @@
                                        asp-action="Login">
                                         Đăng nhập
                                     </a>
-                                </li>                               
+                                </li>
                             }
 
                             else
@@ -99,15 +105,15 @@
         Farmer Area © @DateTime.Now.Year
     </footer>
 
-    <!-- jQuery -->
+    <!-- jQuery (nếu cần Bootstrap plugins) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha256-/xUj+3OJ+YRF3l9S4bbvkn+5PV6xQ5c5i3eFvJ0zB8="
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="~/js/farmer-product.js"></script>
 
-    <!-- Bootstrap 5 JS Bundle (bỏ integrity & crossorigin) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>  
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chỗ dành cho script của view -->
     @RenderSection("Scripts", required: false)
 </body>
 </html>

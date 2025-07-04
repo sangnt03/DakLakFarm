@@ -1,0 +1,84 @@
+﻿@model AgriEcommerces_MVC.Models.user
+
+@{
+    ViewData["Title"] = "Chỉnh sửa Thông tin Cá nhân";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h4 class="mb-0">Chỉnh sửa Thông tin Cá nhân</h4>
+                </div>
+                <div class="card-body">
+                    @* Hiển thị thông báo thành công hoặc lỗi nếu có *@
+                    @if (TempData["SuccessEdit"] != null)
+                    {
+                        <div class="alert alert-success text-center">
+                            @TempData["SuccessEdit"]
+                        </div>
+                    }
+                    @if (TempData["ErrorEdit"] != null)
+                    {
+                        <div class="alert alert-danger text-center">
+                            @TempData["ErrorEdit"]
+                        </div>
+                    }
+
+                    <form asp-action="EditProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userid" value="@Model.userid" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <input type="email"
+                                   class="form-control"
+                                   value="@Model.email"
+                                   readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="fullname"
+                                   class="form-label fw-bold">
+                                Họ và Tên <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="fullname"
+                                   class="form-control" />
+                            <span asp-validation-for="fullname"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="phonenumber"
+                                   class="form-label fw-bold">
+                                Số Điện Thoại
+                            </label>
+                            <input asp-for="phonenumber"
+                                   class="form-control" />
+                            <span asp-validation-for="phonenumber"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                Lưu thay đổi
+                            </button>
+                            <a asp-action="Profile"
+                               asp-controller="Home"
+                               class="btn btn-outline-secondary">
+                                Quay lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* Nếu bạn đã add jQuery Validate và _ValidationScriptsPartial *@
+    <partial name="_ValidationScriptsPartial" />
+}

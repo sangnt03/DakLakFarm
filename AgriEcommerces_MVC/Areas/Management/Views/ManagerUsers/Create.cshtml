@@ -1,0 +1,49 @@
+﻿@model AgriEcommerces_MVC.Models.user
+
+@{
+    ViewData["Title"] = "Thêm người dùng";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+
+<!-- Hiển thị lỗi tổng quát nếu có -->
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+
+<form asp-area="Management"
+      asp-controller="ManagerUsers"
+      asp-action="Create"
+      method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="fullname" class="form-label">Họ tên</label>
+        <input asp-for="fullname" class="form-control" />
+        <span asp-validation-for="fullname" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="email" class="form-label">Email</label>
+        <input asp-for="email" class="form-control" />
+        <span asp-validation-for="email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="passwordhash" class="form-label">Mật khẩu</label>
+        <input asp-for="passwordhash" type="password" class="form-control" />
+        <span asp-validation-for="passwordhash" class="text-danger"></span>
+    </div>
+
+    @* Ẩn role = "Customer" để ModelState không báo lỗi *@
+    <input type="hidden" asp-for="role" value="Customer" />
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+    <a asp-area="Management"
+       asp-controller="ManagerUsers"
+       asp-action="Index"
+       class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

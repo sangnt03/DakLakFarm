@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] – Manager Area</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B6B'/%3E%3Cstop offset='50%25' stop-color='%23FF8E53'/%3E%3Cstop offset='100%25' stop-color='%23FF6B35'/%3E%3C/linearGradient%3E%3ClinearGradient id='tree' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310B981'/%3E%3Cstop offset='100%25' stop-color='%23059669'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23bg)'/%3E%3Ccircle cx='35' cy='25' r='8' fill='%23FCD34D' opacity='0.9'/%3E%3Cpath d='M30 60c0-12 8-20 20-20s20 8 20 20v15H30z' fill='url(%23tree)'/%3E%3Crect x='48' y='60' width='4' height='15' fill='%238B4513'/%3E%3Cpath d='M25 75h50v5c0 2-2 4-4 4H29c-2 0-4-2-4-4z' fill='%2322C55E'/%3E%3C/svg%3E" />
+
+
+
+    <!-- Bootstrap 5 CSS (bỏ integrity & crossorigin) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+          rel="stylesheet"
+          integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand"
+               asp-area="Management"
+               asp-controller="ManagerDashboard"
+               asp-action="Index">
+                Manager Dashboard
+            </a>
+            <div class="collapse navbar-collapse" id="navFarmer">
+                <ul class="navbar-nav ms-auto">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            asp-area="Management"
+                            asp-controller="ManagerCategory"
+                            asp-action="Index">
+                             Quản lý danh mục sản phẩm
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-area="Management"
+                           asp-controller="ManagerSeller"
+                           asp-action="Index">
+                            Duyệt Yêu Cầu Bán Hàng
+                        </a>
+                    </li>
+                   
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            asp-area="Management"
+                            asp-controller="ManagerFarmer"
+                            asp-action="Index">
+                            Quản lý Người Bán
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-area="Management"
+                           asp-controller="ManagerUsers"
+                           asp-action="Index">
+                            Quản lý Người Dùng
+                        </a>
+                    </li>
+                </ul>
+                <ul class="d-flex list-unstyled m-0 align-items-center">
+                    <li class="nav-item dropdown">
+                        <a class="rounded-circle bg-light p-2 mx-1 dropdown-toggle nav-link"
+                           href="#"
+                           id="userDropdown"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+
+                            <img src="@(Url.Content("~/images/LogoInformation.jpg"))" width="30" height="30" alt="LogoInfor" />
+
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            @if (!User.Identity.IsAuthenticated)
+
+                            {
+                                <li>
+                                    <a class="dropdown-item"
+                                       asp-area="Management"
+                                       asp-controller="Account"
+                                       asp-action="Login">
+                                        Đăng nhập
+                                    </a>
+                                </li>
+                            }
+
+                            else
+
+                            {
+                                <li class="dropdown-header text-muted">Xin chào, @User.Identity.Name</li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-area="Management"
+                                          asp-controller="Account"
+                                          asp-action="Logout"
+                                          method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item">Đăng xuất</button>
+                                    </form>
+                                </li>
+                            }
+                        </ul>
+
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <main class="container flex-fill py-4">
+        @RenderBody()
+    </main>
+
+    <footer class="bg-light text-center py-3 mt-auto">
+        Manager Area © @DateTime.Now.Year
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+YRF3l9S4bbvkn+5PV6xQ5c5i3eFvJ0zB8="
+            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/farmer-product.js"></script>
+
+    <!-- Bootstrap 5 JS Bundle (bỏ integrity & crossorigin) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

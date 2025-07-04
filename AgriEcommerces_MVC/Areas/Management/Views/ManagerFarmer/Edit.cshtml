@@ -1,0 +1,81 @@
+﻿@model AgriEcommerces_MVC.Models.user
+
+@{
+    ViewData["Title"] = "Chỉnh sửa người bán";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+
+@* Nếu ModelState có lỗi, hiển thị tất cả lên đầu *@
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+@*
+   - asp-action="Edit"
+   - asp-route-id="@Model.userid" → truyền id qua URL cho action POST(Edit)
+*@
+<form asp-area="Management"
+      asp-controller="ManagerFarmer"
+      asp-action="Edit"
+      asp-route-id="@Model.userid"
+      method="post">
+    @Html.AntiForgeryToken()
+
+    @* 1. Hidden: userid để giữ id bản ghi *@
+    <input type="hidden" asp-for="userid" />
+
+    @* 2. Hidden: role đã có sẵn "Farmer" (model.role khi GET luôn là "Farmer") *@
+    <input type="hidden" asp-for="role" />
+
+    @* 3. fullname *@
+    <div class="mb-3">
+        <label asp-for="fullname" class="form-label">Tên người bán</label>
+        <input asp-for="fullname" class="form-control" />
+        <span asp-validation-for="fullname" class="text-danger"></span>
+    </div>
+
+    @* 4. email *@
+    <div class="mb-3">
+        <label asp-for="email" class="form-label">Email</label>
+        <input asp-for="email" class="form-control" />
+        <span asp-validation-for="email" class="text-danger"></span>
+    </div>
+
+    @* 5. phonenumber *@
+    <div class="mb-3">
+        <label asp-for="phonenumber" class="form-label">Số điện thoại</label>
+        <input asp-for="phonenumber" class="form-control" />
+        <span asp-validation-for="phonenumber" class="text-danger"></span>
+    </div>
+
+    @* 6. passwordhash (đổi nếu muốn) *@
+    <div class="mb-3">
+        <label asp-for="passwordhash" class="form-label">Đổi mật khẩu (nếu muốn)</label>
+        <input asp-for="passwordhash"
+               type="password"
+               class="form-control" />
+        <span asp-validation-for="passwordhash" class="text-danger"></span>
+        <small class="form-text text-muted">Nếu không đổi mật khẩu, để trống.</small>
+    </div>
+
+    <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+    <a asp-area="Management"
+       asp-controller="ManagerFarmer"
+       asp-action="Index"
+       class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    @* Client-side validation script *@
+    <partial name="_ValidationScriptsPartial" />
+}

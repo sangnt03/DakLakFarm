@@ -1,0 +1,66 @@
+﻿@model AgriEcommerces_MVC.Models.user
+
+@{
+    ViewData["Title"] = "Thêm Farmer mới";
+}
+
+<h2>@ViewData["Title"]</h2>
+<hr />
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form asp-area="Management"
+      asp-controller="ManagerFarmer"
+      asp-action="Create"
+      method="post">
+    @Html.AntiForgeryToken()
+
+    @* 1. Dòng này bắt buộc phải có, để bind luôn role = "Farmer" khi submit *@
+    <input type="hidden" asp-for="role" value="Farmer" />
+
+    <div class="mb-3">
+        <label asp-for="fullname" class="form-label">Tên người bán</label>
+        <input asp-for="fullname" class="form-control" />
+        <span asp-validation-for="fullname" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="email" class="form-label">Email</label>
+        <input asp-for="email" class="form-control" />
+        <span asp-validation-for="email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="phonenumber" class="form-label">Số điện thoại</label>
+        <input asp-for="phonenumber" class="form-control" />
+        <span asp-validation-for="phonenumber" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="passwordhash" class="form-label">Mật khẩu</label>
+        <input asp-for="passwordhash"
+               type="password"
+               class="form-control" />
+        <span asp-validation-for="passwordhash" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Thêm Farmer</button>
+    <a asp-area="Management"
+       asp-controller="ManagerFarmer"
+       asp-action="Index"
+       class="btn btn-secondary">Hủy</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

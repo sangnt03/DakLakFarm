@@ -5,6 +5,8 @@ using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class CartController : Controller
 {
@@ -36,27 +38,17 @@ public class CartController : Controller
             else
             {
                 var imageUrl = p.productimages.FirstOrDefault()?.imageurl;
-                if (string.IsNullOrEmpty(imageUrl))
-                {
-                    _logger.LogWarning($"No image found for product ID: {id}");
-                }
-                else
-                {
-                    // Chuẩn hóa đường dẫn: đảm bảo bắt đầu bằng ~/ để Url.Content hoạt động đúng
-                    if (!imageUrl.StartsWith("~/"))
-                    {
-                        imageUrl = $"~{imageUrl}";
-                    }
-                    _logger.LogInformation($"Image URL for product ID {id}: {imageUrl}");
-                }
+                if (!string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("~/"))
+                    imageUrl = $"~{imageUrl}";
 
                 cart.Items.Add(new CartItem
                 {
-                    ProductId = id,
+                    ProductId = p.productid,
                     ProductName = p.productname,
                     UnitPrice = p.price,
                     Quantity = qty,
-                    ImageUrl = imageUrl
+                    ImageUrl = imageUrl,
+                    SellerId = p.userid       // gán SellerId
                 });
             }
         }
@@ -88,19 +80,16 @@ public class CartController : Controller
     [HttpGet]
     public IActionResult UpdateAjax(int id, int qty)
     {
-        var cart = HttpContext.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
+        var cart = HttpContext.Session.GetObject<CartViewModel>(CART_KEY)
+                   ?? new CartViewModel();
 
         var item = cart.Items.FirstOrDefault(i => i.ProductId == id);
         if (item != null)
         {
             if (qty <= 0)
-            {
                 cart.Items.Remove(item);
-            }
             else
-            {
                 item.Quantity = qty;
-            }
         }
 
         HttpContext.Session.SetObject(CART_KEY, cart);
