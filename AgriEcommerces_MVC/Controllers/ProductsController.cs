@@ -44,6 +44,7 @@ namespace AgriEcommerces_MVC.Controllers
         {
             var product = await _db.products
                 .Include(p => p.productimages)
+                //.Include(p => p.user.fullname)
                 .Include(p => p.category)
                 .Include(p => p.reviews)
                     .ThenInclude(r => r.customer)    // <-- Đảm bảo nạp đủ thông tin khách hàng
