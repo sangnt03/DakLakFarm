@@ -1,5 +1,4 @@
-﻿
-@model IEnumerable<AgriEcommerces_MVC.Models.product>
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.product>
 @{
     ViewData["Title"] = "Sản phẩm";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -22,10 +21,8 @@
 
                         <select class="form-select w-auto"
                                 onchange="location = this.value;">
-                            @* All *@
-                            <option value="@Url.Action("Index","Products")" selected>All</option>
+                            <option value="@Url.Action("Index", "Products")" selected>All</option>
 
-                            @* Các category động *@
                             @foreach (var c in categories)
                             {
                                 <option value="@Url.Action("Category","Products", new { id = c.categoryid })">
@@ -35,68 +32,54 @@
                         </select>
                     </div>
 
-
                     <!-- Tabs content -->
-                <style>
-                    /* Đặt chiều cao cố định cho figure (hoặc theo tỷ lệ bạn muốn) */
-                    .product-item figure {
-                        width: 100%;
-                        height: 200px; /* Bạn có thể thay đổi chiều cao này */
-                        overflow: hidden;
-                        margin: 0;
-                    }
-                        /* Cho img phủ full figure và crop nếu lệch tỉ lệ */
-                        .product-item figure img {
+                    <style>
+                        .product-item figure {
                             width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            display: block;
+                            height: 200px;
+                            overflow: hidden;
+                            margin: 0;
                         }
-                </style>
-                <!-- Grid sản phẩm -->
-                <div class="tab-content" id="nav-tabContent">
-                    <!-- ALL products -->
-                    <div class="tab-pane fade show active"
-                         id="nav-all"
-                         role="tabpanel"
-                         aria-labelledby="nav-all-tab">
 
-                        <div class="product-grid row
-                                        row-cols-1
-                                        row-cols-sm-2
-                                        row-cols-md-3
-                                        row-cols-lg-4
-                                        row-cols-xl-5">
+                            .product-item figure img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                                display: block;
+                            }
+                    </style>
 
-                            @foreach (var p in Model)
-                            {
-                                var imgRaw = p.productimages.FirstOrDefault()?.imageurl;
-                                var thumb = !string.IsNullOrEmpty(imgRaw)
-                                ? Url.Content(imgRaw)
-                                : Url.Content("~/images/products/banana.png");
-                                <div class="col">
-                                    <div class="product-item position-relative">
-                                        <!-- wishlist icon -->
-                                        @* <a href="#" class="btn-wishlist">
-                                            <svg width="24" height="24">
-                                                <use xlink:href="#heart"></use>
-                                            </svg>
-                                        </a> *@
+                    <!-- Grid sản phẩm -->
+                    <div class="tab-content" id="nav-tabContent">
+                        <div class="tab-pane fade show active"
+                             id="nav-all"
+                             role="tabpanel"
+                             aria-labelledby="nav-all-tab">
 
-                                        <figure>
-                                            <a asp-controller="Products"
-                                               asp-action="Details"
-                                               asp-route-id="@p.productid"
-                                               title="@p.productname">
-                                                <img src="@thumb"
-                                                     class="tab-image"
-                                                     alt="@p.productname" />
-                                            </a>
-                                        </figure>
+                            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5">
 
-                                        <h3>@p.productname</h3>
+                                @foreach (var p in Model)
+                                {
+                                    var imgRaw = p.productimages.FirstOrDefault()?.imageurl;
+                                    var thumb = !string.IsNullOrEmpty(imgRaw)
+                                    ? Url.Content(imgRaw)
+                                    : Url.Content("~/images/products/banana.png");
+                                    <div class="col">
+                                        <div class="product-item position-relative">
+                                            <figure>
+                                                <a asp-controller="Products"
+                                                   asp-action="Details"
+                                                   asp-route-id="@p.productid"
+                                                   title="@p.productname">
+                                                    <img src="@thumb"
+                                                         class="tab-image"
+                                                         alt="@p.productname" />
+                                                </a>
+                                            </figure>
 
-                                        <span class="rating">
+                                            <h3>@p.productname</h3>
+
+                                            <span class="rating">
                                                 @{
                                                     double avgRating = 0.0;
                                                     int totalReviews = 0;
@@ -117,147 +100,187 @@
 
                                                 <div class="mb-2">
                                                     <span class="rating">
-                                                        @* Vẽ full stars *@
                                                         @for (int i = 0; i < fullStars; i++)
                                                         {
                                                             <i class="fas fa-star text-warning"></i>
                                                         }
-                                                        @* Vẽ half star nếu có *@
                                                         @if (hasHalfStar)
                                                         {
                                                             <i class="fas fa-star-half-alt text-warning"></i>
                                                         }
-                                                        @* Vẽ empty stars *@
                                                         @for (int i = 0; i < emptyStars; i++)
                                                         {
                                                             <i class="far fa-star text-muted"></i>
                                                         }
                                                     </span>
 
-                                                    @* Hiển thị số đánh giá (tuỳ chọn) và điểm trung bình 1 chữ số thập phân *@
                                                     @if (totalReviews > 0)
                                                     {
                                                         <small class="text-muted ms-1">
-                                                            <span class="fw-bold">@avgRating.ToString("0.0")<space>⭐</space></span>
+                                                            <span class="fw-bold">@avgRating.ToString("0.0") ⭐</span>
                                                         </small>
-
                                                     }
                                                     else
                                                     {
                                                         <small class="text-muted ms-1">(Chưa có đánh giá)</small>
                                                     }
                                                 </div>
-                                        </span>
-                                        <span class="price">@p.price.ToString("N0") VNĐ/@p.unit</span>
+                                            </span>
+                                            <span class="price">@p.price.ToString("N0") VNĐ/@p.unit</span>
 
-                                        <div class="d-flex align-items-center justify-content-between mt-3">
-                                            <div class="d-flex align-items-center quantity-wrapper">
-                                                <button type="button"
-                                                        class="btn btn-outline-secondary p-0 d-flex justify-content-center align-items-center"
-                                                        data-type="minus"
-                                                        style="width:32px; height:32px;">
-                                                    −
-                                                </button>
-                                                <input type="text"
-                                                       class="form-control text-center mx-2 input-number"
-                                                       value="1"
-                                                       readonly
-                                                       style="width:48px; padding:0.25rem 0;" />
-                                                <button type="button"
-                                                        class="btn btn-outline-secondary p-0 d-flex justify-content-center align-items-center"
-                                                        data-type="plus"
-                                                        style="width:32px; height:32px;">
-                                                    +
+                                            <div class="d-flex align-items-center justify-content-between mt-3">
+                                                <div class="d-flex align-items-center quantity-wrapper">
+                                                    <button type="button"
+                                                            class="btn btn-outline-secondary p-0 d-flex justify-content-center align-items-center"
+                                                            data-type="minus"
+                                                            style="width:32px; height:32px;">
+                                                        −
+                                                    </button>
+                                                    <input type="text"
+                                                           class="form-control text-center mx-2 input-number"
+                                                           value="1"
+                                                           readonly
+                                                           style="width:48px; padding:0.25rem 0;" />
+                                                    <button type="button"
+                                                            class="btn btn-outline-secondary p-0 d-flex justify-content-center align-items-center"
+                                                            data-type="plus"
+                                                            style="width:32px; height:32px;">
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <button class="btn btn-sm btn-outline-primary w-100 add-to-cart"
+                                                        data-id="@p.productid">
+                                                    Add to Cart
                                                 </button>
                                             </div>
-                                            <button class="btn btn-sm btn-outline-primary w-100 add-to-cart"
-                                                    data-id="@p.productid">
-                                                Add to Cart
-                                            </button>
                                         </div>
-
                                     </div>
-                                </div>
-                            }
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-                </div>
-
             </div>
         </div>
     </div>
 </section>
-    
 
 @section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.addEventListener('click', async e => {
-    const minusOrPlus = e.target.closest('button[data-type]');
-    const addBtn      = e.target.closest('.add-to-cart');
+    <script>
+        // Hàm xử lý khi chưa đăng nhập
+        function handleUnauthorized() {
+            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+        }
 
-    // 1) Xử lý + / − trong product list
-    if (minusOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
-      // là nút trên trang Products, data-type="minus" hoặc "plus"
-      e.preventDefault();
-      const wrapper = minusOrPlus.closest('.quantity-wrapper');
-      const input   = wrapper.querySelector('input.input-number');
-      let v = parseInt(input.value, 10) || 0;
-      if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
-      else if (v > 1) v--;
-      input.value = v < 1 ? 1 : v;
-      return;
-    }
+        // Hàm gọi API với xử lý authentication
+        async function fetchWithAuth(url) {
+            try {
+                const resp = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
 
-    // 2) Xử lý Add to Cart
-    if (addBtn) {
-      e.preventDefault();
-      const id      = addBtn.getAttribute('data-id');
-      const wrapper = addBtn.closest('.product-item');
-      const input   = wrapper.querySelector('input.input-number');
-      let qty       = parseInt(input.value, 10);
-      if (isNaN(qty) || qty < 1) qty = 1;
+                if (resp.status === 401) {
+                    handleUnauthorized();
+                    return null;
+                }
 
-      const url   = '@Url.Action("AddAjax","Cart")';
-      const resp  = await fetch(`${url}?id=${id}&qty=${qty}`);
-      if (!resp.ok) return console.error('AddAjax lỗi', resp.status);
-      const html  = await resp.text();
+                if (!resp.ok) {
+                    console.error('Lỗi API:', resp.status);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    return null;
+                }
 
-      document.getElementById('offcanvasCartBody').innerHTML = html;
-      new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
-      return;
-    }
+                return await resp.text();
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                alert('Không thể kết nối đến server!');
+                return null;
+            }
+        }
 
-    // 3) Các nút trong offcanvas (qty-btn, remove-btn) vẫn như cũ...
-    const qtyBtn = e.target.closest('.qty-btn');
-    if (qtyBtn) {
-      e.preventDefault();
-      const id     = qtyBtn.getAttribute('data-id');
-      const action = qtyBtn.getAttribute('data-action');
-      const li     = qtyBtn.closest('li');
-      const span   = li.querySelector('.qty-value');
-      let qty      = parseInt(span.textContent, 10) || 0;
-      qty = (action === 'plus' ? qty + 1 : qty - 1);
-      if (qty < 0) qty = 0;
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('click', async e => {
+                const minusOrPlus = e.target.closest('button[data-type]');
+                const addBtn = e.target.closest('.add-to-cart');
 
-      const updateUrl = '@Url.Action("UpdateAjax","Cart")';
-      const r2 = await fetch(`${updateUrl}?id=${id}&qty=${qty}`);
-      const h2 = await r2.text();
-      document.getElementById('offcanvasCartBody').innerHTML = h2;
-      return;
-    }
+                // 1) Xử lý + / − trong product list
+                if (minusOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
+                    e.preventDefault();
+                    const wrapper = minusOrPlus.closest('.quantity-wrapper');
+                    const input = wrapper.querySelector('input.input-number');
+                    let v = parseInt(input.value, 10) || 0;
+                    if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
+                    else if (v > 1) v--;
+                    input.value = v < 1 ? 1 : v;
+                    return;
+                }
 
-    const remBtn = e.target.closest('.remove-btn');
-    if (remBtn) {
-      e.preventDefault();
-      const id = remBtn.getAttribute('data-id');
-      const updateUrl = '@Url.Action("UpdateAjax","Cart")';
-      const r3 = await fetch(`${updateUrl}?id=${id}&qty=0`);
-      const h3 = await r3.text();
-      document.getElementById('offcanvasCartBody').innerHTML = h3;
-    }
-  });
-});
-</script>
+                // 2) Xử lý Add to Cart
+                if (addBtn) {
+                    e.preventDefault();
+                    const id = addBtn.getAttribute('data-id');
+                    const wrapper = addBtn.closest('.product-item');
+                    const input = wrapper.querySelector('input.input-number');
+                    let qty = parseInt(input.value, 10);
+                    if (isNaN(qty) || qty < 1) qty = 1;
+
+                    const url = '@Url.Action("AddAjax", "Cart")';
+                    const html = await fetchWithAuth(`${url}?id=${id}&qty=${qty}`);
+                    if (!html) return; // Nếu null (401), đã redirect rồi
+
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) {
+                        offcanvasBody.innerHTML = html;
+                        new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+                    }
+                    return;
+                }
+
+                // 3) Các nút trong offcanvas (qty-btn, remove-btn)
+                const qtyBtn = e.target.closest('.qty-btn');
+                if (qtyBtn) {
+                    e.preventDefault();
+                    const id = qtyBtn.getAttribute('data-id');
+                    const action = qtyBtn.getAttribute('data-action');
+                    const li = qtyBtn.closest('li');
+                    const span = li.querySelector('.qty-value');
+                    let qty = parseInt(span.textContent, 10) || 0;
+                    qty = (action === 'plus' ? qty + 1 : qty - 1);
+                    if (qty < 0) qty = 0;
+
+                    const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+                    const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=${qty}`);
+                    if (!html) return;
+
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) {
+                        offcanvasBody.innerHTML = html;
+                    }
+                    return;
+                }
+
+                const remBtn = e.target.closest('.remove-btn');
+                if (remBtn) {
+                    e.preventDefault();
+                    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                        return;
+                    }
+
+                    const id = remBtn.getAttribute('data-id');
+                    const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+                    const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=0`);
+                    if (!html) return;
+
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) {
+                        offcanvasBody.innerHTML = html;
+                    }
+                }
+            });
+        });
+    </script>
 }

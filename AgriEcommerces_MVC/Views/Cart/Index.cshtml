@@ -6,16 +6,20 @@
 
 <div class="container py-5">
     <h2>@ViewData["Title"]</h2>
-
     @if (!Model.Items.Any())
     {
-        <p>Giỏ hàng trống.</p>
+        <div class="alert alert-info">
+            <p class="mb-0">Giỏ hàng của bạn đang trống.</p>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">
+                Tiếp tục mua sắm
+            </a>
+        </div>
     }
     else
     {
         <div class="cart-body" id="cart-body">
-            <table class="table">
-                <thead>
+            <table class="table table-hover">
+                <thead class="table-light">
                     <tr>
                         <th>Ảnh</th>
                         <th>Sản phẩm</th>
@@ -29,44 +33,156 @@
                     @foreach (var it in Model.Items)
                     {
                         var imgRaw = it.ImageUrl;
-                        <tr>
+                        <tr data-product-id="@it.ProductId">
                             <td>
                                 @if (!string.IsNullOrEmpty(imgRaw))
                                 {
-                                    <img src="@Url.Content(imgRaw)" width="60" alt="@it.ProductName" class="img-fluid" />
+                                    <img src="@Url.Content(imgRaw)" width="60" alt="@it.ProductName" class="img-fluid rounded" />
                                 }
                                 else
                                 {
-                                    <span>Không có ảnh</span>
+                                    <span class="text-muted">Không có ảnh</span>
                                 }
                             </td>
-                            <td>@it.ProductName</td>
+                            <td>
+                                <strong>@it.ProductName</strong>
+                            </td>
                             <td>@it.UnitPrice.ToString("N0") vnđ</td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     <button type="button" class="btn btn-sm btn-outline-secondary me-2 qty-btn" data-id="@it.ProductId" data-action="minus">−</button>
-                                    <span class="qty-value">@it.Quantity</span>
+                                    <span class="qty-value fw-bold">@it.Quantity</span>
                                     <button type="button" class="btn btn-sm btn-outline-secondary ms-2 qty-btn" data-id="@it.ProductId" data-action="plus">+</button>
                                 </div>
                             </td>
-                            <td>@it.Total.ToString("N0") vnđ</td>
+                            <td><strong>@it.Total.ToString("N0") vnđ</strong></td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="@it.ProductId">Xóa</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-btn" data-id="@it.ProductId">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </button>
                             </td>
                         </tr>
                     }
                 </tbody>
-                <tfoot>
+                <tfoot class="table-light">
                     <tr>
                         <th colspan="4" class="text-end">Tổng cộng:</th>
-                        <th>@Model.GrandTotal.ToString("N0") vnđ</th>
-                        <th></th>
+                        <th colspan="2">
+                            <span class="text-primary fs-5">@Model.GrandTotal.ToString("N0") vnđ</span>
+                        </th>
                     </tr>
                 </tfoot>
             </table>
-            <a asp-controller="Home" asp-action="Payment" class="btn btn-success">
-                Tiến hành thanh toán
-            </a>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Tiếp tục mua sắm
+                </a>
+                <a asp-controller="Home" asp-action="Payment" class="btn btn-success btn-lg">
+                    <i class="bi bi-credit-card"></i> Tiến hành thanh toán
+                </a>
+            </div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        // Hàm xử lý khi chưa đăng nhập
+        function handleUnauthorized() {
+            alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+        }
+
+        // Hàm gọi API với xử lý lỗi
+        async function fetchWithAuth(url) {
+            try {
+                const resp = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (resp.status === 401) {
+                    handleUnauthorized();
+                    return null;
+                }
+
+                if (!resp.ok) {
+                    console.error('Lỗi API:', resp.status);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    return null;
+                }
+
+                return await resp.text();
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                alert('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!');
+                return null;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.addEventListener('click', async e => {
+                // Xử lý nút + / -
+                const qtyBtn = e.target.closest('.qty-btn');
+                if (qtyBtn) {
+                    e.preventDefault();
+                    const id = qtyBtn.getAttribute('data-id');
+                    const action = qtyBtn.getAttribute('data-action');
+                    const row = qtyBtn.closest('tr');
+
+                    if (!row) {
+                        console.error('Không tìm thấy hàng chứa nút');
+                        return;
+                    }
+
+                    const span = row.querySelector('.qty-value');
+                    if (!span) {
+                        console.error('Không tìm thấy phần tử .qty-value');
+                        return;
+                    }
+
+                    let qty = parseInt(span.textContent, 10) || 0;
+                    qty = (action === 'plus') ? qty + 1 : qty - 1;
+                    if (qty < 0) qty = 0;
+
+                    const updateUrl = action === 'minus'
+                        ? '@Url.Action("DecrementAjax", "Cart")'
+                        : '@Url.Action("UpdateAjax", "Cart")';
+
+                    const url = qty === 0
+                        ? `@Url.Action("UpdateAjax", "Cart")?id=${id}&qty=0`
+                        : `${updateUrl}?id=${id}${action === 'plus' ? `&qty=${qty}` : ''}`;
+
+                    const html = await fetchWithAuth(url);
+                    if (!html) return;
+
+                    // Reload trang để cập nhật giỏ hàng
+                    window.location.reload();
+                    return;
+                }
+
+                // Xử lý nút xóa
+                const remBtn = e.target.closest('.remove-btn');
+                if (remBtn) {
+                    e.preventDefault();
+
+                    if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                        return;
+                    }
+
+                    const id = remBtn.getAttribute('data-id');
+                    const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
+
+                    const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=0`);
+                    if (!html) return;
+
+                    // Reload trang để cập nhật giỏ hàng
+                    window.location.reload();
+                }
+            });
+        });
+    </script>
+}

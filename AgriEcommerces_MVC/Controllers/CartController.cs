@@ -7,6 +7,9 @@ using AgriEcommerces_MVC.Models.ViewModel;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+
+
 
 public class CartController : Controller
 {
@@ -19,7 +22,17 @@ public class CartController : Controller
         _db = db;
         _logger = logger;
     }
-
+    
+    [Authorize]
+    [HttpGet]
+    public IActionResult Index()
+    {
+        var cart = HttpContext.Session.GetObject<CartViewModel>(CART_KEY)
+                   ?? new CartViewModel();
+        return View(cart);
+    }
+   
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> AddAjax(int id, int qty = 1)
     {
@@ -61,6 +74,7 @@ public class CartController : Controller
         return PartialView("_CartBody", cart);
     }
 
+    [Authorize]
     [HttpGet]
     public IActionResult DecrementAjax(int id)
     {
@@ -76,7 +90,8 @@ public class CartController : Controller
         HttpContext.Session.SetObject(CART_KEY, cart);
         return PartialView("_CartBody", cart);
     }
-
+    
+    [Authorize]    
     [HttpGet]
     public IActionResult UpdateAjax(int id, int qty)
     {

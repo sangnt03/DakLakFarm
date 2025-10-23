@@ -46,7 +46,7 @@ builder.Services.AddAuthentication(options =>
         // nếu URL bắt đầu bằng /Farmer thì xài FarmerAuth
         if (context.Request.Path.StartsWithSegments("/Farmer", StringComparison.OrdinalIgnoreCase))
             return "FarmerAuth";
-        // nếu URL bắt đầu bằng /Management thì xài mân
+        // nếu URL bắt đầu bằng /Management thì xài manager
         if (context.Request.Path.StartsWithSegments("/Management", StringComparison.OrdinalIgnoreCase))
             return "ManagerAuth";
 
@@ -55,37 +55,106 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 2) Scheme “Customer” như trước
+// 2) Scheme "Customer" như trước
 .AddCookie("Customer", opts =>
 {
     opts.Cookie.Name = ".AgriEcomCustomerAuth";
     opts.LoginPath = "/Account/Login";
     opts.LogoutPath = "/Account/Logout";
     opts.AccessDeniedPath = "/Account/AccessDenied";
-    // …các setting khác…
+
+    // THÊM: Xử lý Ajax requests cho Cart
+    opts.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            // Kiểm tra nếu là Ajax request hoặc request đến Cart controller
+            var isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            var isCartRequest = context.Request.Path.StartsWithSegments("/Cart");
+
+            if (isAjax || isCartRequest)
+            {
+                // Trả về 401 thay vì redirect
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            // Request thường thì redirect đến login
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        },
+        OnRedirectToAccessDenied = context =>
+        {
+            var isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            var isCartRequest = context.Request.Path.StartsWithSegments("/Cart");
+
+            if (isAjax || isCartRequest)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        }
+    };
 })
 
-// 3) Scheme “FarmerAuth” cho Farmer area
+// 3) Scheme "FarmerAuth" cho Farmer area
 .AddCookie("FarmerAuth", opts =>
 {
     opts.Cookie.Name = ".AgriEcomFarmerAuth";
     opts.LoginPath = "/Farmer/FarmerAccount/Login";
     opts.LogoutPath = "/Farmer/FarmerAccount/Logout";
     opts.AccessDeniedPath = "/Farmer/FarmerAccount/AccessDenied";
-    // …các setting khác…
+
+    // THÊM: Xử lý Ajax requests cho Farmer area (nếu cần)
+    opts.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            var isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+            if (isAjax)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        }
+    };
 })
-// 3) Scheme “AdminAuth” cho Admin area
+
+// 4) Scheme "ManagerAuth" cho Management area
 .AddCookie("ManagerAuth", opts =>
- {
-     opts.Cookie.Name = ".AgriEcomManagerAuth";
-     opts.LoginPath = "/Management/Account/Login";
-     opts.LogoutPath = "/Management/Account/Logout";
-     opts.AccessDeniedPath = "/Management/Account/AccessDenied";
-     // …các setting khác…
- });
+{
+    opts.Cookie.Name = ".AgriEcomManagerAuth";
+    opts.LoginPath = "/Management/Account/Login";
+    opts.LogoutPath = "/Management/Account/Logout";
+    opts.AccessDeniedPath = "/Management/Account/AccessDenied";
+
+    // THÊM: Xử lý Ajax requests cho Management area (nếu cần)
+    opts.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            var isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+            if (isAjax)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        }
+    };
+});
 
 builder.Services.AddAuthorization();
-
 
 // 5) Thêm logging chi tiết
 builder.Services.AddLogging(logging =>
@@ -94,8 +163,6 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
     logging.SetMinimumLevel(LogLevel.Information);
 });
-
-builder.Services.AddAuthorization(); // Thêm dịch vụ ủy quyền
 
 var app = builder.Build();
 
@@ -136,4 +203,4 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 
-app.Run();  
+app.Run();
