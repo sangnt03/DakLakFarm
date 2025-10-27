@@ -353,56 +353,7 @@ namespace AgriEcommerces_MVC.Controllers
             return View();
         }
 
-        // POST: /Home/ChangePassword
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            // 1) Lấy userId từ claim
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-            {
-                return Challenge();
-            }
-            int userId = int.Parse(userIdClaim.Value);
-
-            // 2) Lấy user từ DB
-            var userInDb = await _db.users.FirstOrDefaultAsync(u => u.userid == userId);
-            if (userInDb == null)
-            {
-                return NotFound();
-            }
-
-            // 3) Xác thực mật khẩu cũ bằng so sánh plaintext
-            if (userInDb.passwordhash != model.CurrentPassword)
-            {
-                ModelState.AddModelError(nameof(model.CurrentPassword), "Mật khẩu hiện tại không đúng.");
-                return View(model);
-            }
-
-            // 4) Lưu mật khẩu mới (plaintext) vào DB
-            userInDb.passwordhash = model.NewPassword;
-
-            try
-            {
-                _db.users.Update(userInDb);
-                await _db.SaveChangesAsync();
-                TempData["SuccessChangePassword"] = "Đổi mật khẩu thành công!";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi đổi mật khẩu cho userId={UserId}", userId);
-                TempData["ErrorChangePassword"] = "Đã có lỗi xảy ra khi lưu mật khẩu mới. Vui lòng thử lại.";
-                return RedirectToAction(nameof(ChangePassword));
-            }
-
-            return RedirectToAction(nameof(ChangePassword));
-        }
+        
 
         public IActionResult GioiThieu()
         {

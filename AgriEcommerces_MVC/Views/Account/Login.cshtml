@@ -1,17 +1,18 @@
 ﻿@model LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
-    Layout  = "_Layout";
-    
+    Layout = "_Layout";
 }
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
             <div class="card shadow mt-5">
                 <div class="card-body p-4">
+                    <img src="~/images/logo.png" alt="DL Farm Logo" class="mx-auto d-block mb-3" style="max-width: 250px;" />
                     <h3 class="card-title text-center mb-4">Đăng nhập</h3>
 
                     <form asp-action="Login" method="post">
+
                         <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
                         <div class="form-floating mb-3">
@@ -26,7 +27,6 @@
                             <span asp-validation-for="password" class="text-danger small"></span>
                         </div>
 
-                        @* hidden returnUrl nếu có *@
                         @if (!string.IsNullOrEmpty(Model.ReturnUrl))
                         {
                             <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
@@ -34,15 +34,30 @@
 
                         <button type="submit" class="btn btn-primary w-100 py-2">Đăng nhập</button>
 
-                        <div class="text-center mt-3">                          
-                            <p>Chưa có tài khoản?<space></space><a asp-action="Register" class="link-primary"> Đăng ký</a>
+                        <div class="text-center mt-3">
+                            <p>Chưa có tài khoản? <a asp-action="Register" class="link-primary"> Đăng ký</a>
                         </div>
+                    </form>
+                    <hr />
+                    <h6 class="text-center small mb-3">Hoặc đăng nhập với</h6>
+
+                    <form asp-action="ExternalLogin" method="post"
+                          asp-route-returnUrl="@Model.ReturnUrl">
+
+                        <input type="hidden" name="provider" value="Google" />
+
+                        <button type"submit" class="btn btn-outline-danger w-100">
+                            Đăng nhập với Google
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+@section Scripts {
+    @await Html.PartialAsync("_Scripts")
+}
 @section Styles {
     <style>
         /* Ẩn khi không có lỗi */
@@ -55,8 +70,5 @@
             display: block;
         }
     </style>
-}
-@section Scripts {
-    @await Html.PartialAsync("_Scripts")
 }
 

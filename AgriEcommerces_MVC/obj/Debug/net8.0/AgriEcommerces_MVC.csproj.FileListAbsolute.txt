@@ -548,3 +548,5 @@ D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\obj\Debug\net8.0
 D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\obj\Debug\net8.0\AgriEcommerces_MVC.pdb
 D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\obj\Debug\net8.0\AgriEcommerces_MVC.genruntimeconfig.cache
 D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\obj\Debug\net8.0\ref\AgriEcommerces_MVC.dll
+D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\bin\Debug\net8.0\BCrypt.Net-Next.dll
+D:\DoAnChuyenNganh\CuoiKy\AgriEcommerces_MVC\AgriEcommerces_MVC\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.Google.dll

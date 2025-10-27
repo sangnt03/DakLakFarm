@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using AgriEcommerces_MVC.Areas.Farmer.Services;
 using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1) DbContext với PostgreSQL
@@ -31,16 +32,27 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// 4) Authentication (Cookies)
+// Thêm HttpClient (cần cho Cloudflare và các dịch vụ API khác)
+builder.Services.AddHttpClient();
+
+
+
+// 1. Đọc Google Keys từ secrets.json (đặt lên trước khi dùng)
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+// 4) Authentication (Cookies) - Chỉ một khối duy nhất
 builder.Services.AddAuthentication(options =>
 {
+    // Giữ nguyên DynamicScheme của bạn
     options.DefaultScheme = "DynamicScheme";
     options.DefaultChallengeScheme = "DynamicScheme";
-    options.DefaultSignInScheme = "DynamicScheme";
+
+    options.DefaultSignInScheme = "External";
 })
 .AddPolicyScheme("DynamicScheme", "Dynamic authentication scheme", options =>
 {
-    // Chọn scheme theo URL prefix
+    // Giữ nguyên logic chọn scheme theo URL prefix của bạn
     options.ForwardDefaultSelector = context =>
     {
         // nếu URL bắt đầu bằng /Farmer thì xài FarmerAuth
@@ -55,7 +67,7 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 2) Scheme "Customer" như trước
+// 2) Scheme "Customer" (Giữ nguyên bản CÓ AJAX của bạn)
 .AddCookie("Customer", opts =>
 {
     opts.Cookie.Name = ".AgriEcomCustomerAuth";
@@ -63,7 +75,7 @@ builder.Services.AddAuthentication(options =>
     opts.LogoutPath = "/Account/Logout";
     opts.AccessDeniedPath = "/Account/AccessDenied";
 
-    // THÊM: Xử lý Ajax requests cho Cart
+    // Giữ nguyên logic xử lý Ajax quan trọng của bạn
     opts.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
@@ -100,7 +112,7 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 3) Scheme "FarmerAuth" cho Farmer area
+// 3) Scheme "FarmerAuth" cho Farmer area (Giữ nguyên)
 .AddCookie("FarmerAuth", opts =>
 {
     opts.Cookie.Name = ".AgriEcomFarmerAuth";
@@ -108,7 +120,7 @@ builder.Services.AddAuthentication(options =>
     opts.LogoutPath = "/Farmer/FarmerAccount/Logout";
     opts.AccessDeniedPath = "/Farmer/FarmerAccount/AccessDenied";
 
-    // THÊM: Xử lý Ajax requests cho Farmer area (nếu cần)
+    // Xử lý Ajax requests cho Farmer area
     opts.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
@@ -127,7 +139,7 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 4) Scheme "ManagerAuth" cho Management area
+// 4) Scheme "ManagerAuth" cho Management area (Giữ nguyên)
 .AddCookie("ManagerAuth", opts =>
 {
     opts.Cookie.Name = ".AgriEcomManagerAuth";
@@ -135,7 +147,7 @@ builder.Services.AddAuthentication(options =>
     opts.LogoutPath = "/Management/Account/Logout";
     opts.AccessDeniedPath = "/Management/Account/AccessDenied";
 
-    // THÊM: Xử lý Ajax requests cho Management area (nếu cần)
+    // Xử lý Ajax requests cho Management area
     opts.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
@@ -152,7 +164,25 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
+})
+
+// 5) Thêm Cookie "External" tạm thời (cho Google)
+// (Đây là phần được thêm vào chuỗi)
+.AddCookie("External")
+
+// 6) Thêm cấu hình Google
+// (Đây là phần được thêm vào chuỗi)
+.AddGoogle(options =>
+{
+    if (string.IsNullOrEmpty(googleClientId) || string.IsNullOrEmpty(googleClientSecret))
+    {
+        throw new InvalidOperationException("Google ClientId hoặc ClientSecret chưa được cấu hình.");
+    }
+    options.ClientId = googleClientId;
+    options.ClientSecret = googleClientSecret;
+    // Đường dẫn /signin-google được middleware xử lý tự động
 });
+
 
 builder.Services.AddAuthorization();
 

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>bfaa9d6a-af5f-44f1-bc31-ce27d589ba45</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -49,7 +52,6 @@
     <None Include="wwwroot\images\ad-image-1.png" />
     <None Include="wwwroot\images\ad-image-2.png" />
     <None Include="wwwroot\images\ad-image-3.png" />
-    <None Include="wwwroot\images\ad-image-4.png" />
     <None Include="wwwroot\images\app-store.jpg" />
     <None Include="wwwroot\images\background-pattern.jpg" />
     <None Include="wwwroot\images\banner-image-1.jpg" />
@@ -73,7 +75,6 @@
     <None Include="wwwroot\images\icon-soft-drinks-bottle.png" />
     <None Include="wwwroot\images\icon-vegetables-broccoli.png" />
     <None Include="wwwroot\images\icon-wine-glass-bottle.png" />
-    <None Include="wwwroot\images\logo.png" />
     <None Include="wwwroot\images\phone.png" />
     <None Include="wwwroot\images\post-thumb-1.jpg" />
     <None Include="wwwroot\images\post-thumb-2.jpg" />
