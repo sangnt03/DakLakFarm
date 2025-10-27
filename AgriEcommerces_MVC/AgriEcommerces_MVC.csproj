@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\images\uploads\**" />
+    <Content Remove="wwwroot\images\uploads\**" />
+    <EmbeddedResource Remove="wwwroot\images\uploads\**" />
+    <None Remove="wwwroot\images\uploads\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -24,7 +31,6 @@
     <Folder Include="Areas\Management\Data\" />
     <Folder Include="Areas\Farmer\Data\" />
     <Folder Include="Data\" />
-    <Folder Include="wwwroot\images\uploads\" />
     <Folder Include="wwwroot\lib\bootstrap\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\css\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\js\" />
@@ -78,25 +84,14 @@
     <None Include="wwwroot\images\product-thumb-13.jpg" />
     <None Include="wwwroot\images\product-thumb-14.jpg" />
     <None Include="wwwroot\images\product-thumb-2.png" />
-    <None Include="wwwroot\images\reviewer-1.jpg" />
-    <None Include="wwwroot\images\reviewer-2.jpg" />
-    <None Include="wwwroot\images\reviewer-3.jpg" />
     <None Include="wwwroot\images\singel-product-item.jpg" />
     <None Include="wwwroot\images\slide-1.jpg" />
     <None Include="wwwroot\images\slide-2.jpg" />
     <None Include="wwwroot\images\slide-3.jpg" />
     <None Include="wwwroot\images\slide-4.jpg" />
-    <None Include="wwwroot\images\thumb-avocado.png" />
-    <None Include="wwwroot\images\products\banana.png" />
     <None Include="wwwroot\images\thumb-biscuits.png" />
-    <None Include="wwwroot\images\thumb-cucumber.png" />
     <None Include="wwwroot\images\thumb-herb.jpg" />
     <None Include="wwwroot\images\thumb-honey.jpg" />
-    <None Include="wwwroot\images\thumb-junk.jpg" />
-    <None Include="wwwroot\images\thumb-milk.png" />
-    <None Include="wwwroot\images\thumb-orange-juice.png" />
-    <None Include="wwwroot\images\thumb-raspberries.png" />
-    <None Include="wwwroot\images\thumb-tomatoes.png" />
     <None Include="wwwroot\images\thumb-tomatoketchup.png" />
     <None Include="wwwroot\images\thumb-tuna.jpg" />
     <None Include="wwwroot\js\jquery-1.11.0.min.js" />
