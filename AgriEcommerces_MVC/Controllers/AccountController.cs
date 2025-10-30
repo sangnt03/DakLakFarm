@@ -4,10 +4,11 @@ using AgriEcommerces_MVC.Models.ViewModel;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization; // Cần cho JsonPropertyName
 
 
 
@@ -16,7 +17,16 @@ namespace AgriEcommerces_MVC.Controllers
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _db;
-        public AccountController(ApplicationDbContext db) => _db = db;
+        private readonly IConfiguration _config;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        //  constructor:
+        public AccountController(ApplicationDbContext db, IConfiguration config, IHttpClientFactory httpClientFactory)
+        {
+            _db = db;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
+        }
 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -31,6 +41,13 @@ namespace AgriEcommerces_MVC.Controllers
         {
             if (!ModelState.IsValid)
                 return View(vm);
+
+            // Xác minh Turnstile
+            if (!await IsTurnstileValid())
+            {
+                ModelState.AddModelError("", "Xác minh người dùng thất bại. Vui lòng thử lại.");
+                return View(vm);
+            }
 
             var user = await _db.users.FirstOrDefaultAsync(u => u.email == vm.email);
             if (user == null)
@@ -84,6 +101,13 @@ namespace AgriEcommerces_MVC.Controllers
 
             if (!ModelState.IsValid)
                 return View(vm);
+
+            // Xác minh Turnstile
+            if (!await IsTurnstileValid())
+            {
+                ModelState.AddModelError("", "Xác minh người dùng thất bại. Vui lòng thử lại.");
+                return View(vm);
+            }
 
             bool exists = await _db.users.AnyAsync(u => u.email == vm.Email);
             if (exists)
@@ -158,8 +182,7 @@ namespace AgriEcommerces_MVC.Controllers
             }
             catch (Exception ex)
             {
-                // _logger.LogError(ex, "Lỗi khi đổi mật khẩu cho userId={UserId}", userId); // Giữ nguyên nếu bạn có inject _logger
-                TempData["ErrorChangePassword"] = "Đã có lỗi xảy ra khi lưu mật khẩu mới. Vui lòng thử lại.";
+                 TempData["ErrorChangePassword"] = "Đã có lỗi xảy ra khi lưu mật khẩu mới. Vui lòng thử lại.";
                 return RedirectToAction(nameof(ChangePassword));
             }
 
@@ -264,18 +287,69 @@ namespace AgriEcommerces_MVC.Controllers
                 return RedirectToAction("Index", "Home");
         }
 
-    // KẾT THÚC PHẦN CODE MỚI
-
-    [HttpPost, ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            // Clear session nếu cần
-            HttpContext.Session.Remove("Cart");
+                // Clear session nếu cần
+             HttpContext.Session.Remove("Cart");
 
-            // Sign out khỏi scheme Customer
-            await HttpContext.SignOutAsync("Customer");
+                // Sign out khỏi scheme Customer
+             await HttpContext.SignOutAsync("Customer");
 
-            return RedirectToAction("Index", "Home");
+             return RedirectToAction("Index", "Home");
         }
+
+        // HÀM HELPER (1): Để xác minh Turnstile
+        private async Task<bool> IsTurnstileValid()
+        {
+            string token = Request.Form["cf-turnstile-response"];
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            string secretKey = _config["Cloudflare:Turnstile:SecretKey"];
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                var content = new FormUrlEncodedContent(new[]
+                {
+            new KeyValuePair<string, string>("secret", secretKey),
+            new KeyValuePair<string, string>("response", token),
+            new KeyValuePair<string, string>("remoteip", HttpContext.Connection.RemoteIpAddress?.ToString())
+        });
+
+                
+                var response = await client.PostAsync("https://challenges.cloudflare.com/turnstile/v0/siteverify", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var validationResponse = JsonSerializer.Deserialize<TurnstileValidationResponse>(jsonString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return validationResponse?.Success ?? false;
+            }
+            catch (Exception ex)
+            {
+                // Nên log lỗi để debug
+                Console.WriteLine($"Turnstile validation error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // CLASS HELPER (2): Để Deserialize JSON trả về từ Cloudflare
+        private class TurnstileValidationResponse
+        {
+            public bool Success { get; set; }
+
+            [JsonPropertyName("error-codes")]
+            public string[] ErrorCodes { get; set; }
+        }
+
     }
 }

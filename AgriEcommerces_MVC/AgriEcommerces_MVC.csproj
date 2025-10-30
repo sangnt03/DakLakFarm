@@ -8,9 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\Farmer\Data\**" />
+    <Compile Remove="Areas\Farmer\Models\**" />
+    <Compile Remove="Areas\Management\Data\**" />
     <Compile Remove="wwwroot\images\uploads\**" />
+    <Content Remove="Areas\Farmer\Data\**" />
+    <Content Remove="Areas\Farmer\Models\**" />
+    <Content Remove="Areas\Management\Data\**" />
     <Content Remove="wwwroot\images\uploads\**" />
+    <EmbeddedResource Remove="Areas\Farmer\Data\**" />
+    <EmbeddedResource Remove="Areas\Farmer\Models\**" />
+    <EmbeddedResource Remove="Areas\Management\Data\**" />
     <EmbeddedResource Remove="wwwroot\images\uploads\**" />
+    <None Remove="Areas\Farmer\Data\**" />
+    <None Remove="Areas\Farmer\Models\**" />
+    <None Remove="Areas\Management\Data\**" />
     <None Remove="wwwroot\images\uploads\**" />
   </ItemGroup>
 
@@ -30,9 +42,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Farmer\Models\" />
-    <Folder Include="Areas\Management\Data\" />
-    <Folder Include="Areas\Farmer\Data\" />
     <Folder Include="Data\" />
     <Folder Include="wwwroot\lib\bootstrap\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\css\" />

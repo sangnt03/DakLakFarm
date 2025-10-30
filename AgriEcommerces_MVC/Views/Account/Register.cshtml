@@ -10,6 +10,8 @@
         <div class="col-md-6 col-lg-5">
             <div class="card shadow mt-5">
                 <div class="card-body p-4">
+                    <img src="~/images/logologin.png" alt="DL Farm Logo" class="mx-auto d-block mb-3" style="max-width: 250px;" />
+
                     <h3 class="card-title text-center mb-4">Đăng ký tài khoản</h3>
 
                     <form asp-action="Register"
@@ -62,6 +64,10 @@
                                   class="text-danger small"></span>
                         </div>
 
+                        <div class="cf-turnstile mb-3"
+                             data-sitekey="0x4AAAAAAB9xaHK9dVpPJWxh"
+                             data-theme="light">
+                        </div>
 
                         <button type="submit"
                                 class="btn btn-primary w-100 py-2">
@@ -84,4 +90,11 @@
 
 @section Scripts {
     @await Html.PartialAsync("_Scripts")
+}
+@section Styles {
+    <style>
+        .text-danger {
+            color: red !important;
+        }
+    </style>
 }
