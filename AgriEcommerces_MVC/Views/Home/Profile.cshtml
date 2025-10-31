@@ -53,9 +53,28 @@
     <a asp-action="EditProfile" class="btn btn-outline-danger">
         <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin
     </a>
-    <a asp-action="ChangePassword" asp-controller="Account" class="btn btn-primary">
-        <i class="bi bi-key"></i> Đổi mật khẩu
-    </a>
+    @{
+        var provider = User.FindFirst("provider")?.Value ?? "Local";
+        // Hoặc nếu bạn lưu provider trong claims khác
+    }
+
+    @if (provider == "Local")
+    {
+        <a asp-action="ChangePassword" asp-controller="Account" class="btn btn-primary">
+            <i class="bi bi-key"></i> Đổi mật khẩu
+        </a>
+    }
+    else
+    {
+        <div class="d-inline-block">
+            <button class="btn btn-secondary" disabled>
+                <i class="bi bi-key"></i> Đổi mật khẩu
+            </button>
+            <small class="d-block text-muted" style="margin-top: 5px;">
+                (Tài khoản Google không thể đổi mật khẩu)
+            </small>
+        </div>
+    }
     @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
     {
         <a id="btnRegister"

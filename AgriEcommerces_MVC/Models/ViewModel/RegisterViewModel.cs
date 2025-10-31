@@ -13,15 +13,19 @@ namespace AgriEcommerces_MVC.Models.ViewModel
         [Display(Name = "Email")]
         public string Email { get; set; }
 
+        [Required(ErrorMessage = "Số điện thoại không được để trống.")]
+        [Phone(ErrorMessage = "Số điện thoại không đúng định dạng.")]
+        [Display(Name = "Số điện thoại")]
         public string PhoneNumber { get; set; }
 
-        // ... các trường Password và ConfirmPassword của bạn đã có ErrorMessage tiếng Việt (rất tốt) ...
-        [Required]
+        
+        [Required(ErrorMessage = "Mật khẩu không được để trống.")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "{0} phải có ít nhất {2} ký tự.")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu")]
         public string Password { get; set; }
 
+        [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống.")]
         [DataType(DataType.Password)]
         [Display(Name = "Xác nhận mật khẩu")]
         [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]

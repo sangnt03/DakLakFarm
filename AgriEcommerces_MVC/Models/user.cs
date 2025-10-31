@@ -20,7 +20,8 @@ public partial class user
     public bool? isapproved { get; set; }
 
     public DateTime? createdat { get; set; }
-   
+
+    public string? provider { get; set; } 
     public virtual ICollection<order> orders { get; set; } = new List<order>();
 
     public virtual ICollection<product> products { get; set; } = new List<product>();

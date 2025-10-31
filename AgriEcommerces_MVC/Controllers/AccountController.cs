@@ -122,7 +122,8 @@ namespace AgriEcommerces_MVC.Controllers
                 email = vm.Email,            
                 // Dùng Bcrypt.HashPassword để băm mật khẩu
                 passwordhash = BCrypt.Net.BCrypt.HashPassword(vm.Password),
-                role = "Customer"
+                role = "Customer",
+                provider = "Local"
             };
 
             _db.users.Add(user);
@@ -134,12 +135,32 @@ namespace AgriEcommerces_MVC.Controllers
             return RedirectToAction("Login", "Account");
         }
 
-        // GET:ChangePassword
         [HttpGet]
-        public IActionResult ChangePassword()
+        public async Task<IActionResult> ChangePassword()
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Challenge();
+            }
+            int userId = int.Parse(userIdClaim.Value);
+
+            var userInDb = await _db.users.FirstOrDefaultAsync(u => u.userid == userId);
+            if (userInDb == null)
+            {
+                return NotFound();
+            }
+
+            // QUAN TRỌNG: Kiểm tra provider
+            if (userInDb.provider != "Local")
+            {
+                TempData["ErrorMessage"] = "Tài khoản đăng nhập bằng Google không thể đổi mật khẩu.";
+                return RedirectToAction("Profile", "Home");
+            }
+
             return View();
         }
+
         // POST: ChangePassword
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -154,7 +175,7 @@ namespace AgriEcommerces_MVC.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
-                return Challenge(); // Chưa đăng nhập
+                return Challenge();
             }
             int userId = int.Parse(userIdClaim.Value);
 
@@ -164,29 +185,33 @@ namespace AgriEcommerces_MVC.Controllers
             {
                 return NotFound();
             }
-            // 3) Xác thực mật khẩu cũ bằng BCrypt.Verify
+
+            // 3) Xác thực mật khẩu cũ
+            // (Logic chỉ chạy cho user "Local" vì [HttpGet] đã chặn user Google)
             if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, userInDb.passwordhash))
             {
                 ModelState.AddModelError(nameof(model.CurrentPassword), "Mật khẩu hiện tại không đúng.");
                 return View(model);
             }
-            
-            // 4) Băm và lưu mật khẩu mới (dùng BCrypt.HashPassword) vào DB
+
+            // 4) Băm và lưu mật khẩu mới
             userInDb.passwordhash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
 
             try
             {
                 _db.users.Update(userInDb);
                 await _db.SaveChangesAsync();
-                TempData["SuccessChangePassword"] = "Đổi mật khẩu thành công!";
+                await HttpContext.SignOutAsync("Customer");
+                TempData["LoginMessage"] = "Đổi mật khẩu thành công! Vui lòng đăng nhập lại với mật khẩu mới.";
             }
             catch (Exception ex)
             {
-                 TempData["ErrorChangePassword"] = "Đã có lỗi xảy ra khi lưu mật khẩu mới. Vui lòng thử lại.";
+                TempData["ErrorChangePassword"] = "Đã có lỗi xảy ra khi lưu mật khẩu mới. Vui lòng thử lại.";
                 return RedirectToAction(nameof(ChangePassword));
             }
 
-            return RedirectToAction(nameof(ChangePassword));
+            
+            return RedirectToAction("Login", "Account");
         }
 
 
@@ -255,8 +280,8 @@ namespace AgriEcommerces_MVC.Controllers
                     // Chúng ta tạo một mật khẩu ngẫu nhiên đã băm
                     // vì user này sẽ luôn đăng nhập qua Google
                     passwordhash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
-                    role = "Customer"
-                    // Thêm các trường bắt buộc khác (như phonenumber) nếu DB của bạn yêu cầu
+                    role = "Customer",
+                    provider = "Google"
                 };
                 _db.users.Add(user);
                 await _db.SaveChangesAsync();
