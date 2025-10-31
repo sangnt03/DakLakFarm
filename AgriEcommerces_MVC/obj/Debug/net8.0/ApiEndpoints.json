@@ -187,5 +187,47 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
+    "Method": "GetProvinces",
+    "RelativePath": "api/ProvincesApi",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
+    "Method": "GetDistricts",
+    "RelativePath": "api/ProvincesApi/GetDistricts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "provinceCode",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
+    "Method": "GetWards",
+    "RelativePath": "api/ProvincesApi/GetWards",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "districtCode",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
   }
 ]

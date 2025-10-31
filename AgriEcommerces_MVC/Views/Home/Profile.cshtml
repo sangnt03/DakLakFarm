@@ -77,6 +77,14 @@
     }
     @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
     {
+        <a asp-controller="CustomerAddress"
+           asp-action="Index"
+           class="btn btn-outline-success">
+            <i class="bi bi-box-arrow-right"></i> Quản lý địa chỉ
+        </a>
+    }
+    @if (User.Identity.IsAuthenticated && User.IsInRole("Customer"))
+    {
         <a id="btnRegister"
            asp-controller="SellerRequest"
            asp-action="Create"

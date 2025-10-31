@@ -1,0 +1,176 @@
+﻿@model AgriEcommerces_MVC.Models.ViewModel.AddressViewModel
+@using AgriEcommerces_MVC.Models.ApiModels
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="mb-3">
+    <label asp-for="RecipientName" class="form-label"></label>
+    <input asp-for="RecipientName" class="form-control" />
+    <span asp-validation-for="RecipientName" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="PhoneNumber" class="form-label"></label>
+    <input asp-for="PhoneNumber" class="form-control" />
+    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="ProvinceCity" class="form-label"></label>
+    <select asp-for="ProvinceCity" class="form-select" id="province-select">
+        <option value="">-- Chọn Tỉnh/Thành phố --</option>
+        @if (ViewBag.Provinces != null)
+        {
+            foreach (var p in (List<ProvinceApiModel>)ViewBag.Provinces)
+            {
+                <option value="@p.Name" data-code="@p.Code">@p.Name</option>
+            }
+        }
+    </select>
+    <span asp-validation-for="ProvinceCity" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="District" class="form-label"></label>
+    <select asp-for="District" class="form-select" id="district-select" disabled>
+        <option value="">-- Chọn Quận/Huyện --</option>
+    </select>
+    <span asp-validation-for="District" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="WardCommune" class="form-label"></label>
+    <select asp-for="WardCommune" class="form-select" id="ward-select" disabled>
+        <option value="">-- Chọn Phường/Xã --</option>
+    </select>
+    <span asp-validation-for="WardCommune" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="FullAddress" class="form-label">Địa chỉ chi tiết (Số nhà, tên đường)</label>
+    <input asp-for="FullAddress" class="form-control" placeholder="Số nhà, tên đường..." />
+    <span asp-validation-for="FullAddress" class="text-danger"></span>
+</div>
+<div class="mb-3 form-check">
+    <input asp-for="IsDefault" type="checkbox" class="form-check-input" />
+    <label asp-for="IsDefault" class="form-check-label"></label>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const provinceSelect = document.getElementById('province-select');
+        const districtSelect = document.getElementById('district-select');
+        const wardSelect = document.getElementById('ward-select');
+
+        // Lấy giá trị đã lưu từ Model (dùng cho chế độ Edit)
+        // Dùng @Json.Serialize để xử lý các ký tự đặc biệt trong tên
+        const selectedProvinceName = @Json.Serialize(Model.ProvinceCity);
+        const selectedDistrictName = @Json.Serialize(Model.District);
+        const selectedWardName = @Json.Serialize(Model.WardCommune);
+
+        // Hàm trợ giúp điền dữ liệu vào <select>
+        function populateSelect(data, selectElement, selectedValue) {
+            // Xác định chuỗi placeholder
+            let placeholder = "-- Chọn --";
+            if (selectElement.id === 'district-select') placeholder = "-- Chọn Quận/Huyện --";
+            if (selectElement.id === 'ward-select') placeholder = "-- Chọn Phường/Xã --";
+
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+
+            if (!data) {
+                selectElement.disabled = true;
+                return;
+            }
+
+            data.forEach(item => {
+                const option = new Option(item.name, item.name); // text = item.name, value = item.name
+                option.dataset.code = item.code; // Lưu mã vào data-code
+
+                if (item.name === selectedValue) {
+                    option.selected = true;
+                }
+                selectElement.add(option);
+            });
+            selectElement.disabled = false;
+        }
+
+        // Hàm gọi API (dùng fetch)
+        async function fetchApi(url, selectElement, selectedValue = null) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Lỗi mạng: ' + response.statusText);
+                }
+                const data = await response.json();
+                populateSelect(data, selectElement, selectedValue);
+
+                // Trả về true để báo hiệu đã tải xong
+                return true;
+
+            } catch (error) {
+                console.error('Fetch lỗi:', error);
+                selectElement.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                selectElement.disabled = true;
+                return false; // Báo hiệu tải lỗi
+            }
+        }
+
+        // 1. Sự kiện khi thay đổi Tỉnh/Thành
+        provinceSelect.addEventListener('change', function () {
+            districtSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
+
+            const selectedOption = this.options[this.selectedIndex];
+            const provinceCode = selectedOption.dataset.code;
+
+            if (provinceCode) {
+                // Gọi API nội bộ (ProvincesApiController)
+                fetchApi(`/api/Provinces/GetDistricts?provinceCode=${provinceCode}`, districtSelect);
+            }
+        });
+
+        // 2. Sự kiện khi thay đổi Quận/Huyện
+        districtSelect.addEventListener('change', function () {
+            wardSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
+            wardSelect.disabled = true;
+
+            const selectedOption = this.options[this.selectedIndex];
+            const districtCode = selectedOption.dataset.code;
+
+            if (districtCode) {
+                // Gọi API nội bộ (ProvincesApiController)
+                fetchApi(`/api/Provinces/GetWards?districtCode=${districtCode}`, wardSelect);
+            }
+        });
+
+        // 3. Xử lý cho chế độ Edit (khi tải trang)
+        async function initializeEditForm() {
+            if (selectedProvinceName) {
+                // Đặt giá trị Tỉnh (đã được load sẵn từ ViewBag)
+                provinceSelect.value = selectedProvinceName;
+
+                const provinceOption = Array.from(provinceSelect.options).find(opt => opt.value === selectedProvinceName);
+                if (!provinceOption) return;
+
+                const provinceCode = provinceOption.dataset.code;
+
+                // Tải danh sách Quận/Huyện và chọn giá trị cũ (selectedDistrictName)
+                const districtsLoaded = await fetchApi(`/api/Provinces/GetDistricts?provinceCode=${provinceCode}`, districtSelect, selectedDistrictName);
+
+                if (districtsLoaded && selectedDistrictName) {
+                    const districtOption = Array.from(districtSelect.options).find(opt => opt.value === selectedDistrictName);
+                    if (!districtOption) return;
+
+                    const districtCode = districtOption.dataset.code;
+
+                    // Tải danh sách Phường/Xã và chọn giá trị cũ (selectedWardName)
+                    await fetchApi(`/api/Provinces/GetWards?districtCode=${districtCode}`, wardSelect, selectedWardName);
+                }
+            }
+        }
+
+        // Chạy hàm khởi tạo
+        initializeEditForm();
+    });
+</script>

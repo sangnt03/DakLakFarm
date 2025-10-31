@@ -34,8 +34,7 @@ builder.Services.AddSession(options =>
 
 // Thêm HttpClient (cần cho Cloudflare và các dịch vụ API khác)
 builder.Services.AddHttpClient();
-
-
+builder.Services.AddMemoryCache();
 
 // 1. Đọc Google Keys từ secrets.json (đặt lên trước khi dùng)
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];

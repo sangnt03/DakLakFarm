@@ -1,0 +1,124 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.customer_address>
+@{
+    ViewData["Title"] = "Sổ địa chỉ";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Đảm bảo đường dẫn Layout của bạn là chính xác
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@ViewData["Title"]</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Thêm địa chỉ mới
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="list-group">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">Bạn chưa có địa chỉ nào. Vui lòng thêm địa chỉ mới.</div>
+        }
+
+        @foreach (var item in Model)
+        {
+            <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 border rounded shadow-sm">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">
+                        @item.recipient_name
+                        @if (item.is_default)
+                        {
+                            <span class="badge bg-success ms-2">Mặc định</span>
+                        }
+                    </h5>
+                    <div>
+                        <a asp-action="Edit" asp-route-id="@item.id" class="btn btn-sm btn-outline-primary">Sửa</a>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger ms-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteConfirmModal"
+                                data-address-id="@item.id"
+                                data-address-name="@item.recipient_name">
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+                <p class="mb-1">@item.phone_number</p>
+                <p class="mb-1">@item.full_address</p>
+                <p class="mb-0 text-muted">@item.ward_commune, @item.district, @item.province_city</p>
+
+                @if (!item.is_default)
+                {
+                    <form asp-action="SetDefault" asp-route-id="@item.id" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                            Đặt làm mặc định
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xác nhận Xóa Địa Chỉ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn xóa địa chỉ của <strong id="addressNameToDelete"></strong>?
+                <p class="text-danger mt-2">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+
+                <form id="deleteForm" asp-controller="CustomerAddress" asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var deleteModal = document.getElementById('deleteConfirmModal');
+
+            if (deleteModal) {
+                // Sự kiện này được kích hoạt KHI modal SẮP HIỂN THỊ
+                deleteModal.addEventListener('show.bs.modal', function (event) {
+
+                    // Lấy button đã kích hoạt modal
+                    var button = event.relatedTarget;
+
+                    // Lấy thông tin từ data-* attributes của button
+                    var addressId = button.getAttribute('data-address-id');
+                    var addressName = button.getAttribute('data-address-name');
+
+                    // Cập nhật nội dung (tên) trong modal
+                    var modalBody = deleteModal.querySelector('.modal-body #addressNameToDelete');
+                    modalBody.textContent = addressName;
+
+                    // Cập nhật action của form xóa trong modal
+                    // Action này sẽ trỏ đến /CustomerAddress/Delete/5 (ví dụ)
+                    var deleteForm = deleteModal.querySelector('#deleteForm');
+                    deleteForm.action = '/CustomerAddress/Delete/' + addressId;
+                });
+            }
+        });
+    </script>
+}

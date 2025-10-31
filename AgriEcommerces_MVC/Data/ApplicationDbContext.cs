@@ -29,7 +29,10 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<review> reviews { get; set; }
 
     public virtual DbSet<user> users { get; set; }
+
     public virtual DbSet<SellerRequest> sellerrequests { get; set; }
+
+     public virtual DbSet<customer_address> customer_addresses { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
