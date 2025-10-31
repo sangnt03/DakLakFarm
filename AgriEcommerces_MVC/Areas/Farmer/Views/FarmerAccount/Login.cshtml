@@ -1,7 +1,7 @@
 ﻿@model AgriEcommerces_MVC.Models.ViewModel.LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập Farmer";
-    Layout = "~/Areas/Farmer/Views/Shared/_LayoutFarmer.cshtml";
+    Layout = null;
 }
 
 
@@ -14,7 +14,7 @@
             <div asp-validation-summary="All" class="text-danger validation-summary-errors"></div>
 
             <div class="form-group">
-                <label asp-for="email" class="form-label">📧 Địa chỉ Email</label>
+                <label asp-for="email" class="form-label">Địa chỉ Email</label>
                 <div class="position-relative">
                     <input asp-for="email" class="form-control" placeholder="Nhập email của bạn..." />
                 </div>
@@ -22,7 +22,7 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="password" class="form-label">🔒 Mật khẩu</label>
+                <label asp-for="password" class="form-label">Mật khẩu</label>
                 <div class="position-relative">
                     <input asp-for="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
                 </div>
