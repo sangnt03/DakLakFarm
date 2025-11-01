@@ -12,6 +12,7 @@ namespace AgriEcommerces_MVC.Models
     {
         [Key] // Đánh dấu đây là khóa chính
         [Column("id")] // Ánh xạ tới cột 'id'
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int id { get; set; }
 
         [Column("user_id")]

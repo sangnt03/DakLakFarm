@@ -23,17 +23,17 @@ namespace AgriEcommerces_MVC.Models.ViewModel
         public string FullAddress { get; set; }
 
         [Display(Name = "Tỉnh/Thành phố")]
-        [Required(ErrorMessage = "Vui lòng nhập Tỉnh/Thành phố")]
+        [Required(ErrorMessage = "Vui lòng chọn Tỉnh/Thành phố")]
         [StringLength(100)]
         public string ProvinceCity { get; set; }
 
         [Display(Name = "Quận/Huyện")]
-        [Required(ErrorMessage = "Vui lòng nhập Quận/Huyện")]
+        [Required(ErrorMessage = "Vui lòng chọn Quận/Huyện")]
         [StringLength(100)]
         public string District { get; set; }
 
         [Display(Name = "Phường/Xã")]
-        [Required(ErrorMessage = "Vui lòng nhập Phường/Xã")]
+        [Required(ErrorMessage = "Vui lòng chọn Phường/Xã")]
         [StringLength(100)]
         public string WardCommune { get; set; }
 

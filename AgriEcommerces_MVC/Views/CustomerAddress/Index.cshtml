@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<AgriEcommerces_MVC.Models.customer_address>
 @{
-    ViewData["Title"] = "Sổ địa chỉ";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Đảm bảo đường dẫn Layout của bạn là chính xác
+    ViewData["Title"] = "Địa chỉ của tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="container py-5">
@@ -66,6 +66,11 @@
                 }
             </div>
         }
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a asp-controller="Home" asp-action="Profile" class="btn btn-secondary ms-2">
+                Trở về Trang cá nhân
+            </a>
+        </div>
     </div>
 </div>
 
@@ -78,7 +83,7 @@
             </div>
             <div class="modal-body">
                 Bạn có chắc chắn muốn xóa địa chỉ của <strong id="addressNameToDelete"></strong>?
-                <p class="text-danger mt-2">Hành động này không thể hoàn tác.</p>
+                <p class="text-danger">Hành động này không thể hoàn tác.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -92,7 +97,13 @@
     </div>
 </div>
 
-
+@section Styles {
+    <style>
+        .text-danger {
+            color: #FF3300 !important;
+        }
+    </style>
+}
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -191,7 +191,7 @@
   {
     "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
     "Method": "GetProvinces",
-    "RelativePath": "api/ProvincesApi",
+    "RelativePath": "api/Provinces",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -201,7 +201,7 @@
   {
     "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
     "Method": "GetDistricts",
-    "RelativePath": "api/ProvincesApi/GetDistricts",
+    "RelativePath": "api/Provinces/GetDistricts",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -217,7 +217,7 @@
   {
     "ContainingType": "AgriEcommerces_MVC.Controllers.ProvincesApiController",
     "Method": "GetWards",
-    "RelativePath": "api/ProvincesApi/GetWards",
+    "RelativePath": "api/Provinces/GetWards",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

@@ -7,8 +7,8 @@ using System.Text.Json.Serialization;
 
 namespace AgriEcommerces_MVC.Controllers
 {
-    // Cấu hình đây là một API Controller, route là /api/Provinces
-    [Route("api/[controller]")]
+    // FIX: Đổi route thành "Provinces" thay vì "[controller]"
+    [Route("api/Provinces")]
     [ApiController]
     public class ProvincesApiController : ControllerBase
     {
@@ -36,28 +36,44 @@ namespace AgriEcommerces_MVC.Controllers
 
             // 2. Nếu không có cache, gọi API
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync($"{ApiBaseUrl}p/");
 
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var jsonString = await response.Content.ReadAsStringAsync();
-                provinces = JsonSerializer.Deserialize<List<ProvinceApiModel>>(jsonString);
+                var response = await httpClient.GetAsync($"{ApiBaseUrl}p/");
 
-                // 3. Lưu vào Cache (ví dụ: 1 ngày)
-                var cacheOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                _memoryCache.Set(cacheKey, provinces, cacheOptions);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    provinces = JsonSerializer.Deserialize<List<ProvinceApiModel>>(jsonString, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                return Ok(provinces);
+                    // 3. Lưu vào Cache (1 ngày)
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
+                    _memoryCache.Set(cacheKey, provinces, cacheOptions);
+
+                    return Ok(provinces);
+                }
+
+                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API tỉnh thành.");
             }
-
-            return StatusCode((int)response.StatusCode, "Lỗi khi gọi API tỉnh thành.");
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // GET: /api/Provinces/GetDistricts?provinceCode=1
         [HttpGet("GetDistricts")]
-        public async Task<IActionResult> GetDistricts(int provinceCode)
+        public async Task<IActionResult> GetDistricts([FromQuery] int provinceCode)
         {
+            if (provinceCode <= 0)
+            {
+                return BadRequest("Mã tỉnh không hợp lệ");
+            }
+
             string cacheKey = $"Districts_{provinceCode}";
 
             if (_memoryCache.TryGetValue(cacheKey, out List<DistrictApiModel> districts))
@@ -66,28 +82,45 @@ namespace AgriEcommerces_MVC.Controllers
             }
 
             var httpClient = _httpClientFactory.CreateClient();
-            // API này trả về cả tỉnh, ta chỉ cần lấy list districts
-            var response = await httpClient.GetAsync($"{ApiBaseUrl}p/{provinceCode}?depth=2");
 
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var provinceData = JsonSerializer.Deserialize<ProvinceWithDistricts>(jsonString);
-                districts = provinceData?.Districts;
+                var response = await httpClient.GetAsync($"{ApiBaseUrl}p/{provinceCode}?depth=2");
 
-                var cacheOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                _memoryCache.Set(cacheKey, districts, cacheOptions);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var provinceData = JsonSerializer.Deserialize<ProvinceWithDistricts>(jsonString, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                return Ok(districts);
+                    districts = provinceData?.Districts ?? new List<DistrictApiModel>();
+
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
+                    _memoryCache.Set(cacheKey, districts, cacheOptions);
+
+                    return Ok(districts);
+                }
+
+                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API quận huyện.");
             }
-            return StatusCode((int)response.StatusCode, "Lỗi khi gọi API quận huyện.");
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // GET: /api/Provinces/GetWards?districtCode=1
         [HttpGet("GetWards")]
-        public async Task<IActionResult> GetWards(int districtCode)
+        public async Task<IActionResult> GetWards([FromQuery] int districtCode)
         {
+            if (districtCode <= 0)
+            {
+                return BadRequest("Mã quận không hợp lệ");
+            }
+
             string cacheKey = $"Wards_{districtCode}";
 
             if (_memoryCache.TryGetValue(cacheKey, out List<WardApiModel> wards))
@@ -96,21 +129,34 @@ namespace AgriEcommerces_MVC.Controllers
             }
 
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync($"{ApiBaseUrl}d/{districtCode}?depth=2");
 
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var districtData = JsonSerializer.Deserialize<DistrictWithWards>(jsonString);
-                wards = districtData?.Wards;
+                var response = await httpClient.GetAsync($"{ApiBaseUrl}d/{districtCode}?depth=2");
 
-                var cacheOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                _memoryCache.Set(cacheKey, wards, cacheOptions);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var districtData = JsonSerializer.Deserialize<DistrictWithWards>(jsonString, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
 
-                return Ok(wards);
+                    wards = districtData?.Wards ?? new List<WardApiModel>();
+
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
+                    _memoryCache.Set(cacheKey, wards, cacheOptions);
+
+                    return Ok(wards);
+                }
+
+                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API phường xã.");
             }
-            return StatusCode((int)response.StatusCode, "Lỗi khi gọi API phường xã.");
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // Các class trợ giúp để Deserialize API
@@ -119,6 +165,7 @@ namespace AgriEcommerces_MVC.Controllers
             [JsonPropertyName("districts")]
             public List<DistrictApiModel> Districts { get; set; }
         }
+
         private class DistrictWithWards
         {
             [JsonPropertyName("wards")]

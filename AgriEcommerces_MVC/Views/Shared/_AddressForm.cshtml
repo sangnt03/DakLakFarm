@@ -1,5 +1,6 @@
 ﻿@model AgriEcommerces_MVC.Models.ViewModel.AddressViewModel
 @using AgriEcommerces_MVC.Models.ApiModels
+
 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
 <div class="mb-3">
@@ -7,6 +8,7 @@
     <input asp-for="RecipientName" class="form-control" />
     <span asp-validation-for="RecipientName" class="text-danger"></span>
 </div>
+
 <div class="mb-3">
     <label asp-for="PhoneNumber" class="form-label"></label>
     <input asp-for="PhoneNumber" class="form-control" />
@@ -49,128 +51,198 @@
     <input asp-for="FullAddress" class="form-control" placeholder="Số nhà, tên đường..." />
     <span asp-validation-for="FullAddress" class="text-danger"></span>
 </div>
+
 <div class="mb-3 form-check">
     <input asp-for="IsDefault" type="checkbox" class="form-check-input" />
     <label asp-for="IsDefault" class="form-check-label"></label>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    (function() {
+        'use strict';
 
         const provinceSelect = document.getElementById('province-select');
         const districtSelect = document.getElementById('district-select');
         const wardSelect = document.getElementById('ward-select');
 
         // Lấy giá trị đã lưu từ Model (dùng cho chế độ Edit)
-        // Dùng @Json.Serialize để xử lý các ký tự đặc biệt trong tên
-        const selectedProvinceName = @Json.Serialize(Model.ProvinceCity);
-        const selectedDistrictName = @Json.Serialize(Model.District);
-        const selectedWardName = @Json.Serialize(Model.WardCommune);
+        const selectedProvinceName = @Html.Raw(Json.Serialize(Model.ProvinceCity ?? ""));
+        const selectedDistrictName = @Html.Raw(Json.Serialize(Model.District ?? ""));
+        const selectedWardName = @Html.Raw(Json.Serialize(Model.WardCommune ?? ""));
 
-        // Hàm trợ giúp điền dữ liệu vào <select>
-        function populateSelect(data, selectElement, selectedValue) {
-            // Xác định chuỗi placeholder
-            let placeholder = "-- Chọn --";
-            if (selectElement.id === 'district-select') placeholder = "-- Chọn Quận/Huyện --";
-            if (selectElement.id === 'ward-select') placeholder = "-- Chọn Phường/Xã --";
+        console.log('Edit Mode Data:', {
+            province: selectedProvinceName,
+            district: selectedDistrictName,
+            ward: selectedWardName
+        });
 
+        // Hàm reset dropdown
+        function resetSelect(selectElement, placeholder, disabled = true) {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            selectElement.disabled = disabled;
+            selectElement.value = "";
+        }
+
+        // Hàm điền dữ liệu vào select
+        function populateSelect(selectElement, data, selectedValue = null) {
+            const placeholders = {
+                'district-select': '-- Chọn Quận/Huyện --',
+                'ward-select': '-- Chọn Phường/Xã --'
+            };
+
+            const placeholder = placeholders[selectElement.id] || '-- Chọn --';
             selectElement.innerHTML = `<option value="">${placeholder}</option>`;
 
-            if (!data) {
+            if (!data || data.length === 0) {
+                console.warn(`Không có dữ liệu cho ${selectElement.id}`);
                 selectElement.disabled = true;
-                return;
+                return false;
             }
 
             data.forEach(item => {
-                const option = new Option(item.name, item.name); // text = item.name, value = item.name
-                option.dataset.code = item.code; // Lưu mã vào data-code
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = item.name;
+                option.setAttribute('data-code', item.code);
 
-                if (item.name === selectedValue) {
+                if (selectedValue && item.name === selectedValue) {
                     option.selected = true;
                 }
-                selectElement.add(option);
+
+                selectElement.appendChild(option);
             });
+
             selectElement.disabled = false;
+            return true;
         }
 
-        // Hàm gọi API (dùng fetch)
-        async function fetchApi(url, selectElement, selectedValue = null) {
+        // Hàm gọi API với error handling
+        async function fetchData(url, selectElement, selectedValue = null) {
+            console.log(`Fetching: ${url}`);
+
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error('Lỗi mạng: ' + response.statusText);
-                }
-                const data = await response.json();
-                populateSelect(data, selectElement, selectedValue);
 
-                // Trả về true để báo hiệu đã tải xong
-                return true;
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log(`Data received for ${selectElement.id}:`, data);
+
+                return populateSelect(selectElement, data, selectedValue);
 
             } catch (error) {
-                console.error('Fetch lỗi:', error);
-                selectElement.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                console.error(`Lỗi khi tải ${selectElement.id}:`, error);
+                selectElement.innerHTML = '<option value="">❌ Lỗi tải dữ liệu</option>';
                 selectElement.disabled = true;
-                return false; // Báo hiệu tải lỗi
+
+                // Hiển thị thông báo lỗi cho user
+                alert(`Không thể tải dữ liệu. Vui lòng thử lại.\nLỗi: ${error.message}`);
+                return false;
             }
         }
 
-        // 1. Sự kiện khi thay đổi Tỉnh/Thành
-        provinceSelect.addEventListener('change', function () {
-            districtSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
-            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-            districtSelect.disabled = true;
-            wardSelect.disabled = true;
+        // Xử lý khi chọn Tỉnh/Thành phố
+        provinceSelect.addEventListener('change', async function() {
+            console.log('Province changed:', this.value);
+
+            // Reset các select phía dưới
+            resetSelect(districtSelect, '-- Đang tải... --', true);
+            resetSelect(wardSelect, '-- Chọn Phường/Xã --', true);
 
             const selectedOption = this.options[this.selectedIndex];
-            const provinceCode = selectedOption.dataset.code;
+            const provinceCode = selectedOption.getAttribute('data-code');
 
-            if (provinceCode) {
-                // Gọi API nội bộ (ProvincesApiController)
-                fetchApi(`/api/Provinces/GetDistricts?provinceCode=${provinceCode}`, districtSelect);
+            if (!provinceCode) {
+                console.log('Không có mã tỉnh');
+                return;
             }
+
+            console.log('Loading districts for province code:', provinceCode);
+            await fetchData(`/api/Provinces/GetDistricts?provinceCode=${provinceCode}`, districtSelect);
         });
 
-        // 2. Sự kiện khi thay đổi Quận/Huyện
-        districtSelect.addEventListener('change', function () {
-            wardSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
-            wardSelect.disabled = true;
+        // Xử lý khi chọn Quận/Huyện
+        districtSelect.addEventListener('change', async function() {
+            console.log('District changed:', this.value);
+
+            resetSelect(wardSelect, '-- Đang tải... --', true);
 
             const selectedOption = this.options[this.selectedIndex];
-            const districtCode = selectedOption.dataset.code;
+            const districtCode = selectedOption.getAttribute('data-code');
 
-            if (districtCode) {
-                // Gọi API nội bộ (ProvincesApiController)
-                fetchApi(`/api/Provinces/GetWards?districtCode=${districtCode}`, wardSelect);
+            if (!districtCode) {
+                console.log('Không có mã quận');
+                return;
             }
+
+            console.log('Loading wards for district code:', districtCode);
+            await fetchData(`/api/Provinces/GetWards?districtCode=${districtCode}`, wardSelect);
         });
 
-        // 3. Xử lý cho chế độ Edit (khi tải trang)
-        async function initializeEditForm() {
-            if (selectedProvinceName) {
-                // Đặt giá trị Tỉnh (đã được load sẵn từ ViewBag)
-                provinceSelect.value = selectedProvinceName;
-
-                const provinceOption = Array.from(provinceSelect.options).find(opt => opt.value === selectedProvinceName);
-                if (!provinceOption) return;
-
-                const provinceCode = provinceOption.dataset.code;
-
-                // Tải danh sách Quận/Huyện và chọn giá trị cũ (selectedDistrictName)
-                const districtsLoaded = await fetchApi(`/api/Provinces/GetDistricts?provinceCode=${provinceCode}`, districtSelect, selectedDistrictName);
-
-                if (districtsLoaded && selectedDistrictName) {
-                    const districtOption = Array.from(districtSelect.options).find(opt => opt.value === selectedDistrictName);
-                    if (!districtOption) return;
-
-                    const districtCode = districtOption.dataset.code;
-
-                    // Tải danh sách Phường/Xã và chọn giá trị cũ (selectedWardName)
-                    await fetchApi(`/api/Provinces/GetWards?districtCode=${districtCode}`, wardSelect, selectedWardName);
-                }
+        // Khởi tạo cho chế độ Edit
+        async function initializeEditMode() {
+            if (!selectedProvinceName) {
+                console.log('Không phải chế độ Edit');
+                return;
             }
+
+            console.log('Khởi tạo chế độ Edit...');
+
+            // Đặt giá trị Tỉnh
+            provinceSelect.value = selectedProvinceName;
+
+            const provinceOption = Array.from(provinceSelect.options)
+                .find(opt => opt.value === selectedProvinceName);
+
+            if (!provinceOption) {
+                console.error('Không tìm thấy tỉnh:', selectedProvinceName);
+                return;
+            }
+
+            const provinceCode = provinceOption.getAttribute('data-code');
+            console.log('Province code:', provinceCode);
+
+            // Load Quận/Huyện
+            const districtsLoaded = await fetchData(
+                `/api/Provinces/GetDistricts?provinceCode=${provinceCode}`,
+                districtSelect,
+                selectedDistrictName
+            );
+
+            if (!districtsLoaded || !selectedDistrictName) {
+                console.log('Không load được quận hoặc không có giá trị quận');
+                return;
+            }
+
+            const districtOption = Array.from(districtSelect.options)
+                .find(opt => opt.value === selectedDistrictName);
+
+            if (!districtOption) {
+                console.error('Không tìm thấy quận:', selectedDistrictName);
+                return;
+            }
+
+            const districtCode = districtOption.getAttribute('data-code');
+            console.log('District code:', districtCode);
+
+            // Load Phường/Xã
+            await fetchData(
+                `/api/Provinces/GetWards?districtCode=${districtCode}`,
+                wardSelect,
+                selectedWardName
+            );
+
+            console.log('Hoàn tất khởi tạo Edit mode');
         }
 
-        // Chạy hàm khởi tạo
-        initializeEditForm();
-    });
+        // Chạy khi DOM đã sẵn sàng
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEditMode);
+        } else {
+            initializeEditMode();
+        }
+
+    })();
 </script>

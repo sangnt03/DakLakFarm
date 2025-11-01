@@ -18,7 +18,7 @@
                         <partial name="_AddressForm" model="Model" />
 
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-primary">Lưu địa chỉ</button>
+                            <button type="submit" class="btn btn-primary">Thêm địa chỉ</button>
                             <a asp-action="Index" class="btn btn-outline-secondary ms-2">Hủy</a>
                         </div>
                     </form>
@@ -27,6 +27,13 @@
         </div>
     </div>
 </div>
+@section Styles {
+    <style>
+        .text-danger {
+            color: #FF3300 !important;
+        }
+    </style>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
