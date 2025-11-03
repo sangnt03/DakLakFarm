@@ -10,256 +10,315 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] – Manager Area</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B6B'/%3E%3Cstop offset='50%25' stop-color='%23FF8E53'/%3E%3Cstop offset='100%25' stop-color='%23FF6B35'/%3E%3C/linearGradient%3E%3ClinearGradient id='tree' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310B981'/%3E%3Cstop offset='100%25' stop-color='%23059669'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23bg)'/%3E%3Ccircle cx='35' cy='25' r='8' fill='%23FCD34D' opacity='0.9'/%3E%3Cpath d='M30 60c0-12 8-20 20-20s20 8 20 20v15H30z' fill='url(%23tree)'/%3E%3Crect x='48' y='60' width='4' height='15' fill='%238B4513'/%3E%3Cpath d='M25 75h50v5c0 2-2 4-4 4H29c-2 0-4-2-4-4z' fill='%2322C55E'/%3E%3C/svg%3E" />
-
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%232d8b57'/%3E%3Cpath d='M50 30c-8 0-15 7-15 15v10h30V45c0-8-7-15-15-15zM45 55h10v15H45z' fill='%23fff'/%3E%3C/svg%3E" />
 </head>
 
-<div class="login-container">
-    <div class="login-card">
-        <h1 class="login-title">🌱 Farmer Portal</h1>
-        <p class="login-subtitle">Chào mừng bạn trở lại</p>
-
-        <form asp-area="Farmer" asp-controller="FarmerAccount" asp-action="Login" method="post">
-            <div asp-validation-summary="All" class="text-danger validation-summary-errors"></div>
-
-            <div class="form-group">
-                <label asp-for="email" class="form-label">Địa chỉ Email</label>
-                <div class="position-relative">
-                    <input asp-for="email" class="form-control" placeholder="Nhập email của bạn..." />
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            
+            <div class="left-panel">
+                <div class="logo-section">
+                    <div class="logo-circle">
+                        <span class="logo-icon">🌱</span>
+                    </div>
+                    <h2 class="brand-name">Farmer Manager</h2>
                 </div>
-                <span asp-validation-for="email" class="text-danger"></span>
-            </div>
 
-            <div class="form-group">
-                <label asp-for="password" class="form-label">Mật khẩu</label>
-                <div class="position-relative">
-                    <input asp-for="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
+                <div class="welcome-section">
+                    <h1 class="welcome-title">Chào mừng trở lại!</h1>
+                    <p class="welcome-text">Trang quản lý dành cho shop bán hàng</p>
                 </div>
-                <span asp-validation-for="password" class="text-danger"></span>
             </div>
 
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập</label>
+            <!-- Right Panel - White -->
+            <div class="right-panel">
+                <div class="form-section">
+                    <h2 class="form-title">welcome</h2>
+                    <p class="form-subtitle">Đăng nhập tài khoản của bạn để tiếp tục</p>
+
+                    <form asp-area="Farmer" asp-controller="FarmerAccount" asp-action="Login" method="post">
+                        @if (TempData["LoginMessage"] != null)
+                        {
+                            <div class="alert alert-success text-center">
+                                @TempData["LoginMessage"]
+                            </div>
+                        }
+
+                        <div class="form-group">
+                            <input asp-for="email" class="form-control" placeholder="Email" />
+                            <span asp-validation-for="email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <input asp-for="password" type="password" class="form-control" placeholder="Mật khẩu" />
+                            <span asp-validation-for="password" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn-login">
+                            Đăng nhập
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(Model?.ReturnUrl))
+                        {
+                            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+                        }
+                    </form>
+                </div>
             </div>
-
-            <button type="submit" class="btn btn-login">
-                Đăng nhập
-            </button>
-
-            @if (!string.IsNullOrEmpty(Model?.ReturnUrl))
-            {
-                <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
-            }
-        </form>
+        </div>
     </div>
-</div>
 
-<style>
-    .login-container {
-        min-height: 100vh;
-        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 30%, #fffbeb 70%, #fef3c7 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-    
-    .login-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(16, 185, 129, 0.3);
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 
-            0 20px 40px rgba(16, 185, 129, 0.15),
-            0 0 0 1px rgba(251, 191, 36, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        max-width: 450px;
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .login-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #10b981, #059669, #fbbf24, #f59e0b);
-    }
-    
-    .login-title {
-        color: #059669;
-        font-size: 2rem;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 10px;
-        text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
-    
-    .login-subtitle {
-        color: #6b7280;
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 0.95rem;
-    }
-    
-    .form-floating {
-        margin-bottom: 20px;
-        position: relative;
-    }
-    
-    .form-control {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(16, 185, 129, 0.3);
-        border-radius: 12px;
-        color: #374151;
-        padding: 15px 20px;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        height: auto;
-    }
-    
-    .form-control:focus {
-        background: rgba(255, 255, 255, 1);
-        border-color: #10b981;
-        box-shadow: 
-            0 0 0 0.2rem rgba(16, 185, 129, 0.25),
-            0 0 20px rgba(251, 191, 36, 0.2);
-        color: #111827;
-        outline: none;
-    }
-    
-    .form-control::placeholder {
-        color: #9ca3af;
-    }
-    
-    .form-label {
-        color: #374151;
-        font-weight: 500;
-        margin-bottom: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .form-check {
-        margin: 25px 0;
-    }
-    
-    .form-check-input {
-        background-color: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(16, 185, 129, 0.4);
-        border-radius: 6px;
-        width: 18px;
-        height: 18px;
-    }
-    
-    .form-check-input:checked {
-        background-color: #10b981;
-        border-color: #10b981;
-    }
-    
-    .form-check-input:focus {
-        box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
-    }
-    
-    .form-check-label {
-        color: #4b5563;
-        font-size: 0.9rem;
-        margin-left: 8px;
-    }
-    
-    .btn-login {
-        background: linear-gradient(135deg, #10b981 0%, #059669 50%, #fbbf24 100%);
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 600;
-        padding: 15px 30px;
-        font-size: 16px;
-        width: 100%;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-login:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 50%, #f59e0b 100%);
-        transform: translateY(-2px);
-        box-shadow: 
-            0 10px 25px rgba(16, 185, 129, 0.3),
-            0 0 30px rgba(251, 191, 36, 0.2);
-    }
-    
-    .btn-login:active {
-        transform: translateY(0);
-    }
-    
-    .text-danger {
-        color: #ef4444 !important;
-        font-size: 0.85rem;
-        margin-top: 5px;
-    }
-    
-    .validation-summary-errors {
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    
-    .validation-summary-errors ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-    
-    .validation-summary-errors li {
-        color: #ef4444;
-        font-size: 0.9rem;
-    }
-    
-    .input-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #64748b;
-        z-index: 10;
-    }
-    
-    .input-with-icon {
-        padding-left: 45px !important;
-    }
-    
-    @@keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
-    }
-    
-    .login-card {
-        animation: fadeInUp 0.6s ease-out;
-    }
-    
-    @@media (max-width: 576px) {
-        .login-card {
-            padding: 30px 25px;
-            margin: 10px;
+
+        .login-wrapper {
+            min-height: 100vh;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        
-        .login-title {
-            font-size: 1.5rem;
+
+        .login-container {
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            min-height: 550px;
         }
-    }
-</style>
+
+        /* Left Panel - Xanh lá đậm vừa phải (#2d8b57) */
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(135deg, #2d8b57 0%, #1e6a42 100%);
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: relative;
+        }
+
+            .left-panel::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -30%;
+                width: 400px;
+                height: 400px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 50%;
+            }
+
+            .left-panel::after {
+                content: '';
+                position: absolute;
+                bottom: -30%;
+                left: -20%;
+                width: 300px;
+                height: 300px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 50%;
+            }
+
+        .logo-section {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-icon {
+            font-size: 36px;
+        }
+
+        .brand-name {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .welcome-text {
+            font-size: 15px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            flex: 1;
+            padding: 60px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-section {
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .form-title {
+            color: #2d8b57;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            background: #e8f5e9;
+            border-radius: 25px;
+            font-size: 15px;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+            .form-control:focus {
+                outline: none;
+                background: #d8f0e0;
+                box-shadow: 0 0 0 3px rgba(45, 139, 87, 0.15);
+            }
+
+            .form-control::placeholder {
+                color: #94a3b8;
+            }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: #2d8b57;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+            .btn-login:hover {
+                background: #1e6a42;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(45, 139, 87, 0.3);
+            }
+
+            .btn-login:active {
+                transform: translateY(0);
+            }
+
+        .text-danger {
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+            padding-left: 20px;
+        }
+
+        .validation-summary-errors {
+            background: #fef2f2;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+            .validation-summary-errors ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .validation-summary-errors li {
+                color: #dc2626;
+                font-size: 13px;
+                margin-bottom: 4px;
+            }
+
+                .validation-summary-errors li:last-child {
+                    margin-bottom: 0;
+                }
+
+        @@media (max-width: 768px) {
+            .login-container
+
+        {
+            flex-direction: column;
+        }
+
+        .left-panel {
+            padding: 40px 30px;
+            min-height: 300px;
+        }
+
+        .welcome-title {
+            font-size: 26px;
+        }
+
+        .welcome-text {
+            font-size: 14px;
+        }
+
+        .right-panel {
+            padding: 40px 30px;
+        }
+
+        .form-title {
+            font-size: 26px;
+        }
+
+        }
+    </style>
+</body>
+</html>

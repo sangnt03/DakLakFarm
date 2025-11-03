@@ -4,116 +4,444 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] – Farmer Area</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='rainbow' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B6B'/%3E%3Cstop offset='20%25' stop-color='%23FF8E53'/%3E%3Cstop offset='40%25' stop-color='%23FCD34D'/%3E%3Cstop offset='60%25' stop-color='%2310B981'/%3E%3Cstop offset='80%25' stop-color='%234F46E5'/%3E%3Cstop offset='100%25' stop-color='%238B5CF6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='%23000'/%3E%3Cpath d='M20 50c0-25 20-30 30-30s30 5 30 30c0 20-12 30-30 30-18 0-30-10-30-30z' fill='url(%23rainbow)'/%3E%3Cpath d='M35 45c8-12 12-18 15-18s7 6 15 18c-8 8-12 12-15 12s-7-4-15-12z' fill='%23FFFFFF' opacity='0.3'/%3E%3C/svg%3E" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%2322c55e'/%3E%3Cpath d='M30 60c0-12 8-20 20-20s20 8 20 20v15H30z' fill='%23fff'/%3E%3Crect x='48' y='60' width='4' height='15' fill='%23fff'/%3E%3C/svg%3E" />
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-          rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
-          rel="stylesheet"
-          integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
-          crossorigin="anonymous" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --topbar-height: 60px;
+            --primary-green: #22c55e;
+            --primary-green-dark: #16a34a;
+            --sidebar-bg: #1f2937;
+            --sidebar-hover: #374151;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            z-index: 1000;
+            transition: all 0.3s;
+            overflow-y: auto;
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background: var(--sidebar-hover);
+                border-radius: 3px;
+            }
+
+        .sidebar-brand {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .sidebar-brand-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu-item {
+            list-style: none;
+        }
+
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+            .sidebar-menu-link:hover,
+            .sidebar-menu-link.active {
+                background: var(--sidebar-hover);
+                color: white;
+                border-left: 3px solid var(--primary-green);
+                padding-left: 17px;
+            }
+
+        .sidebar-menu-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: var(--topbar-height);
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 999;
+        }
+
+        .topbar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #6b7280;
+            cursor: pointer;
+        }
+
+        .topbar-search {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+            .topbar-search input {
+                width: 100%;
+                padding: 8px 16px 8px 40px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+
+            .topbar-search i {
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-muted);
+            }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+            .topbar-user:hover {
+                background: #f3f4f6;
+            }
+
+        .topbar-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .topbar-user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar-user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .topbar-user-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 30px;
+            min-height: calc(100vh - var(--topbar-height));
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .page-breadcrumb {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        /* Mobile Responsive */
+        @@media (max-width: 768px) {
+            .sidebar
+
+        {
+            left: -260px;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .topbar {
+            left: 0;
+        }
+
+        .topbar-toggle {
+            display: block;
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+
+        .topbar-search {
+            display: none;
+        }
+
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+    </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand"
-               asp-area="Farmer"
-               asp-controller="FarmerDashboard"
-               asp-action="Index">
-                Farmer Dashboard
-            </a>
-            <div class="collapse navbar-collapse" id="navFarmer">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-area="Farmer"
-                           asp-controller="KetQuaDuDoan"
-                           asp-action="Index">Xem dự đoán giá</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-area="Farmer"
-                           asp-controller="ProductManagement"
-                           asp-action="Index">Quản lý sản phẩm</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-area="Farmer"
-                           asp-controller="OrdersManagement"
-                           asp-action="Index">Quản lý đơn hàng</a>
-                    </li>
-                </ul>
-                <ul class="d-flex list-unstyled m-0 align-items-center">
-                    <li class="nav-item dropdown">
-                        <a class="rounded-circle bg-light p-2 mx-1 dropdown-toggle nav-link"
-                           href="#"
-                           id="userDropdown"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">
-
-                            <img src="@(Url.Content("~/images/LogoInformation.jpg"))" width="30" height="30" alt="LogoInfor" />
-
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            @if (!User.Identity.IsAuthenticated)
-
-                            {
-                                <li>
-                                    <a class="dropdown-item"
-                                       asp-area="Farmer"
-                                       asp-controller="FarmerAccount"
-                                       asp-action="Login">
-                                        Đăng nhập
-                                    </a>
-                                </li>
-                            }
-
-                            else
-
-                            {
-                                <li class="dropdown-header text-muted">Xin chào, @User.Identity.Name</li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li>
-                                    <form asp-area="Farmer"
-                                          asp-controller="FarmerAccount"
-                                          asp-action="Logout"
-                                          method="post">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item">Đăng xuất</button>
-                                    </form>
-                                </li>
-                            }
-                        </ul>
-
-                    </li>
-                </ul>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                🌾
             </div>
+            <div class="sidebar-brand-text">Farmer Portal</div>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link active"
+                   asp-area="Farmer"
+                   asp-controller="FarmerDashboard"
+                   asp-action="Index">
+                    <i class="fas fa-home sidebar-menu-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Farmer"
+                   asp-controller="KetQuaDuDoan"
+                   asp-action="Index">
+                    <i class="fas fa-chart-line sidebar-menu-icon"></i>
+                    <span>Dự đoán giá</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Farmer"
+                   asp-controller="ProductManagement"
+                   asp-action="Index">
+                    <i class="fas fa-box sidebar-menu-icon"></i>
+                    <span>Quản lý sản phẩm</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Farmer"
+                   asp-controller="OrdersManagement"
+                   asp-action="Index">
+                    <i class="fas fa-shopping-cart sidebar-menu-icon"></i>
+                    <span>Quản lý đơn hàng</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Topbar -->
+    <nav class="topbar">
+        <button class="topbar-toggle" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="topbar-search">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Tìm kiếm...">
+        </div>
+
+        <div class="dropdown">
+            <div class="topbar-user" data-bs-toggle="dropdown">
+                <img src="@(Url.Content("~/images/LogoInformation.jpg"))"
+                     alt="User"
+                     class="topbar-user-avatar">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="topbar-user-info">
+                        <div class="topbar-user-name">@User.Identity.Name</div>
+                        <div class="topbar-user-role">Farmer</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="topbar-user-info">
+                        <div class="topbar-user-name">Guest</div>
+                        <div class="topbar-user-role">Chưa đăng nhập</div>
+                    </div>
+                }
+                <i class="fas fa-chevron-down" style="font-size: 12px; color: #9ca3af;"></i>
+            </div>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                @if (!User.Identity.IsAuthenticated)
+                {
+                    <li>
+                        <a class="dropdown-item"
+                           asp-area="Farmer"
+                           asp-controller="FarmerAccount"
+                           asp-action="Login">
+                            <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="dropdown-header">Tài khoản</li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Hồ sơ</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Cài đặt</a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                        <form asp-area="Farmer"
+                              asp-controller="FarmerAccount"
+                              asp-action="Logout"
+                              method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                            </button>
+                        </form>
+                    </li>
+                }
+            </ul>
         </div>
     </nav>
 
-
-    <main class="container flex-fill py-4">
+    <!-- Main Content -->
+    <main class="main-content">
         @RenderBody()
     </main>
 
-    <footer class="bg-light text-center py-3 mt-auto">
-        Farmer Area © @DateTime.Now.Year
-    </footer>
-
-    <!-- jQuery (nếu cần Bootstrap plugins) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
-            crossorigin="anonymous"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- Bootstrap 5 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Chỗ dành cho script của view -->
+    <script>
+        // Toggle sidebar on mobile
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Active menu highlight
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.sidebar-menu-link').forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                document.querySelector('.sidebar-menu-link.active')?.classList.remove('active');
+                link.classList.add('active');
+            }
+        });
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

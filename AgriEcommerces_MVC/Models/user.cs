@@ -21,7 +21,11 @@ public partial class user
 
     public DateTime? createdat { get; set; }
 
-    public string? provider { get; set; } 
+    public string? provider { get; set; }
+
+    public string? shop_name { get; set; }
+
+    public string? shop_avatar { get; set; }
     public virtual ICollection<order> orders { get; set; } = new List<order>();
 
     public virtual ICollection<product> products { get; set; } = new List<product>();

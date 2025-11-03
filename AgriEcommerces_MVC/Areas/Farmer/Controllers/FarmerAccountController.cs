@@ -41,8 +41,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 return View(vm);
             }
 
-            // Nếu bạn đang lưu hash, thay thế bằng VerifyPasswordHash(...)
-            if (user.passwordhash != vm.password)
+            if (user.passwordhash == null || !BCrypt.Net.BCrypt.Verify(vm.password, user.passwordhash))
             {
                 ModelState.AddModelError("", "Mật khẩu không đúng.");
                 return View(vm);
