@@ -1,29 +1,29 @@
 ﻿using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Models;
-using AgriEcommerces_MVC.Models.ApiModels; // Model cho API (ProvinceApiModel)
+using AgriEcommerces_MVC.Models.ApiModels;
 using AgriEcommerces_MVC.Models.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Json; // Cần cho GetFromJsonAsync
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace AgriEcommerces_MVC.Controllers
 {
-    [Authorize] // Yêu cầu người dùng phải đăng nhập
+    [Authorize]
     public class CustomerAddressController : Controller
     {
         private readonly ApplicationDbContext _db;
-        private readonly IHttpClientFactory _httpClientFactory; // Tiêm HttpClientFactory
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        // Cập nhật Constructor
         public CustomerAddressController(ApplicationDbContext db, IHttpClientFactory httpClientFactory)
         {
             _db = db;
-            _httpClientFactory = httpClientFactory; // Gán
+            _httpClientFactory = httpClientFactory;
         }
 
-        // Hàm trợ giúp để lấy ID người dùng hiện tại
+        // Lấy ID người dùng hiện tại
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -31,10 +31,10 @@ namespace AgriEcommerces_MVC.Controllers
             {
                 return userId;
             }
-            return -1; // Sẽ bị chặn bởi [Authorize]
+            return -1; // Bị chặn bởi [Authorize]
         }
 
-        // Hàm trợ giúp: Hủy tất cả mặc định CŨ
+        // Xóa tất cả địa chỉ mặc định cũ
         private async Task ClearAllDefaults(int userId)
         {
             await _db.customer_addresses
@@ -42,29 +42,35 @@ namespace AgriEcommerces_MVC.Controllers
                 .ExecuteUpdateAsync(s => s.SetProperty(p => p.is_default, false));
         }
 
-        // HÀM MỚI: Lấy danh sách tỉnh ban đầu từ API
-        // (Chỉ gọi 1 lần khi tải trang Create/Edit)
         private async Task<List<ProvinceApiModel>> GetProvincesListAsync()
         {
             var httpClient = _httpClientFactory.CreateClient();
+
+            // QUAN TRỌNG: Thiết lập BaseAddress
+            httpClient.BaseAddress = new Uri($"{Request.Scheme}://{Request.Host}");
+
             try
             {
-                // Gọi thẳng API công cộng
-                // (Giả định ProvincesApiController của bạn dùng cache cho việc này,
-                // nhưng gọi thẳng từ đây cũng không sao vì chỉ là danh sách tỉnh)
-                var provinces = await httpClient
-                    .GetFromJsonAsync<List<ProvinceApiModel>>("https://provinces.open-api.vn/api/p/");
+                var response = await httpClient.GetAsync("/api/Provinces");
 
-                return provinces ?? new List<ProvinceApiModel>();
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<List<ProvinceApiModel>>(jsonString, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new List<ProvinceApiModel>();
+                }
+
+                Console.WriteLine($"Lỗi API nội bộ: {response.StatusCode}");
+                return new List<ProvinceApiModel>();
             }
             catch (Exception ex)
             {
-                // Log lỗi nếu cần
-                Console.WriteLine($"Lỗi khi gọi API tỉnh thành: {ex.Message}");
-                return new List<ProvinceApiModel>(); // Trả về list rỗng nếu lỗi
+                Console.WriteLine($"Lỗi gọi API tỉnh thành: {ex.Message}");
+                return new List<ProvinceApiModel>();
             }
         }
-
 
         // GET: /CustomerAddress
         public async Task<IActionResult> Index()
@@ -72,7 +78,7 @@ namespace AgriEcommerces_MVC.Controllers
             int userId = GetCurrentUserId();
             var addresses = await _db.customer_addresses
                 .Where(a => a.user_id == userId)
-                .OrderByDescending(a => a.is_default) // Luôn ưu tiên mặc định lên đầu
+                .OrderByDescending(a => a.is_default)
                 .ToListAsync();
 
             return View(addresses);
@@ -82,10 +88,7 @@ namespace AgriEcommerces_MVC.Controllers
         public async Task<IActionResult> Create()
         {
             var vm = new AddressViewModel();
-
-            // Lấy danh sách tỉnh từ API và gửi sang View
             ViewBag.Provinces = await GetProvincesListAsync();
-
             return View(vm);
         }
 
@@ -96,14 +99,12 @@ namespace AgriEcommerces_MVC.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Nếu model không hợp lệ, phải tải lại danh sách tỉnh cho View
                 ViewBag.Provinces = await GetProvincesListAsync();
                 return View(vm);
             }
 
             int userId = GetCurrentUserId();
 
-            // Logic xử lý "Mặc định"
             if (vm.IsDefault)
             {
                 await ClearAllDefaults(userId);
@@ -115,7 +116,6 @@ namespace AgriEcommerces_MVC.Controllers
                 recipient_name = vm.RecipientName,
                 phone_number = vm.PhoneNumber,
                 full_address = vm.FullAddress,
-                // Dữ liệu này là string TÊN, được điền bởi JavaScript
                 province_city = vm.ProvinceCity,
                 district = vm.District,
                 ward_commune = vm.WardCommune,
@@ -155,9 +155,7 @@ namespace AgriEcommerces_MVC.Controllers
                 IsDefault = address.is_default
             };
 
-            // Lấy danh sách tỉnh từ API và gửi sang View
             ViewBag.Provinces = await GetProvincesListAsync();
-
             return View(vm);
         }
 
@@ -173,7 +171,6 @@ namespace AgriEcommerces_MVC.Controllers
 
             if (!ModelState.IsValid)
             {
-                // Nếu model không hợp lệ, phải tải lại danh sách tỉnh cho View
                 ViewBag.Provinces = await GetProvincesListAsync();
                 return View(vm);
             }
@@ -187,13 +184,11 @@ namespace AgriEcommerces_MVC.Controllers
                 return NotFound();
             }
 
-            // Logic xử lý "Mặc định"
             if (vm.IsDefault)
             {
                 await ClearAllDefaults(userId);
             }
 
-            // Cập nhật thông tin
             addressInDb.recipient_name = vm.RecipientName;
             addressInDb.phone_number = vm.PhoneNumber;
             addressInDb.full_address = vm.FullAddress;
@@ -221,10 +216,8 @@ namespace AgriEcommerces_MVC.Controllers
             {
                 try
                 {
-                    // 1. Hủy tất cả mặc định cũ
                     await ClearAllDefaults(userId);
 
-                    // 2. Đặt mặc định mới
                     var addressToSet = await _db.customer_addresses
                                         .FirstOrDefaultAsync(a => a.id == id && a.user_id == userId);
 

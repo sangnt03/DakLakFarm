@@ -12,14 +12,14 @@
         </a>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-    }
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+        }
 
     <div class="list-group">
         @if (!Model.Any())
@@ -31,7 +31,7 @@
         {
             <div class="list-group-item list-group-item-action flex-column align-items-start mb-3 border rounded shadow-sm">
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">
+                    <h5 class="mb-1"> Tên người nhận: 
                         @item.recipient_name
                         @if (item.is_default)
                         {
@@ -51,9 +51,9 @@
                         </button>
                     </div>
                 </div>
-                <p class="mb-1">@item.phone_number</p>
-                <p class="mb-1">@item.full_address</p>
-                <p class="mb-0 text-muted">@item.ward_commune, @item.district, @item.province_city</p>
+                <p class="mb-1">Số điện thoại: @item.phone_number</p>
+                <p class="mb-0">Địa chỉ: @item.full_address, @item.ward_commune, @item.district, @item.province_city</p>
+                
 
                 @if (!item.is_default)
                 {
