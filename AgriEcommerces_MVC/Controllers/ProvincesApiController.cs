@@ -1,175 +1,122 @@
 ﻿using AgriEcommerces_MVC.Models.ApiModels;
+using Microsoft.AspNetCore.Hosting; // Thêm cho IWebHostEnvironment
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AgriEcommerces_MVC.Controllers
 {
-    // FIX: Đổi route thành "Provinces" thay vì "[controller]"
     [Route("api/Provinces")]
     [ApiController]
     public class ProvincesApiController : ControllerBase
     {
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMemoryCache _memoryCache;
-        private const string ApiBaseUrl = "https://provinces.open-api.vn/api/";
+        private readonly IWebHostEnvironment _environment; // Thêm để lấy path file
+        private const string CacheKey = "ProvincesFullData"; // Cache key cho toàn bộ dữ liệu
 
-        public ProvincesApiController(IHttpClientFactory httpClientFactory, IMemoryCache memoryCache)
+        public ProvincesApiController(IMemoryCache memoryCache, IWebHostEnvironment environment)
         {
-            _httpClientFactory = httpClientFactory;
             _memoryCache = memoryCache;
+            _environment = environment;
         }
 
-        // GET: /api/Provinces
-        [HttpGet]
-        public async Task<IActionResult> GetProvinces()
+        // Phương thức private để load và cache dữ liệu từ JSON file
+        private List<ProvinceApiModel> GetCachedProvinces()
         {
-            const string cacheKey = "ProvincesList";
-
-            // 1. Thử lấy từ Cache
-            if (_memoryCache.TryGetValue(cacheKey, out List<ProvinceApiModel> provinces))
+            if (_memoryCache.TryGetValue(CacheKey, out List<ProvinceApiModel> provinces))
             {
-                return Ok(provinces);
+                return provinces;
             }
-
-            // 2. Nếu không có cache, gọi API
-            var httpClient = _httpClientFactory.CreateClient();
 
             try
             {
-                var response = await httpClient.GetAsync($"{ApiBaseUrl}p/");
+                // Path đến file (điều chỉnh nếu cần)
+                var filePath = Path.Combine(_environment.WebRootPath, "data", "provinces.json");
 
-                if (response.IsSuccessStatusCode)
+                if (!System.IO.File.Exists(filePath))
                 {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    provinces = JsonSerializer.Deserialize<List<ProvinceApiModel>>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    // 3. Lưu vào Cache (1 ngày)
-                    var cacheOptions = new MemoryCacheEntryOptions()
-                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                    _memoryCache.Set(cacheKey, provinces, cacheOptions);
-
-                    return Ok(provinces);
+                    throw new FileNotFoundException($"File provinces.json không tồn tại tại {filePath}");
                 }
 
-                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API tỉnh thành.");
+                var jsonString = System.IO.File.ReadAllText(filePath);
+                provinces = JsonSerializer.Deserialize<List<ProvinceApiModel>>(jsonString, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                // Cache vĩnh viễn vì dữ liệu tĩnh (hoặc set expiration nếu cần)
+                var cacheOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromDays(365)); // Cache 1 năm
+                _memoryCache.Set(CacheKey, provinces, cacheOptions);
+
+                return provinces ?? new List<ProvinceApiModel>();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
+                // Log lỗi nếu cần (sử dụng ILogger nếu có)
+                Console.WriteLine($"Lỗi load provinces.json: {ex.Message}");
+                return new List<ProvinceApiModel>();
             }
+        }
+
+        // GET: /api/Provinces (chỉ return list provinces: name và code)
+        [HttpGet]
+        public IActionResult GetProvinces()
+        {
+            var fullData = GetCachedProvinces();
+            if (fullData.Count == 0)
+            {
+                return StatusCode(500, "Lỗi load dữ liệu tỉnh thành từ file.");
+            }
+
+            // Chỉ return name và code để khớp code cũ
+            var provinces = fullData.Select(p => new { p.Name, p.Code }).ToList();
+            return Ok(provinces);
         }
 
         // GET: /api/Provinces/GetDistricts?provinceCode=1
         [HttpGet("GetDistricts")]
-        public async Task<IActionResult> GetDistricts([FromQuery] int provinceCode)
+        public IActionResult GetDistricts([FromQuery] int provinceCode)
         {
             if (provinceCode <= 0)
             {
                 return BadRequest("Mã tỉnh không hợp lệ");
             }
 
-            string cacheKey = $"Districts_{provinceCode}";
+            var fullData = GetCachedProvinces();
+            var province = fullData.FirstOrDefault(p => p.Code == provinceCode);
 
-            if (_memoryCache.TryGetValue(cacheKey, out List<DistrictApiModel> districts))
+            if (province == null || province.Districts == null || province.Districts.Count == 0)
             {
-                return Ok(districts);
+                return NotFound("Không tìm thấy quận/huyện cho tỉnh này.");
             }
 
-            var httpClient = _httpClientFactory.CreateClient();
-
-            try
-            {
-                var response = await httpClient.GetAsync($"{ApiBaseUrl}p/{provinceCode}?depth=2");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    var provinceData = JsonSerializer.Deserialize<ProvinceWithDistricts>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    districts = provinceData?.Districts ?? new List<DistrictApiModel>();
-
-                    var cacheOptions = new MemoryCacheEntryOptions()
-                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                    _memoryCache.Set(cacheKey, districts, cacheOptions);
-
-                    return Ok(districts);
-                }
-
-                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API quận huyện.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            // Return districts: name và code
+            var districts = province.Districts.Select(d => new { d.Name, d.Code }).ToList();
+            return Ok(districts);
         }
 
         // GET: /api/Provinces/GetWards?districtCode=1
         [HttpGet("GetWards")]
-        public async Task<IActionResult> GetWards([FromQuery] int districtCode)
+        public IActionResult GetWards([FromQuery] int districtCode)
         {
             if (districtCode <= 0)
             {
                 return BadRequest("Mã quận không hợp lệ");
             }
 
-            string cacheKey = $"Wards_{districtCode}";
+            var fullData = GetCachedProvinces();
+            var district = fullData.SelectMany(p => p.Districts).FirstOrDefault(d => d.Code == districtCode);
 
-            if (_memoryCache.TryGetValue(cacheKey, out List<WardApiModel> wards))
+            if (district == null || district.Wards == null || district.Wards.Count == 0)
             {
-                return Ok(wards);
+                return NotFound("Không tìm thấy phường/xã cho quận này.");
             }
 
-            var httpClient = _httpClientFactory.CreateClient();
-
-            try
-            {
-                var response = await httpClient.GetAsync($"{ApiBaseUrl}d/{districtCode}?depth=2");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    var districtData = JsonSerializer.Deserialize<DistrictWithWards>(jsonString, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    wards = districtData?.Wards ?? new List<WardApiModel>();
-
-                    var cacheOptions = new MemoryCacheEntryOptions()
-                        .SetAbsoluteExpiration(TimeSpan.FromDays(1));
-                    _memoryCache.Set(cacheKey, wards, cacheOptions);
-
-                    return Ok(wards);
-                }
-
-                return StatusCode((int)response.StatusCode, "Lỗi khi gọi API phường xã.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
-        }
-
-        // Các class trợ giúp để Deserialize API
-        private class ProvinceWithDistricts
-        {
-            [JsonPropertyName("districts")]
-            public List<DistrictApiModel> Districts { get; set; }
-        }
-
-        private class DistrictWithWards
-        {
-            [JsonPropertyName("wards")]
-            public List<WardApiModel> Wards { get; set; }
+            // Return wards: name và code
+            var wards = district.Wards.Select(w => new { w.Name, w.Code }).ToList();
+            return Ok(wards);
         }
     }
 }
