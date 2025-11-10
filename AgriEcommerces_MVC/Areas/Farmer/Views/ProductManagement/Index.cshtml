@@ -3,326 +3,266 @@
 }
 
 <style>
-    /* Mint & Lemon Theme - Tươi mát & Năng động */
+    /* --- Clean White, Green & Yellow Theme --- */
     :root {
-        --mint-primary: #10b981;
-        --mint-light: #6ee7b7;
-        --mint-lighter: #a7f3d0;
-        --mint-lightest: #d1fae5;
-        --lemon-primary: #fbbf24;
-        --lemon-light: #fcd34d;
-        --lemon-lighter: #fde68a;
-        --lemon-lightest: #fef3c7;
-        --gradient-fresh: linear-gradient(135deg, var(--mint-primary) 0%, var(--lemon-primary) 100%);
-        --gradient-soft: linear-gradient(135deg, var(--mint-lightest) 0%, var(--lemon-lightest) 100%);
-        --shadow-fresh: 0 10px 25px rgba(16, 185, 129, 0.15);
-        --shadow-hover: 0 15px 35px rgba(16, 185, 129, 0.25);
+        --primary-green: #10b981;
+        --primary-green-dark: #059669;
+        --light-green: #d1fae5;
+        --accent-yellow: #fbbf24;
+        --accent-yellow-dark: #f59e0b;
+        --light-yellow: #fef3c7;
+        --white: #ffffff;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
     }
 
     body {
-        background: linear-gradient(135deg, #f0fdfa 0%, #fffbeb 50%, #f0fdf4 100%);
-        min-height: 100vh;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--gray-50);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: var(--gray-700);
     }
 
     /* Header styling */
-    h2 {
-        background: var(--gradient-fresh);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-        font-size: 2.5rem;
+    .page-title {
+        color: var(--primary-green-dark);
+        font-weight: 800;
+        font-size: 1.875rem;
         margin-bottom: 2rem;
         text-align: center;
-        position: relative;
-    }
-
-    h2::after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80px;
-        height: 4px;
-        background: var(--gradient-fresh);
-        border-radius: 2px;
+        letter-spacing: -0.025em;
     }
 
     /* Main container */
-    .container-fluid {
+    .main-container {
         padding: 2rem;
         max-width: 1400px;
         margin: 0 auto;
     }
 
-    /* Create button */
-    #btnCreate {
-        background: var(--gradient-fresh);
+    /* Button styling */
+    .btn-create-new {
+        background-color: var(--primary-green);
         border: none;
-        padding: 12px 24px;
-        border-radius: 25px;
-        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        color: var(--white);
         font-weight: 600;
-        font-size: 1rem;
-        box-shadow: var(--shadow-fresh);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
     }
 
-    #btnCreate::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
+        .btn-create-new:hover {
+            background-color: var(--primary-green-dark);
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
+            color: var(--white);
+        }
+
+    /* Table card & responsive wrapper */
+    .table-card {
+        background: var(--white);
+        border-radius: 1rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--gray-200);
+        overflow: hidden; /* Đảm bảo bo góc hoạt động */
+    }
+
+    .table-responsive-wrapper {
         width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Cuộn mượt trên iOS */
     }
 
-    #btnCreate:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    #btnCreate:hover::before {
-        left: 100%;
-    }
-
-    /* Table container */
-    .table-container {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        box-shadow: var(--shadow-fresh);
-        overflow: hidden;
-        border: 1px solid rgba(16, 185, 129, 0.1);
-    }
-
-    /* Table styling */
-    .table {
+    /* Custom table styling */
+    .custom-table {
+        width: 100%;
         margin-bottom: 0;
-        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        white-space: nowrap; /* Ngăn xuống dòng để giữ layout đẹp trên desktop */
     }
 
-    .table thead th {
-        background: #F7FFF7
-        color: #92400e;
-        border: none;
-        padding: 1rem 0.75rem;
+        .custom-table th {
+            background-color: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .custom-table td {
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .custom-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: var(--gray-50);
+        }
+
+    /* Column specifics */
+    .col-thumb img {
+        width: 48px;
+        height: 48px;
+        border-radius: 0.5rem;
+        object-fit: cover;
+        border: 1px solid var(--gray-200);
+    }
+
+    .product-name {
         font-weight: 600;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        position: relative;
+        color: var(--gray-700);
+        white-space: normal; /* Cho phép tên sản phẩm xuống dòng nếu quá dài */
+        max-width: 200px;
     }
 
-    .table thead th::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-                background: #a7f3d0;
-    }
-
-    .table tbody tr {
-        transition: all 0.3s ease;
-        border: none;
-    }
-
-    .table tbody tr:nth-child(even) {
-        background: var(--gradient-soft);
-    }
-
-    .table tbody tr:nth-child(odd) {
-        background: rgba(255, 255, 255, 0.7);
-    }
-
-    .table tbody tr:hover {
-        background: linear-gradient(135deg, var(--mint-lighter) 0%, var(--lemon-lighter) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
-    }
-
-    .table tbody td {
-        padding: 1rem 0.75rem;
-        border: none;
-        vertical-align: middle;
-        position: relative;
-    }
-
-    /* Image styling */
-    .table tbody td img {
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .table tbody td img:hover {
-        transform: scale(1.1);
-    }
-
-    /* Price styling */
-    .table tbody td:nth-child(4) {
+    .category-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: var(--light-green);
+        color: var(--primary-green-dark);
         font-weight: 600;
-        color: var(--mint-primary);
-        font-size: 1.1rem;
+        font-size: 0.75rem;
+        border-radius: 9999px;
     }
 
-    /* Description column control */
-    #productTableBody td:nth-child(7) {
-        max-width: 0;
+    .price-text {
+        font-weight: 600;
+        color: var(--primary-green-dark);
+    }
+
+    .description-text {
+        max-width: 200px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        color: #6b7280;
-        font-style: italic;
     }
 
-    /* Action buttons */
-    .btn-edit {
-        background: linear-gradient(135deg, var(--lemon-primary) 0%, var(--lemon-light) 100%);
+    /* Action buttons group */
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
         border: none;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        transition: all 0.2s;
+        color: var(--white);
+        box-shadow: var(--shadow-sm);
     }
 
-    .btn-edit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
-        background: linear-gradient(135deg, var(--lemon-light) 0%, var(--lemon-primary) 100%);
+    .btn-edit {
+        background-color: var(--accent-yellow);
     }
+
+        .btn-edit:hover {
+            background-color: var(--accent-yellow-dark);
+            transform: translateY(-1px);
+        }
 
     .btn-delete {
-        background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
-        border: none;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        background-color: #ef4444;
     }
 
-    .btn-delete:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-        background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-    }
+        .btn-delete:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
 
-    /* Empty state */
-    .text-center {
-        color: #6b7280;
-        font-style: italic;
-        padding: 3rem !important;
-        background: var(--gradient-soft);
-    }
-
-    /* Quantity and unit styling */
-    .table tbody td:nth-child(5),
-    .table tbody td:nth-child(6) {
-        font-weight: 600;
-        color: var(--mint-primary);
-    }
-
-    /* Date styling */
-    .table tbody td:nth-child(8) {
-        color: #6b7280;
-        font-size: 0.9rem;
-    }
-
-    /* Responsive enhancements */
-    @@media (max-width: 768px) {
-        .container-fluid {
+    /* --- Responsive Media Queries --- */
+    @@media (max-width: 992px) {
+        .main-container {
             padding: 1rem;
         }
-        
-        h2 {
-            font-size: 2rem;
+
+        .page-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
         }
-        
-        .table-container {
-            border-radius: 15px;
+        /* Ẩn bớt cột trên tablet/mobile */
+        .col-desc, .col-date {
+            display: none;
         }
-        
-        .table thead th {
-            padding: 0.75rem 0.5rem;
-            font-size: 0.8rem;
-        }
-        
-        .table tbody td {
-            padding: 0.75rem 0.5rem;
+
+        .product-name {
+            max-width: 150px;
         }
     }
 
-    /* Loading animation for future use */
-    @@keyframes shimmer {
-        0% {
-            background-position: -1000px 0;
+    @@media (max-width: 576px) {
+        .btn-create-new span {
+            display: none; /* Ẩn chữ trên nút thêm mới khi màn hình quá nhỏ */
         }
-        100% {
-            background-position: 1000px 0;
+
+        .btn-create-new {
+            padding: 0.5rem;
         }
-    }
 
-    /* Category badge styling */
-    .table tbody td:nth-child(3) {
-        font-weight: 500;
-        color: var(--mint-primary);
-        background: var(--mint-lightest);
-        border-radius: 12px;
-        text-align: center;
-        margin: 4px;
-        padding: 4px 8px !important;
-    }
+        .col-unit { /* Ẩn thêm cột đơn vị trên mobile nhỏ */
+            display: none;
+        }
 
-    /* Fresh accent lines */
-    .table-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--gradient-fresh);
-        z-index: 1;
+        .custom-table th, .custom-table td {
+            padding: 0.75rem 0.5rem; /* Giảm padding */
+        }
     }
 </style>
 
-<div class="container-fluid">
-    <h2>@ViewData["Title"]</h2>
-    
-    <button id="btnCreate" class="btn mb-3">
-        <i class="fas fa-plus me-2"></i>Thêm sản phẩm
-    </button>
+<div class="main-container">
+    <h2 class="page-title">@ViewData["Title"]</h2>
 
-    <div class="table-container position-relative">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th style="width: 10%;">Ảnh</th>
-                    <th style="width: 15%;">Tên</th>
-                    <th style="width: 10%;">Danh mục</th>
-                    <th style="width: 10%;">Giá</th>
-                    <th style="width: 5%;">SL</th>
-                    <th style="width: 8%;">Đơn vị</th>
-                    <th style="width: 30%;">Mô tả</th>
-                    <th style="width: 15%;">Ngày tạo</th>
-                    <th style="width: 12%;">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="productTableBody">
-                <!-- JS sẽ render -->     
-            </tbody>
-        </table>
+    <div class="d-flex justify-content-end mb-4">
+        <button id="btnCreate" class="btn-create-new">
+            <i class="fas fa-plus"></i>
+            <span>Thêm sản phẩm mới</span>
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive-wrapper">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th class="text-center">Danh mục</th>
+                        <th class="text-end">Giá bán</th>
+                        <th class="text-center">Tồn kho</th>
+                        <th class="text-center col-unit">Đơn vị</th>
+                        <th class="col-desc">Mô tả</th>
+                        <th class="col-date">Ngày tạo</th>
+                        <th class="text-end" style="min-width: 100px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -334,230 +274,108 @@
             let categories = [];
             let editingProductId = null;
 
-            // khởi tạo modal instance khi cần
-            function getModal() {
-                const modalEl = document.getElementById('productModal');
-                return bootstrap.Modal.getInstance(modalEl)
-                    || new bootstrap.Modal(modalEl);
-            }
+            const getModal = () => bootstrap.Modal.getOrCreateInstance(document.getElementById('productModal'));
+            const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
-            // Load danh mục
             function loadCategories() {
-                $.get('/api/farmer/categories')
-                    .done(function (data) {
-                        categories = data;
-                        populateCategorySelect();
-                    })
-                    .fail(function (xhr) {
-                        console.error('Không thể tải danh mục:', xhr);
-                        alert('Không thể tải danh mục');
-                    });
-            }
-
-            // Điền select
-            function populateCategorySelect() {
-                const select = $('#categoryId');
-                select.empty().append('<option value="">-- Chọn danh mục --</option>');
-                categories.forEach(cat => {
-                    select.append(
-                        `<option value="${cat.categoryId}">${cat.categoryName}</option>`
-                    );
+                $.get('/api/farmer/categories').done(data => {
+                    categories = data;
+                    const $select = $('#categoryId').empty().append('<option value="">-- Chọn danh mục --</option>');
+                    categories.forEach(cat => $select.append(`<option value="${cat.categoryId}">${cat.categoryName}</option>`));
                 });
             }
 
-            // Load & render sản phẩm
             function loadProducts() {
+                $('#productTableBody').html('<tr><td colspan="9" class="text-center py-4 text-muted">Đang tải dữ liệu...</td></tr>');
                 $.get('/api/farmer/products')
                     .done(renderProductTable)
-                    .fail(xhr => {
-                        console.error('Lỗi tải sản phẩm:', xhr);
-                        alert('Không thể tải sản phẩm');
-                    });
+                    .fail(() => $('#productTableBody').html('<tr><td colspan="9" class="text-center py-4 text-danger">Lỗi tải dữ liệu.</td></tr>'));
             }
 
-            // Vẽ bảng
             function renderProductTable(products) {
-                const tbody = $('#productTableBody').empty();
-                if (!products.length) {
-                    tbody.append('<tr><td colspan="9" class="text-center">Chưa có sản phẩm</td></tr>');
+                const $tbody = $('#productTableBody').empty();
+                if (!products?.length) {
+                    $tbody.append('<tr><td colspan="9" class="text-center py-5 text-muted">Chưa có sản phẩm nào.</td></tr>');
                     return;
                 }
 
                 products.forEach(p => {
-                    const imgHtml = p.imageUrls && p.imageUrls.length
-                        ? `<img src="${p.imageUrls[0]}" style="width:50px;height:50px;object-fit:cover" class="rounded">`
-                        : '<span class="text-muted">Không có ảnh</span>';
+                    const imgHtml = p.imageUrls?.length
+                        ? `<div class="col-thumb"><img src="${p.imageUrls[0]}" alt="${p.productName}"></div>`
+                        : '<div class="col-thumb"><div class="bg-light rounded d-flex align-items-center justify-content-center border" style="width:48px;height:48px"><i class="fas fa-image text-muted"></i></div></div>';
 
-                    const $row = $(`
+                    $tbody.append(`
                         <tr>
                             <td>${imgHtml}</td>
-                            <td>${p.productName}</td>
-                            <td>${p.categoryName}</td>
-                            <td>${new Intl.NumberFormat('vi-VN').format(p.price)}</td>
-                            <td>${p.quantityAvailable}</td>
-                            <td>${p.unit || '-'}</td>
-                            <td title="${(p.description || '')}">
-                                ${(p.description || '').substring(0, 50)}${(p.description || '').length > 50 ? '…' : ''}
-                            </td>
-                            <td>${new Date(p.createdAt).toLocaleDateString('vi-VN')}</td>
+                            <td><div class="product-name" title="${p.productName}">${p.productName}</div></td>
+                            <td class="text-center"><span class="category-badge">${p.categoryName}</span></td>
+                            <td class="text-end"><span class="price-text">${formatCurrency(p.price)}</span></td>
+                            <td class="text-center">${p.quantityAvailable}</td>
+                            <td class="text-center text-muted col-unit">${p.unit || '-'}</td>
+                            <td class="col-desc"><div class="description-text" title="${p.description || ''}">${p.description || ''}</div></td>
+                            <td class="text-muted small col-date">${new Date(p.createdAt).toLocaleDateString('vi-VN')}</td>
                             <td>
-                                <button class="btn btn-sm btn-warning btn-edit me-1" data-id="${p.productId}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger btn-delete" data-id="${p.productId}" data-name="${p.productName}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <div class="action-group">
+                                    <button class="action-btn btn-edit" data-id="${p.productId}" title="Sửa"><i class="fas fa-pen" style="font-size: 12px;"></i></button>
+                                    <button class="action-btn btn-delete" data-id="${p.productId}" data-name="${p.productName}" title="Xóa"><i class="fas fa-trash" style="font-size: 12px;"></i></button>
+                                </div>
                             </td>
                         </tr>
                     `);
-                    tbody.append($row);
                 });
             }
 
-            // Mở modal Create/Edit
-            function openModal(mode, product) {
+            function openModal(mode, product = null) {
                 editingProductId = mode === 'edit' ? product.productId : null;
-
-                // Reset form
-                const $form = $('#productForm')[0];
-                $form.reset();
-                populateCategorySelect();
+                $('#productForm')[0].reset();
+                $('#productModalLabel').text(mode === 'create' ? 'Thêm sản phẩm mới' : 'Cập nhật sản phẩm');
                 $('#currentImages').empty().toggle(mode === 'edit');
                 $('#productImages').prop('required', mode === 'create');
 
-                // Tiêu đề
-                $('#productModalLabel')
-                    .text(mode === 'create' ? 'Thêm sản phẩm mới' : 'Sửa sản phẩm');
-
-                if (mode === 'edit') {
-                    // điền giá trị
+                if (mode === 'edit' && product) {
                     $('#productName').val(product.productName);
                     $('#categoryId').val(product.categoryId);
                     $('#price').val(product.price);
                     $('#quantityAvailable').val(product.quantityAvailable);
-                    $('#unit').val(product.unit || '');
-                    $('#description').val(product.description || '');
-
-                    // hiển thị ảnh cũ
-                    const $cur = $('#currentImages').empty();
-                    (product.imageUrls || []).forEach(url => {
-                        $cur.append(`
-                            <img src="${url}"
-                                 style="width:80px;height:80px;object-fit:cover"
-                                 class="me-2 mb-2 border rounded">
-                        `);
+                    $('#unit').val(product.unit);
+                    $('#description').val(product.description);
+                    product.imageUrls?.forEach(url => {
+                        $('#currentImages').append(`<img src="${url}" class="rounded border me-2 mb-2" style="width: 80px; height: 80px; object-fit: cover;">`);
                     });
                 }
-
-                // show modal
                 getModal().show();
             }
 
-            // Tạo mới
-            function createProduct() {
-                const formData = new FormData($('#productForm')[0]);
-                $.ajax({
-                    url: '/api/farmer/products',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                })
-                    .done(res => {
-                        getModal().hide(); 
-                        loadProducts();
-                    })
-                    .fail(xhr => {
-                        console.error('Create error:', xhr);
-                        alert('Lỗi khi thêm sản phẩm');
-                    });
-            }
-
-            // Lấy dữ liệu để sửa
-            function editProduct(id) {
-                $.get(`/api/farmer/products/${id}`)
-                    .done(product => openModal('edit', product))
-                    .fail(xhr => {
-                        console.error('Edit load error:', xhr);
-                        alert('Không thể tải thông tin sản phẩm');
-                    });
-            }
-
-            // Cập nhật
-            function updateProduct() {
-                const formData = new FormData($('#productForm')[0]);
-                $.ajax({
-                    url: `/api/farmer/products/${editingProductId}`,
-                    type: 'PUT',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                })
-                    .done(res => {
-                        getModal().hide();
-                        // alert('Cập nhật thành công');
-                        loadProducts();
-                    })
-                    .fail(xhr => {
-                        console.error('Update error:', xhr);
-                        alert('Lỗi khi cập nhật sản phẩm');
-                    });
-            }
-
-            // Xóa
-            function deleteProduct(id, name) {
-                if (!confirm(`Xóa sản phẩm "${name}"?`)) return;
-                $.ajax({
-                    url: `/api/farmer/products/${id}`,
-                    type: 'DELETE'
-                })
-                    .done(res => {
-                        
-                        loadProducts();
-                    })
-                    .fail(xhr => {
-                        console.error('Delete error:', xhr);
-                        alert('Lỗi khi xóa sản phẩm');
-                    });
-            }
-
-            // Event binding
             $('#btnCreate').click(() => openModal('create'));
-            $('#productForm').submit(function (e) {
+            $('#productForm').on('submit', function(e) {
                 e.preventDefault();
-                editingProductId ? updateProduct() : createProduct();
-            });
-            $(document).on('click', '.btn-edit', function () {
-                editProduct($(this).data('id'));
-            });
-            $(document).on('click', '.btn-delete', function () {
-                deleteProduct($(this).data('id'), $(this).data('name'));
+                const $btn = $(this).find('button[type="submit"]').prop('disabled', true);
+                const originalText = $btn.html();
+                $btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...');
+
+                $.ajax({
+                    url: editingProductId ? `/api/farmer/products/${editingProductId}` : '/api/farmer/products',
+                    type: editingProductId ? 'PUT' : 'POST',
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false
+                }).done(() => { getModal().hide(); loadProducts(); })
+                  .fail(xhr => alert('Lỗi: ' + (xhr.responseJSON?.message || xhr.statusText)))
+                  .always(() => $btn.prop('disabled', false).html(originalText));
             });
 
-            // Kick off
+            $(document).on('click', '.btn-edit', function() {
+                $.get(`/api/farmer/products/${$(this).data('id')}`).done(p => openModal('edit', p));
+            });
+
+            $(document).on('click', '.btn-delete', function() {
+                if (confirm(`Xóa sản phẩm "${$(this).data('name')}"?`)) {
+                    $.ajax({ url: `/api/farmer/products/${$(this).data('id')}`, type: 'DELETE' }).done(loadProducts);
+                }
+            });
+
             loadCategories();
             loadProducts();
-
-            // Đổi tên hàm showForm thành openProductForm
-            window.openProductForm = function (mode, id) {
-                if (mode === 'create') {
-                    openModal('create');
-                } else {
-                    editProduct(id);
-                }
-            };
-
-            // Đổi tên hàm del thành deleteProductItem
-            window.deleteProductItem = function (id) {
-                const name = document
-                    .querySelector(`button.btn-delete[data-id="${id}"]`)
-                    ?.getAttribute('data-name') || '';
-                deleteProduct(id, name);
-            };
-
-            // Thêm log để kiểm tra
-            console.log('farmer-product.js loaded, openProductForm defined:', typeof window.openProductForm);
-            console.log('farmer-product.js loaded, deleteProductItem defined:', typeof window.deleteProductItem);
         });
     </script>
 }

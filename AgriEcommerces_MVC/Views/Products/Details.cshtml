@@ -4,26 +4,306 @@
     ViewData["Title"] = "Chi tiết sản phẩm";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var imgRaw = Model.productimages.FirstOrDefault()?.imageurl;
-    var thumb = !string.IsNullOrEmpty(imgRaw)
-        ? Url.Content(imgRaw)
-        : Url.Content("~/images/products/banana.png");
+    // Lấy danh sách URL ảnh từ Model. Nếu không có ảnh nào, dùng ảnh mặc định.
+    var images = Model.productimages?.Select(pi => pi.imageurl).ToList() ?? new List<string>();
+    if (!images.Any())
+    {
+        images.Add("~/images/products/noimage.png"); // Đảm bảo có ảnh mặc định hợp lệ
+    }
+    // Ảnh đầu tiên sẽ là ảnh hiển thị chính ban đầu
+    var mainImage = Url.Content(images.First());
 }
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+@section Styles {
+    <style>
+        /* --- CSS GỐC CỦA BẠN (Đã được giữ nguyên hoặc khôi phục) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        h2.mb-4 {
+            color: #333;
+            font-weight: 700;
+        }
+
+        h5.text-success {
+            font-weight: 600;
+            color: #28a745 !important;
+        }
+
+        .quantity-wrapper {
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+        }
+
+            .quantity-wrapper .btn-outline-secondary {
+                color: #6c757d;
+                border-color: #6c757d;
+                padding: .25rem .75rem;
+            }
+
+                .quantity-wrapper .btn-outline-secondary:hover {
+                    background-color: #6c757d;
+                    color: #fff;
+                }
+
+            .quantity-wrapper .input-number {
+                border-left: 1px solid #dee2e6;
+                border-right: 1px solid #dee2e6;
+                padding: .5rem 0;
+                background-color: #fff;
+                width: 60px;
+                box-shadow: none;
+            }
+
+        .add-to-cart-btn {
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+            .add-to-cart-btn:hover {
+                background-color: #0056b3;
+                border-color: #0056b3;
+            }
+
+        .btn-outline-secondary {
+            color: #6c757d;
+            border-color: #6c757d;
+        }
+
+            .btn-outline-secondary:hover {
+                background-color: #6c757d;
+                color: #fff;
+            }
+
+        /* --- STYLES MỚI CHO GALLERY ẢNH (SHOPEE-LIKE) --- */
+        .product-gallery {
+            position: relative;
+        }
+
+        .main-image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* Tạo khung vuông tỉ lệ 1:1 */
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+
+            .main-image-container img {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain; /* Giữ tỉ lệ ảnh, không bị méo */
+                transition: opacity 0.2s ease-in-out;
+            }
+
+        .thumbnail-container {
+            display: flex;
+            margin: 0 -5px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 5px;
+        }
+
+            .thumbnail-container::-webkit-scrollbar {
+                display: none;
+            }
+
+        .thumbnail-item {
+            flex: 0 0 20%; /* Hiển thị 5 ảnh trên 1 hàng */
+            max-width: 20%;
+            padding: 0 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .thumbnail-inner {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* Khung vuông 1:1 cho thumbnail */
+            border: 2px solid transparent;
+            border-radius: .25rem;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+
+            .thumbnail-inner img {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .thumbnail-item:hover,
+        .thumbnail-item.active {
+            opacity: 1;
+        }
+
+            .thumbnail-item:hover .thumbnail-inner,
+            .thumbnail-item.active .thumbnail-inner {
+                border-color: #ee4d2d; /* Màu viền cam đặc trưng Shopee */
+            }
+
+        /* --- REVIEWS SECTION (GIỮ NGUYÊN DESIGN CŨ) --- */
+        .reviews-section {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .section-title {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .no-reviews-container {
+            text-align: center;
+            padding: 40px;
+            border: 1px dashed #ced4da;
+            border-radius: .25rem;
+            background-color: #f8f9fa;
+            margin-top: 20px;
+        }
+
+        .no-reviews-content i {
+            color: #adb5bd;
+        }
+
+        .review-card {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+            .review-card:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6c757d;
+            margin-right: 10px;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+
+        .review-date {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .rating-section {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .star-rating .fas.fa-star {
+            color: #ffc107;
+        }
+
+        .star-rating .far.fa-star {
+            color: #e0e0e0;
+        }
+
+        .rating-text {
+            font-weight: 600;
+            color: #333;
+            margin-left: 5px;
+        }
+
+        .comment-text {
+            color: #555;
+            line-height: 1.6;
+        }
+
+            .comment-text.no-comment {
+                font-style: italic;
+                color: #aaa;
+            }
+
+        .review-actions .action-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+
+            .review-actions .action-btn:hover {
+                background-color: #f0f0f0;
+                color: #333;
+            }
+    </style>
+}
+
 @if (TempData["Success"] != null)
 {
     <script>
-        var message = "Đánh giá của bạn đã được gửi thành công!";
-        alert(message);
+        alert("Đánh giá của bạn đã được gửi thành công!");
     </script>
 }
 
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-6">
-            <img src="@thumb" class="img-fluid rounded" alt="@Model.productname">
+            <div class="product-gallery">
+                <div class="main-image-container">
+                    <img id="mainImage" src="@mainImage" alt="@Model.productname">
+                </div>
+
+                @if (images.Count > 1)
+                {
+                    <div class="thumbnail-container">
+                        @for (int i = 0; i < images.Count; i++)
+                        {
+                            <div class="thumbnail-item @(i == 0 ? "active" : "")" data-img-url="@Url.Content(images[i])">
+                                <div class="thumbnail-inner">
+                                    <img src="@Url.Content(images[i])" alt="Thumbnail @(i + 1)">
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
         <div class="col-md-6">
             <h2 class="mb-4">@Model.productname</h2>
@@ -52,19 +332,18 @@
         </div>
     </div>
 
-    <!-- Phần hiển thị ĐÁNH GIÁ (Reviews) -->
     <div class="row mt-5">
         <div class="col-12">
             <div class="reviews-section">
-                <div class="section-header mb-4">
-                    <h3 class="section-title">
+                <div class="section-header mb-4 d-flex align-items-center justify-content-between">
+                    <h3 class="section-title mb-0">
                         <i class="fas fa-star-half-alt me-2"></i>
                         Đánh giá sản phẩm
                     </h3>
                     <div class="reviews-summary">
                         @if (Model.reviews != null && Model.reviews.Any())
                         {
-                            <span class="total-reviews">@Model.reviews.Count() đánh giá</span>
+                            <span class="total-reviews text-muted">(@Model.reviews.Count() đánh giá)</span>
                         }
                     </div>
                 </div>
@@ -85,7 +364,7 @@
                         @foreach (var review in Model.reviews.OrderByDescending(r => r.createdat))
                         {
                             <div class="review-card">
-                                <div class="review-header">
+                                <div class="review-header d-flex align-items-center justify-content-between mb-3">
                                     <div class="reviewer-info">
                                         <div class="reviewer-avatar">
                                             @if (review.customer != null && !string.IsNullOrEmpty(review.customer.fullname))
@@ -97,16 +376,9 @@
                                                 <i class="fas fa-user"></i>
                                             }
                                         </div>
-                                        <div class="reviewer-details">
+                                        <div class="reviewer-details ms-2">
                                             <h6 class="reviewer-name">
-                                                @if (review.customer != null && !string.IsNullOrEmpty(review.customer.fullname))
-                                                {
-                                                    @review.customer.fullname
-                                                }
-                                                else
-                                                {
-                                                    <span>Khách hàng</span>
-                                                }
+                                                @(review.customer?.fullname ?? "Khách hàng")
                                             </h6>
                                             <small class="review-date">
                                                 <i class="far fa-clock me-1"></i>
@@ -125,6 +397,7 @@
                                                 }
                                                 else
                                                 {
+
                                                     <i class="far fa-star"></i>
                                                 }
                                             }
@@ -133,7 +406,7 @@
                                     </div>
                                 </div>
 
-                                <div class="review-content">
+                                <div class="review-content ps-5">
                                     @if (!string.IsNullOrEmpty(review.comment))
                                     {
                                         <p class="comment-text">@review.comment</p>
@@ -147,14 +420,12 @@
                                     }
                                 </div>
 
-                                <div class="review-actions">
+                                <div class="review-actions ps-5 mt-2">
                                     <button class="action-btn helpful-btn">
-                                        <i class="fas fa-thumbs-up me-1"></i>
-                                        Hữu ích
+                                        <i class="fas fa-thumbs-up me-1"></i> Hữu ích
                                     </button>
-                                    <button class="action-btn reply-btn">
-                                        <i class="fas fa-reply me-1"></i>
-                                        Trả lời
+                                    <button class="action-btn reply-btn ms-3">
+                                        <i class="fas fa-reply me-1"></i> Trả lời
                                     </button>
                                 </div>
                             </div>
@@ -166,41 +437,59 @@
     </div>
 </div>
 
-@section Styles {
-    <style>
-        /* ... giữ nguyên CSS cũ ... */
-    </style>
-}
-
 @section Scripts {
     <script>
-        // Hàm xử lý khi chưa đăng nhập
+        // === 1. Script xử lý Gallery ảnh (MỚI) ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainImage = document.getElementById('mainImage');
+            const thumbnails = document.querySelectorAll('.thumbnail-item');
+
+            if (mainImage && thumbnails.length > 0) {
+                if (!document.querySelector('.thumbnail-item.active')) {
+                    thumbnails[0].classList.add('active');
+                }
+
+                thumbnails.forEach(thumb => {
+                    const changeImage = () => {
+                        const newSrc = thumb.getAttribute('data-img-url');
+                        if (mainImage.src !== newSrc) {
+                            mainImage.style.opacity = '0.5';
+                            setTimeout(() => {
+                                mainImage.src = newSrc;
+                                mainImage.style.opacity = '1';
+                            }, 150);
+                            thumbnails.forEach(t => t.classList.remove('active'));
+                            thumb.classList.add('active');
+                        }
+                    };
+                    thumb.addEventListener('click', changeImage);
+                    thumb.addEventListener('mouseenter', changeImage);
+                });
+            }
+        });
+
+        // === 2. Script xử lý Giỏ hàng & Authentication (CODE CŨ CỦA BẠN) ===
         function handleUnauthorized() {
-            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
-            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-            window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+            if(confirm('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng! Bạn có muốn đến trang đăng nhập không?')) {
+                const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+            }
         }
 
-        // Hàm gọi API với xử lý authentication
         async function fetchWithAuth(url) {
             try {
                 const resp = await fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
-
                 if (resp.status === 401) {
                     handleUnauthorized();
                     return null;
                 }
-
                 if (!resp.ok) {
                     console.error('Lỗi API:', resp.status);
                     alert('Có lỗi xảy ra. Vui lòng thử lại!');
                     return null;
                 }
-
                 return await resp.text();
             } catch (error) {
                 console.error('Lỗi kết nối:', error);
@@ -214,7 +503,7 @@
                 const minusOrPlus = e.target.closest('button[data-type]');
                 const addBtn = e.target.closest('.add-to-cart-btn');
 
-                // 1) Xử lý + / − trong product detail
+                // 1) Xử lý + / -
                 if (minusOrPlus && minusOrPlus.classList.contains('qty-btn')) {
                     e.preventDefault();
                     const wrapper = minusOrPlus.closest('.quantity-wrapper');
@@ -235,19 +524,31 @@
                     let qty = parseInt(input.value, 10);
                     if (isNaN(qty) || qty < 1) qty = 1;
 
+                    const originalHtml = addBtn.innerHTML;
+                    addBtn.disabled = true;
+                    addBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+
                     const url = '@Url.Action("AddAjax", "Cart")';
                     const html = await fetchWithAuth(`${url}?id=${id}&qty=${qty}`);
-                    if (!html) return; // Nếu null (401), đã redirect rồi
+                    if (!html) {
+                         addBtn.innerHTML = originalHtml;
+                         addBtn.disabled = false;
+                         return;
+                    }
 
                     const offcanvasBody = document.getElementById('offcanvasCartBody');
                     if (offcanvasBody) {
                         offcanvasBody.innerHTML = html;
                         new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+                    } else {
+                        alert('Đã thêm sản phẩm vào giỏ hàng thành công!');
                     }
+                    addBtn.innerHTML = originalHtml;
+                    addBtn.disabled = false;
                     return;
                 }
 
-                // 3) Các nút trong offcanvas (qty-btn, remove-btn)
+                // 3) Các nút trong offcanvas
                 const qtyBtnOffcanvas = e.target.closest('.qty-btn:not([data-type])');
                 if (qtyBtnOffcanvas) {
                     e.preventDefault();
@@ -264,18 +565,14 @@
                     if (!html) return;
 
                     const offcanvasBody = document.getElementById('offcanvasCartBody');
-                    if (offcanvasBody) {
-                        offcanvasBody.innerHTML = html;
-                    }
+                    if (offcanvasBody) offcanvasBody.innerHTML = html;
                     return;
                 }
 
                 const remBtn = e.target.closest('.remove-btn');
                 if (remBtn) {
                     e.preventDefault();
-                    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                        return;
-                    }
+                    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
 
                     const id = remBtn.getAttribute('data-id');
                     const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
@@ -283,9 +580,8 @@
                     if (!html) return;
 
                     const offcanvasBody = document.getElementById('offcanvasCartBody');
-                    if (offcanvasBody) {
-                        offcanvasBody.innerHTML = html;
-                    }
+                    if (offcanvasBody) offcanvasBody.innerHTML = html;
+                    return;
                 }
             });
         });

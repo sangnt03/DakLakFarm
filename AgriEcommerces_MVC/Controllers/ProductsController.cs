@@ -23,7 +23,7 @@ namespace AgriEcommerces_MVC.Controllers
             return View(products);
         }
         // GET /Products/Category/5
-        //[HttpGet("Products/Category/{id:int}")]
+        
         public async Task<IActionResult> Category(int id)
         {
             // Lấy list các category để build dropdown nếu cần
@@ -39,7 +39,7 @@ namespace AgriEcommerces_MVC.Controllers
             return View("Category", products);
         }
         // GET /Products/Details/5
-        //[HttpGet("Products/Details/{id:int}")]
+        
         public async Task<IActionResult> Details(int id)
         {
             var product = await _db.products
