@@ -10,7 +10,6 @@
             <div class="col-12">
 
                 <div class="bootstrap-tabs product-tabs">
-                    <!-- Tabs header -->
                     @{
                         var categories = ViewBag.Categories as List<AgriEcommerces_MVC.Models.category>;
                         int? selectedId = ViewBag.CurrentCategoryId as int?;
@@ -21,35 +20,36 @@
 
                         <select class="form-select w-auto"
                                 onchange="location = this.value;">
-                            <option value="@Url.Action("Index", "Products")" selected>All</option>
+
+                            @if (selectedId == null)
+                            {
+                                <option value="@Url.Action("Index", "Products")" selected>All</option>
+                            }
+                            else
+                            {
+                                <option value="@Url.Action("Index", "Products")">All</option>
+                            }
 
                             @foreach (var c in categories)
                             {
-                                <option value="@Url.Action("Category","Products", new { id = c.categoryid })">
-                                    @c.categoryname
-                                </option>
+                                if (selectedId == c.categoryid)
+                                {
+                                    <option value="@Url.Action("Category","Products", new { id = c.categoryid })" selected>
+                                        @c.categoryname
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@Url.Action("Category","Products", new { id = c.categoryid })">
+                                        @c.categoryname
+                                    </option>
+                                }
                             }
                         </select>
                     </div>
 
-                    <!-- Tabs content -->
-                    <style>
-                        .product-item figure {
-                            width: 100%;
-                            height: 200px;
-                            overflow: hidden;
-                            margin: 0;
-                        }
+                    
 
-                            .product-item figure img {
-                                width: 100%;
-                                height: 100%;
-                                object-fit: cover;
-                                display: block;
-                            }
-                    </style>
-
-                    <!-- Grid sản phẩm -->
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active"
                              id="nav-all"
@@ -156,7 +156,39 @@
                                         </div>
                                     </div>
                                 }
-                            </div>
+                            </div> @{
+                            int currentPage = ViewBag.PageNumber;
+                            int totalPages = ViewBag.TotalPages;
+                            int? catId = ViewBag.CurrentCategoryId;
+
+                            string actionName = (catId == null) ? "Index" : "Category";
+                                                        }
+
+                            @if (totalPages > 1)
+                            {
+                                <nav aria-label="Product pagination">
+                                    <ul class="pagination justify-content-center mt-4">
+                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                            <a class="page-link" href="@Url.Action(actionName, new { id = catId, page = currentPage - 1 })" aria-label="Previous">
+                                                &lt;
+                                            </a>
+                                        </li>
+
+                                        @for (int i = 1; i <= totalPages; i++)
+                                        {
+                                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                                <a class="page-link" href="@Url.Action(actionName, new { id = catId, page = i })">@i</a>
+                                            </li>
+                                        }
+
+                                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                            <a class="page-link" href="@Url.Action(actionName, new { id = catId, page = currentPage + 1 })" aria-label="Next">
+                                                &gt;
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            }
                         </div>
                     </div>
                 </div>
@@ -164,7 +196,44 @@
         </div>
     </div>
 </section>
+<style>
+    .product-item figure {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        margin: 0;
+    }
 
+        .product-item figure img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    .pagination .page-link {
+        color: #ffc800; /* Màu chữ vàng (màu bạn dùng) */
+    }
+
+    /* Đổi màu nền và viền của nút đang active */
+    .pagination .page-item.active .page-link {
+        background-color: #ffc800; /* Nền vàng khi active */
+        border-color: #ffc800; /* Viền vàng khi active */
+        color: #333; /* Chữ đen để dễ đọc (giống nút "Mua ngay") */
+    }
+
+    /* Đổi màu khi hover (rê chuột) */
+    .pagination .page-item:not(.disabled) .page-link:hover {
+        background-color: #fff8e1; /* Nền vàng rất nhạt khi hover */
+        color: #e6b400; /* Chữ vàng đậm khi hover */
+    }
+
+    /* Đổi màu nút bị vô hiệu hóa (disabled) */
+    .pagination .page-item.disabled .page-link {
+        color: #e6b400;
+        opacity: 0.6;
+    }
+</style>
 @section Scripts {
     <script>
         // Hàm xử lý khi chưa đăng nhập
@@ -255,7 +324,6 @@
                     const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
                     const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=${qty}`);
                     if (!html) return;
-
                     const offcanvasBody = document.getElementById('offcanvasCartBody');
                     if (offcanvasBody) {
                         offcanvasBody.innerHTML = html;
