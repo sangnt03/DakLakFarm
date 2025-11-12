@@ -34,4 +34,10 @@ public partial class user
 
     public virtual ICollection<SellerRequest> SellerRequests { get; set; } = new List<SellerRequest>();
 
+    public virtual ICollection<promotion> promotions { get; set; } = new List<promotion>();
+
+    public virtual ICollection<promotion_farmer> promotion_farmers { get; set; } = new List<promotion_farmer>();
+    
+    public virtual ICollection<promotion_usagehistory> promotion_usagehistories { get; set; } = new List<promotion_usagehistory>();
+
 }

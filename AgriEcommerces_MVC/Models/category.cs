@@ -10,4 +10,5 @@ public partial class category
     public string categoryname { get; set; } = null!;
 
     public virtual ICollection<product> products { get; set; } = new List<product>();
+    public virtual ICollection<promotion_category> promotion_categories { get; set; } = new List<promotion_category>();
 }

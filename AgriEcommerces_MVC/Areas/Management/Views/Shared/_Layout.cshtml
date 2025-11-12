@@ -6,134 +6,554 @@
     <title>@ViewData["Title"] – Manager Area</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FF6B6B'/%3E%3Cstop offset='50%25' stop-color='%23FF8E53'/%3E%3Cstop offset='100%25' stop-color='%23FF6B35'/%3E%3C/linearGradient%3E%3ClinearGradient id='tree' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%2310B981'/%3E%3Cstop offset='100%25' stop-color='%23059669'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23bg)'/%3E%3Ccircle cx='35' cy='25' r='8' fill='%23FCD34D' opacity='0.9'/%3E%3Cpath d='M30 60c0-12 8-20 20-20s20 8 20 20v15H30z' fill='url(%23tree)'/%3E%3Crect x='48' y='60' width='4' height='15' fill='%238B4513'/%3E%3Cpath d='M25 75h50v5c0 2-2 4-4 4H29c-2 0-4-2-4-4z' fill='%2322C55E'/%3E%3C/svg%3E" />
 
-
-
-    <!-- Bootstrap 5 CSS (bỏ integrity & crossorigin) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-          rel="stylesheet" />
-
-    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
           rel="stylesheet"
           integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
           crossorigin="anonymous"
           referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /*--- Color Palette - Vàng & Trắng ---*/
+            --primary-yellow: #FFC107;
+            --dark-yellow: #FFA000;
+            --light-yellow: #FFD54F;
+            --pale-yellow: #FFF9E6;
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-dark: #2C3E50;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            /*--- Layout Dimensions ---*/
+            --sidebar-width: 260px;
+            --topbar-height: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /*--- Sidebar ---*/
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: all 0.3s ease-in-out;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-brand {
+            height: var(--topbar-height);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, var(--primary-yellow) 0%, var(--dark-yellow) 100%);
+            border-bottom: 3px solid var(--dark-yellow);
+        }
+
+        .sidebar-brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-white);
+            color: var(--dark-yellow);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand-text {
+            color: var(--bg-white);
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-menu {
+            padding: 24px 16px;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu-item {
+            list-style: none;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-menu-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+            .sidebar-menu-link:hover {
+                background: var(--pale-yellow);
+                color: var(--dark-yellow);
+            }
+
+            .sidebar-menu-link.active {
+                background: linear-gradient(135deg, var(--primary-yellow) 0%, var(--light-yellow) 100%);
+                color: var(--bg-white);
+                box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+            }
+
+        .sidebar-menu-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /*--- Topbar ---*/
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            height: var(--topbar-height);
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 999;
+            transition: left 0.3s ease-in-out;
+        }
+
+        .topbar-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .topbar-search {
+            flex: 1;
+            max-width: 320px;
+            position: relative;
+        }
+
+            .topbar-search input {
+                width: 100%;
+                padding: 10px 16px 10px 44px;
+                background: var(--bg-light);
+                border: 1px solid transparent;
+                border-radius: 10px;
+                font-size: 14px;
+                color: var(--text-dark);
+                transition: all 0.2s;
+            }
+
+                .topbar-search input:focus {
+                    background: var(--bg-white);
+                    border-color: var(--primary-yellow);
+                    outline: none;
+                    box-shadow: 0 0 0 3px var(--pale-yellow);
+                }
+
+            .topbar-search i {
+                position: absolute;
+                left: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-light);
+            }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            border: 1px solid transparent;
+        }
+
+            .topbar-user:hover {
+                background: var(--pale-yellow);
+                border-color: var(--light-yellow);
+            }
+
+        .topbar-user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--light-yellow);
+            border: 2px solid var(--bg-white);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .topbar-user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+
+        .topbar-user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .topbar-user-role {
+            font-size: 12px;
+            color: var(--dark-yellow);
+            font-weight: 500;
+        }
+
+        /*--- Main Content ---*/
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 32px;
+            min-height: calc(100vh - var(--topbar-height));
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /*--- Helpers & Components ---*/
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .dropdown-menu {
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .dropdown-item {
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+            .dropdown-item:hover, .dropdown-item:focus {
+                background-color: var(--pale-yellow);
+                color: var(--dark-yellow);
+            }
+
+            .dropdown-item.active, .dropdown-item:active {
+                background-color: var(--primary-yellow);
+                color: var(--bg-white);
+            }
+
+        .dropdown-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /*--- Mobile Responsive ---*/
+        @@media (max-width: 991.98px) {
+            .sidebar
+
+        {
+            left: calc(-1 * var(--sidebar-width));
+        }
+
+        .sidebar.active {
+            left: 0;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.1);
+        }
+
+        .topbar {
+            left: 0;
+            padding: 0 16px;
+        }
+
+        .topbar-toggle {
+            display: block;
+            margin-right: 12px;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 20px;
+        }
+
+        .topbar-search {
+            display: none;
+        }
+
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+
+        /* Utility Classes */
+        .btn-yellow {
+            background-color: var(--primary-yellow);
+            color: var(--bg-white);
+            border: none;
+            font-weight: 600;
+        }
+
+            .btn-yellow:hover {
+                background-color: var(--dark-yellow);
+                color: var(--bg-white);
+            }
+
+        .badge-yellow {
+            background-color: var(--light-yellow);
+            color: var(--text-dark);
+        }
+    </style>
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand"
-               asp-area="Management"
-               asp-controller="ManagerDashboard"
-               asp-action="Index">
-                Manager Dashboard
-            </a>
-            <div class="collapse navbar-collapse" id="navFarmer">
-                <ul class="navbar-nav ms-auto">
-                    
-                    <li class="nav-item">
-                        <a class="nav-link"
-                            asp-area="Management"
-                            asp-controller="ManagerCategory"
-                            asp-action="Index">
-                             Quản lý danh mục sản phẩm
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-area="Management"
-                           asp-controller="ManagerSeller"
-                           asp-action="Index">
-                            Duyệt Yêu Cầu Bán Hàng
-                        </a>
-                    </li>
-                   
-                    <li class="nav-item">
-                        <a class="nav-link"
-                            asp-area="Management"
-                            asp-controller="ManagerFarmer"
-                            asp-action="Index">
-                            Quản lý Người Bán
-                        </a>
-                    </li>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <div class="sidebar-brand-text">Manager Area</div>
+        </div>
 
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           asp-area="Management"
-                           asp-controller="ManagerUsers"
-                           asp-action="Index">
-                            Quản lý Người Dùng
-                        </a>
-                    </li>
-                </ul>
-                <ul class="d-flex list-unstyled m-0 align-items-center">
-                    <li class="nav-item dropdown">
-                        <a class="rounded-circle bg-light p-2 mx-1 dropdown-toggle nav-link"
-                           href="#"
-                           id="userDropdown"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">
+        <ul class="sidebar-menu">
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerDashboard"
+                   asp-action="Index">
+                    <i class="fas fa-home sidebar-menu-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerCategory"
+                   asp-action="Index">
+                    <i class="fas fa-th-large sidebar-menu-icon"></i>
+                    <span>Quản lý danh mục</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerSeller"
+                   asp-action="Index">
+                    <i class="fas fa-clipboard-check sidebar-menu-icon"></i>
+                    <span>Duyệt Yêu Cầu Bán Hàng</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerFarmer"
+                   asp-action="Index">
+                    <i class="fas fa-store sidebar-menu-icon"></i>
+                    <span>Quản lý Người Bán</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerUsers"
+                   asp-action="Index">
+                    <i class="fas fa-users sidebar-menu-icon"></i>
+                    <span>Quản lý Người Dùng</span>
+                </a>
+            </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link"
+                   asp-area="Management"
+                   asp-controller="ManagerPromotion"
+                   asp-action="Index">
+                    <i class="fas fa-tags sidebar-menu-icon"></i>
+                    <span>Quản lý Khuyến Mãi</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
 
-                            <img src="@(Url.Content("~/images/LogoInformation.jpg"))" width="30" height="30" alt="LogoInfor" />
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            @if (!User.Identity.IsAuthenticated)
+    <!-- Topbar -->
+    <nav class="topbar">
+        <div class="d-flex align-items-center">
+            <button class="topbar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
 
-                            {
-                                <li>
-                                    <a class="dropdown-item"
-                                       asp-area="Management"
-                                       asp-controller="Account"
-                                       asp-action="Login">
-                                        Đăng nhập
-                                    </a>
-                                </li>
-                            }
+            <div class="topbar-search d-none d-md-block">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Tìm kiếm...">
+            </div>
+        </div>
 
-                            else
+        <div class="topbar-right">
+            <div class="dropdown">
+                <div class="topbar-user" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="@(Url.Content("~/images/LogoInformation.jpg"))"
+                         alt="User"
+                         class="topbar-user-avatar">
+                    <div class="topbar-user-info d-none d-sm-flex">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="topbar-user-name">@User.Identity.Name</div>
+                            <div class="topbar-user-role">Quản lý</div>
+                        }
+                        else
+                        {
+                            <div class="topbar-user-name">Khách</div>
+                            <div class="topbar-user-role">Chưa đăng nhập</div>
+                        }
+                    </div>
+                    <i class="fas fa-chevron-down ms-2 text-muted" style="font-size: 12px;"></i>
+                </div>
 
-                            {
-                                <li class="dropdown-header text-muted">Xin chào, @User.Identity.Name</li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li>
-                                    <form asp-area="Management"
-                                          asp-controller="Account"
-                                          asp-action="Logout"
-                                          method="post">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item">Đăng xuất</button>
-                                    </form>
-                                </li>
-                            }
-                        </ul>
-
-                    </li>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    @if (!User.Identity.IsAuthenticated)
+                    {
+                        <li>
+                            <a class="dropdown-item"
+                               asp-area="Management"
+                               asp-controller="Account"
+                               asp-action="Login">
+                                <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li><h6 class="dropdown-header">Tài khoản của tôi</h6></li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="far fa-user me-2"></i> Hồ sơ cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i> Cài đặt
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form asp-area="Management"
+                                  asp-controller="Account"
+                                  asp-action="Logout"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    }
                 </ul>
             </div>
         </div>
     </nav>
 
-
-    <main class="container flex-fill py-4">
+    <!-- Main Content -->
+    <main class="main-content">
         @RenderBody()
     </main>
 
-    <footer class="bg-light text-center py-3 mt-auto">
-        Manager Area © @DateTime.Now.Year
-    </footer>
-
-    <!-- jQuery -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJ+YRF3l9S4bbvkn+5PV6xQ5c5i3eFvJ0zB8="
             crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="~/js/farmer-product.js"></script>
-
-    <!-- Bootstrap 5 JS Bundle (bỏ integrity & crossorigin) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Toggle sidebar on mobile
+            const $sidebar = $('#sidebar');
+            const $sidebarOverlay = $('#sidebarOverlay');
+
+            $('#sidebarToggle').on('click', function() {
+                $sidebar.addClass('active');
+                $sidebarOverlay.addClass('active');
+                $('body').css('overflow', 'hidden');
+            });
+
+            $sidebarOverlay.on('click', function() {
+                $sidebar.removeClass('active');
+                $(this).removeClass('active');
+                $('body').css('overflow', '');
+            });
+
+            // Active menu highlight based on URL
+            const currentPath = window.location.pathname.toLowerCase();
+            $('.sidebar-menu-link').each(function() {
+                const linkPath = $(this).attr('href');
+                if (linkPath) {
+                    const normalizedLinkPath = linkPath.toLowerCase();
+                    if (currentPath === normalizedLinkPath ||
+                        (normalizedLinkPath !== '/' && currentPath.startsWith(normalizedLinkPath))) {
+                        $('.sidebar-menu-link').removeClass('active');
+                        $(this).addClass('active');
+                    }
+                }
+            });
+        });
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

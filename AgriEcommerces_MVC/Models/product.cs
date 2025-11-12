@@ -35,5 +35,7 @@ public partial class product
 
     public virtual ICollection<review> reviews { get; set; } = new List<review>();
 
+    public virtual ICollection<promotion_product> promotion_products { get; set; } = new List<promotion_product>();
+
     public virtual user user { get; set; } = null!;
 }

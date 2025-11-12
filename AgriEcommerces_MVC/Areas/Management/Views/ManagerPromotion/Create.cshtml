@@ -1,0 +1,165 @@
+﻿@model AgriEcommerces_MVC.Models.promotion
+
+@{
+    ViewData["Title"] = "Tạo mới Khuyến mãi";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1>Tạo mới Khuyến mãi</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-9">
+        <form asp-action="Create" method="post">
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thông tin cơ bản</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label">Tên khuyến mãi</label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Code" class="control-label">Mã (Code)</label>
+                                <input asp-for="Code" class="form-control" />
+                                <span asp-validation-for="Code" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Description" class="control-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Giá trị & Điều kiện</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="DiscountType" class="control-label">Loại giảm giá</label>
+                                <select asp-for="DiscountType" class="form-control">
+                                    <option value="percentage">Phần trăm (%)</option>
+                                    <option value="fixed_amount">Số tiền cố định (VND)</option>
+                                    <option value="free_shipping">Miễn phí vận chuyển</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="DiscountValue" class="control-label">Giá trị giảm</label>
+                                <input asp-for="DiscountValue" type="number" class="form-control" />
+                                <span asp-validation-for="DiscountValue" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="MaxDiscountAmount" class="control-label">Giảm tối đa (VND)</label>
+                                <input asp-for="MaxDiscountAmount" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="MinOrderValue" class="control-label">Đơn hàng tối thiểu (VND)</label>
+                                <input asp-for="MinOrderValue" type="number" class="form-control" value="0" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="MaxUsagePerUser" class="control-label">Lượt dùng / Người</label>
+                                <input asp-for="MaxUsagePerUser" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="TotalUsageLimit" class="control-label">Tổng lượt sử dụng</label>
+                                <input asp-for="TotalUsageLimit" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Phạm vi & Thời gian</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ApplicableTo" class="control-label">Phạm vi áp dụng</label>
+                                <select asp-for="ApplicableTo" class="form-control">
+                                    <option value="all">Toàn bộ sản phẩm</option>
+                                    <option value="specific_products">Sản phẩm cụ thể</option>
+                                    <option value="specific_categories">Danh mục cụ thể</option>
+                                    <option value="specific_farmers">Farmer cụ thể</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="TargetCustomerType" class="control-label">Đối tượng khách hàng</label>
+                                <select asp-for="TargetCustomerType" class="form-control">
+                                    <option value="all">Tất cả</option>
+                                    <option value="retail">Khách lẻ (Retail)</option>
+                                    <option value="wholesale">Khách sỉ (Wholesale)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="StartDate" class="control-label">Ngày bắt đầu</label>
+                                <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="EndDate" class="control-label">Ngày kết thúc</label>
+                                <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group form-check" style="padding-top: 35px;">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" asp-for="IsActive" checked /> Kích hoạt
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Tạo mới khuyến mãi" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Thêm đoạn này để bật validation phía client *@
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

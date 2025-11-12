@@ -34,6 +34,11 @@ public partial class ApplicationDbContext : DbContext
 
      public virtual DbSet<customer_address> customer_addresses { get; set; }
 
+    public virtual DbSet<promotion> promotions { get; set; }
+    public virtual DbSet<promotion_category> promotion_categories { get; set; }
+    public virtual DbSet<promotion_product> promotion_products { get; set; }
+    public virtual DbSet<promotion_farmer> promotion_farmers { get; set; }
+    public virtual DbSet<promotion_usagehistory> promotion_usagehistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +204,122 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.role).HasMaxLength(20);
             entity.Property(e => e.role).HasDefaultValue("Customer");
         });
+
+        // ================================================
+        // BẮT ĐẦU: CẤU HÌNH CÁC BẢNG KHUYẾN MÃI
+        // ================================================
+
+        modelBuilder.Entity<promotion>(entity =>
+        {
+            entity.HasKey(e => e.PromotionId).HasName("promotions_pkey");
+
+            // Ràng buộc UNIQUE cho cột 'code'
+            entity.HasIndex(e => e.Code, "promotions_code_key").IsUnique();
+
+            // Liên kết đến người tạo (user role 'Admin')
+            entity.HasOne(d => d.CreatedBy) // Model: virtual user createdbyuser { get; set; }
+                .WithMany(p => p.promotions) // Model: ICollection<promotion> promotions { get; set; }
+                .HasForeignKey(d => d.CreatedByUserId)
+                .HasConstraintName("promotions_createdbyuserid_fkey");
+        });
+
+        modelBuilder.Entity<promotion_category>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("promotion_categories_pkey");
+
+            // Ràng buộc UNIQUE để 1 danh mục chỉ được thêm 1 lần cho 1 khuyến mãi
+            entity.HasIndex(e => new { e.PromotionId, e.CategoryId }, "idx_promo_cat_unique").IsUnique();
+
+            // Liên kết đến promotion
+            entity.HasOne(d => d.Promotion)
+                .WithMany(p => p.PromotionCategories) // Model: ICollection<promotion_category> promotion_categories { get; set; }
+                .HasForeignKey(d => d.PromotionId)
+                .OnDelete(DeleteBehavior.Cascade) // Tự động xóa nếu promotion bị xóa
+                .HasConstraintName("promo_cat_promotionid_fkey");
+
+            // Liên kết đến category
+            entity.HasOne(d => d.Category)
+                .WithMany(p => p.promotion_categories) // Model: ICollection<promotion_category> promotion_categories { get; set; }
+                .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("promo_cat_categoryid_fkey");
+        });
+
+        modelBuilder.Entity<promotion_farmer>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("promotion_farmers_pkey");
+
+            entity.HasIndex(e => new { e.PromotionId, e.FarmerId }, "idx_promo_farmer_unique").IsUnique();
+
+            // Liên kết đến promotion
+            entity.HasOne(d => d.Promotion)
+                .WithMany(p => p.PromotionFarmers) // Model: ICollection<promotion_farmer> promotion_farmers { get; set; }
+                .HasForeignKey(d => d.PromotionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("promo_farmer_promotionid_fkey");
+
+            // Liên kết đến user (farmer)
+            entity.HasOne(d => d.Farmer) // Model: virtual user farmer { get; set; }
+                .WithMany(p => p.promotion_farmers) // Model: ICollection<promotion_farmer> promotion_farmers { get; set; }
+                .HasForeignKey(d => d.FarmerId)
+                .HasConstraintName("promo_farmer_farmerid_fkey");
+        });
+
+        modelBuilder.Entity<promotion_product>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("promotion_products_pkey");
+
+            entity.HasIndex(e => new { e.PromotionId, e.ProductId }, "idx_promo_product_unique").IsUnique();
+
+            // Liên kết đến promotion
+            entity.HasOne(d => d.Promotion)
+                .WithMany(p => p.PromotionProducts) // Model: ICollection<promotion_product> promotion_products { get; set; }
+                .HasForeignKey(d => d.PromotionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("promo_product_promotionid_fkey");
+
+            // Liên kết đến product
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.promotion_products) // Model: ICollection<promotion_product> promotion_products { get; set; }
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("promo_product_productid_fkey");
+        });
+
+        modelBuilder.Entity<promotion_usagehistory>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("promotion_usagehistory_pkey");
+
+            // UNIQUE: Một đơn hàng chỉ dùng 1 mã 1 lần
+            entity.HasIndex(e => new { e.PromotionId, e.OrderId }, "idx_promo_usage_order_unique").IsUnique();
+            // INDEX: Để tra cứu nhanh 1 user đã dùng 1 mã bao nhiêu lần
+            entity.HasIndex(e => new { e.UserId, e.PromotionId }, "idx_promo_usage_user");
+
+            // Liên kết đến promotion
+            entity.HasOne(d => d.Promotion)
+                .WithMany(p => p.PromotionUsageHistory) // Model: ICollection<promotion_usagehistory> promotion_usagehistories { get; set; }
+                .HasForeignKey(d => d.PromotionId)
+                .OnDelete(DeleteBehavior.SetNull) // Nếu xóa KM, giữ lại lịch sử
+                .HasConstraintName("promo_usage_promotionid_fkey");
+
+            // Liên kết đến user (customer)
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.promotion_usagehistories) // Model: ICollection<promotion_usagehistory> promotion_usagehistories { get; set; }
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull) // Nếu xóa user, giữ lại lịch sử
+                .HasConstraintName("promo_usage_userid_fkey");
+
+            // Liên kết đến order
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.promotion_usagehistories) // Model: ICollection<promotion_usagehistory> promotion_usagehistories { get; set; }
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade) // Nếu xóa đơn hàng, xóa luôn lịch sử
+                .HasConstraintName("promo_usage_orderid_fkey");
+        });
+
+        // ================================================
+        // KẾT THÚC: CẤU HÌNH CÁC BẢNG KHUYẾN MÃI
+        // ================================================
 
         OnModelCreatingPartial(modelBuilder);
     }

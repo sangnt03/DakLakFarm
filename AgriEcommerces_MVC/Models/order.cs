@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AgriEcommerces_MVC.Models;
 
@@ -22,4 +23,10 @@ public partial class order
     public virtual user customer { get; set; } = null!;
 
     public virtual ICollection<orderdetail> orderdetails { get; set; } = new List<orderdetail>();
+    public int? promotionid { get; set; }
+    public decimal discountamount { get; set; } 
+
+    [ForeignKey("promotionid")]
+    public virtual promotion? promotion { get; set; }
+    public virtual ICollection<promotion_usagehistory> promotion_usagehistories { get; set; } = new List<promotion_usagehistory>();
 }

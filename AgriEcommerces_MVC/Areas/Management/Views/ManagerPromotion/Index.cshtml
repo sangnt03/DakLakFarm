@@ -1,0 +1,84 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.promotion>
+
+@{
+    ViewData["Title"] = "Quản lý Khuyến mãi";
+    // Giả sử bạn có 1 layout riêng cho trang Admin (ví dụ: _AdminLayout.cshtml)
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1>Quản lý Khuyến mãi</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Tạo mới
+    </a>
+</p>
+
+@* Hiển thị thông báo nếu tạo thành công (từ TempData) *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách khuyến mãi</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Tên khuyến mãi</th>
+                        <th>Mã (Code)</th>
+                        <th>Loại</th>
+                        <th>Giá trị</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@item.Code</td>
+                            <td>@item.DiscountType</td>
+                            <td>
+                                @if (item.DiscountType == "percentage")
+                                {
+                                    <span>@item.DiscountValue %</span>
+                                }
+                                else
+                                {
+                                    <span>@item.DiscountValue.ToString("N0") VND</span>
+                                }
+                            </td>
+                            <td>@item.StartDate.ToShortDateString()</td>
+                            <td>@item.EndDate.ToShortDateString()</td>
+                            <td>
+                                @if (item.IsActive && item.EndDate >= DateTime.Now)
+                                {
+                                    <span class="badge badge-success">Đang hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger">Đã hết hạn</span>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.PromotionId" class="btn btn-warning btn-sm">Sửa</a>
+                                <a asp-action="Details" asp-route-id="@item.PromotionId" class="btn btn-info btn-sm">Chi tiết</a>
+                                <a asp-action="Delete" asp-route-id="@item.PromotionId" class="btn btn-danger btn-sm">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
