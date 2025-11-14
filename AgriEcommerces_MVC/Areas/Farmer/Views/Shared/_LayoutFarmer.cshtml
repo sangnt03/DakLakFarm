@@ -24,7 +24,8 @@
             --bg-light: #f8fafc; /* Slate 50 - Main Background */
             --border-color: #e2e8f0; /* Slate 200 - Borders */
 
-            --text-dark: #1e293b; /* Slate 800 - Main Text */
+            --text-while: #ffffff; /* Slate 800 - Main Text */
+            --text-dark: #1e293b; /* Slate 900 - Primary Text */
             --text-muted: #64748b; /* Slate 500 - Secondary Text */
             --text-light: #94a3b8; /* Slate 400 - Placeholder/Disabled */
             /*--- Layout Dimensions ---*/
@@ -67,7 +68,9 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #00FF66 100%);
+
+            
         }
 
         .sidebar-brand-icon {
@@ -83,7 +86,7 @@
         }
 
         .sidebar-brand-text {
-            color: var(--text-dark);
+            color: var(--text-while);
             font-size: 18px;
             font-weight: 700;
             letter-spacing: -0.5px;
@@ -333,7 +336,6 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            
             <div class="sidebar-brand-text">Farmer Management</div>
         </div>
 

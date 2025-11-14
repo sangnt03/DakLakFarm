@@ -11,11 +11,11 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
 {
     [Area("Management")]
     [Authorize(Roles = "Admin")]
-    public class ManagerUsers : Controller
+    public class ManagerUsersController : Controller
     {
         private readonly ApplicationDbContext _db;
 
-        public ManagerUsers(ApplicationDbContext db)
+        public ManagerUsersController(ApplicationDbContext db)
         {
             _db = db;
         }

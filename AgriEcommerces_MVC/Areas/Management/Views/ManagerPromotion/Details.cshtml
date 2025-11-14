@@ -1,0 +1,356 @@
+﻿@model AgriEcommerces_MVC.Models.promotion
+
+@{
+    ViewData["Title"] = "Chi tiết Khuyến mãi";
+}
+
+<h1>Chi tiết Khuyến mãi</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Thông tin cơ bản -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thông tin cơ bản</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Tên khuyến mãi:</dt>
+                    <dd class="col-sm-8">@Model.Name</dd>
+
+                    <dt class="col-sm-4">Mã (Code):</dt>
+                    <dd class="col-sm-8"><strong class="text-primary">@Model.Code</strong></dd>
+
+                    <dt class="col-sm-4">Mô tả:</dt>
+                    <dd class="col-sm-8">@(Model.Description ?? "N/A")</dd>
+
+                    <dt class="col-sm-4">Người tạo:</dt>
+                    <dd class="col-sm-8">@(Model.CreatedBy?.fullname ?? Model.CreatedBy?.email ?? "N/A")</dd>
+
+                    <dt class="col-sm-4">Ngày tạo:</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-4">Trạng thái:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.IsActive && Model.EndDate >= DateTime.Now && Model.StartDate <= DateTime.Now)
+                        {
+                            <span class="badge badge-success">Đang hoạt động</span>
+                        }
+                        else if (!Model.IsActive)
+                        {
+                            <span class="badge badge-secondary">Đã vô hiệu hóa</span>
+                        }
+                        else if (Model.StartDate > DateTime.Now)
+                        {
+                            <span class="badge badge-info">Chưa bắt đầu</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger">Đã hết hạn</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Giá trị & Điều kiện -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Giá trị & Điều kiện</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Loại giảm giá:</dt>
+                    <dd class="col-sm-8">
+                        @switch (Model.DiscountType)
+                        {
+                            case "percentage":
+                                <span class="badge badge-info">Phần trăm (%)</span>
+                                break;
+                            case "fixed_amount":
+                                <span class="badge badge-success">Số tiền cố định</span>
+                                break;
+                            case "free_shipping":
+                                <span class="badge badge-warning">Miễn phí vận chuyển</span>
+                                break;
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Giá trị giảm:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.DiscountType == "percentage")
+                        {
+                            <strong class="text-success">@Model.DiscountValue%</strong>
+                        }
+                        else if (Model.DiscountType == "fixed_amount")
+                        {
+                            <strong class="text-success">@Model.DiscountValue.ToString("N0") VND</strong>
+                        }
+                        else
+                        {
+                            <strong class="text-success">Miễn phí ship</strong>
+                        }
+                    </dd>
+
+                    @if (Model.MaxDiscountAmount.HasValue)
+                    {
+                        <dt class="col-sm-4">Giảm tối đa:</dt>
+                        <dd class="col-sm-8">@Model.MaxDiscountAmount.Value.ToString("N0") VND</dd>
+                    }
+
+                    <dt class="col-sm-4">Đơn hàng tối thiểu:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.MinOrderValue > 0)
+                        {
+                            @Model.MinOrderValue.ToString("N0")<text> VND</text>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không yêu cầu</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Giới hạn / Người:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.MaxUsagePerUser.HasValue)
+                        {
+                            @Model.MaxUsagePerUser.Value<text> lần</text>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không giới hạn</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Tổng lượt sử dụng:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.TotalUsageLimit.HasValue)
+                        {
+                            <span>@Model.CurrentUsageCount / @Model.TotalUsageLimit.Value</span>
+                            var percentage = Model.TotalUsageLimit.Value > 0
+                            ? (Model.CurrentUsageCount * 100.0 / Model.TotalUsageLimit.Value)
+                            : 0;
+                            <div class="progress mt-2" style="height: 20px;">
+                                <div class="progress-bar @(percentage >= 80 ? "bg-danger" : percentage >= 50 ? "bg-warning" : "bg-success")"
+                                     role="progressbar"
+                                     style="width: @percentage%">
+                                    @percentage.ToString("F1")%
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <span>@Model.CurrentUsageCount / <span class="text-muted">Không giới hạn</span></span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Phạm vi áp dụng -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Phạm vi áp dụng</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Áp dụng cho:</dt>
+                    <dd class="col-sm-8">
+                        @switch (Model.ApplicableTo)
+                        {
+                            case "all":
+                                <span class="badge badge-primary">Toàn bộ sản phẩm</span>
+                                break;
+                            case "specific_products":
+                                <span class="badge badge-info">Sản phẩm cụ thể</span>
+                                break;
+                            case "specific_categories":
+                                <span class="badge badge-success">Danh mục cụ thể</span>
+                                break;
+                            case "specific_farmers":
+                                <span class="badge badge-warning">Farmer cụ thể</span>
+                                break;
+                        }
+                    </dd>
+
+                    @if (Model.ApplicableTo == "specific_products" && Model.PromotionProducts.Any())
+                    {
+                        <dt class="col-sm-4">Sản phẩm:</dt>
+                        <dd class="col-sm-8">
+                            <ul class="list-unstyled">
+                                @foreach (var pp in Model.PromotionProducts)
+                                {
+                                    <li>• @pp.Product.productname</li>
+                                }
+                            </ul>
+                        </dd>
+                    }
+
+                    @if (Model.ApplicableTo == "specific_categories" && Model.PromotionCategories.Any())
+                    {
+                        <dt class="col-sm-4">Danh mục:</dt>
+                        <dd class="col-sm-8">
+                            <ul class="list-unstyled">
+                                @foreach (var pc in Model.PromotionCategories)
+                                {
+                                    <li>• @pc.Category.categoryname</li>
+                                }
+                            </ul>
+                        </dd>
+                    }
+
+                    @if (Model.ApplicableTo == "specific_farmers" && Model.PromotionFarmers.Any())
+                    {
+                        <dt class="col-sm-4">Farmers:</dt>
+                        <dd class="col-sm-8">
+                            <ul class="list-unstyled">
+                                @foreach (var pf in Model.PromotionFarmers)
+                                {
+                                    <li>• @(pf.Farmer.shop_name ?? pf.Farmer.fullname ?? pf.Farmer.email)</li>
+                                }
+                            </ul>
+                        </dd>
+                    }
+
+                    <dt class="col-sm-4">Đối tượng khách hàng:</dt>
+                    <dd class="col-sm-8">
+                        @switch (Model.TargetCustomerType)
+                        {
+                            case "all":
+                                <span>Tất cả</span>
+                                break;
+                            case "retail":
+                                <span>Khách lẻ (Retail)</span>
+                                break;
+                            case "wholesale":
+                                <span>Khách sỉ (Wholesale)</span>
+                                break;
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Thời gian:</dt>
+                    <dd class="col-sm-8">
+                        <strong>Từ:</strong> @Model.StartDate.ToString("dd/MM/yyyy HH:mm")<br />
+                        <strong>Đến:</strong> @Model.EndDate.ToString("dd/MM/yyyy HH:mm")
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Lịch sử sử dụng -->
+        @if (Model.PromotionUsageHistory.Any())
+        {
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Lịch sử sử dụng (@Model.PromotionUsageHistory.Count lượt)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Ngày sử dụng</th>
+                                    <th>Người dùng</th>
+                                    <th>Đơn hàng</th>
+                                    <th>Giảm giá</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var usage in Model.PromotionUsageHistory.OrderByDescending(u => u.UsedAt).Take(10))
+                                {
+                                    <tr>
+                                        <td>@usage.UsedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@(usage.User?.fullname ?? usage.User?.email ?? "N/A")</td>
+                                        <td>#@usage.OrderId</td>
+                                        <td class="text-success">@usage.DiscountAmount.ToString("N0") VND</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @if (Model.PromotionUsageHistory.Count > 10)
+                        {
+                            <small class="text-muted">Hiển thị 10 lượt sử dụng gần nhất</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="mb-3">
+            <a asp-action="Edit" asp-route-id="@Model.PromotionId" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại danh sách
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Thống kê nhanh -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thống kê</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5 class="text-center">
+                        <span class="badge badge-pill badge-primary">@Model.CurrentUsageCount</span>
+                    </h5>
+                    <p class="text-center text-muted mb-0">Lượt sử dụng</p>
+                </div>
+                <hr />
+                <div class="mb-3">
+                    <h5 class="text-center">
+                        <span class="badge badge-pill badge-success">
+                            @Model.PromotionUsageHistory.Sum(u => u.DiscountAmount).ToString("N0") VND
+                        </span>
+                    </h5>
+                    <p class="text-center text-muted mb-0">Tổng giảm giá</p>
+                </div>
+                @if (Model.TotalUsageLimit.HasValue)
+                {
+                    <hr />
+                    <div class="mb-3">
+                        <h5 class="text-center">
+                            <span class="badge badge-pill badge-info">
+                                @(Model.TotalUsageLimit.Value - Model.CurrentUsageCount)
+                            </span>
+                        </h5>
+                        <p class="text-center text-muted mb-0">Lượt còn lại</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Hành động nhanh -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Hành động</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.IsActive)
+                {
+                    <p class="text-muted small mb-2">Vô hiệu hóa khuyến mãi nếu không muốn sử dụng nữa</p>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">Kích hoạt lại khuyến mãi nếu muốn sử dụng</p>
+                }
+                @if (!Model.PromotionUsageHistory.Any())
+                {
+                    <a asp-action="Delete" asp-route-id="@Model.PromotionId" class="btn btn-danger btn-block">
+                        <i class="fas fa-trash"></i> Xóa khuyến mãi
+                    </a>
+                }
+                else
+                {
+                    <button class="btn btn-secondary btn-block" disabled title="Không thể xóa khuyến mãi đã được sử dụng">
+                        <i class="fas fa-trash"></i> Không thể xóa
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

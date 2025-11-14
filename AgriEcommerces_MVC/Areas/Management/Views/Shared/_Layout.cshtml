@@ -514,17 +514,14 @@
     </main>
 
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha256-/xUj+3OJ+YRF3l9S4bbvkn+5PV6xQ5c5i3eFvJ0zB8="
-            crossorigin="anonymous"></script>
-    <script src="~/js/farmer-product.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         $(document).ready(function() {
             // Toggle sidebar on mobile
-            const $sidebar = $('#sidebar');
-            const $sidebarOverlay = $('#sidebarOverlay');
+            const $sidebar = $('#sidebar'); 
+            const $sidebarOverlay = $('#sidebarOverlay'); 
 
             $('#sidebarToggle').on('click', function() {
                 $sidebar.addClass('active');
@@ -532,20 +529,20 @@
                 $('body').css('overflow', 'hidden');
             });
 
-            $sidebarOverlay.on('click', function() {
+            $sidebarOverlay.on('click', function() { 
                 $sidebar.removeClass('active');
                 $(this).removeClass('active');
                 $('body').css('overflow', '');
             });
 
             // Active menu highlight based on URL
-            const currentPath = window.location.pathname.toLowerCase();
-            $('.sidebar-menu-link').each(function() {
+            const currentPath = window.location.pathname.toLowerCase(); 
+            $('.sidebar-menu-link').each(function() { 
                 const linkPath = $(this).attr('href');
                 if (linkPath) {
                     const normalizedLinkPath = linkPath.toLowerCase();
                     if (currentPath === normalizedLinkPath ||
-                        (normalizedLinkPath !== '/' && currentPath.startsWith(normalizedLinkPath))) {
+                        (normalizedLinkPath !== '/' && currentPath.startsWith(normalizedLinkPath))) { 
                         $('.sidebar-menu-link').removeClass('active');
                         $(this).addClass('active');
                     }

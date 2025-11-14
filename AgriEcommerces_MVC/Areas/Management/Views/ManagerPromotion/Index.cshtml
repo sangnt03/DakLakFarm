@@ -2,78 +2,274 @@
 
 @{
     ViewData["Title"] = "Quản lý Khuyến mãi";
-    // Giả sử bạn có 1 layout riêng cho trang Admin (ví dụ: _AdminLayout.cshtml)
-    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
-<h1>Quản lý Khuyến mãi</h1>
-
-<p>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Tạo mới
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-gift"></i> Quản lý Khuyến mãi
+    </h1>
+    <a asp-action="Create" class="btn btn-primary btn-icon-split">
+        <span class="icon text-white-50">
+            <i class="fas fa-plus"></i>
+        </span>
+        <span class="text">Tạo mới khuyến mãi</span>
     </a>
-</p>
+</div>
 
-@* Hiển thị thông báo nếu tạo thành công (từ TempData) *@
+@* Hiển thị thông báo thành công *@
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
 }
 
+@* Hiển thị thông báo lỗi *@
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Tổng khuyến mãi
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Count()</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-gift fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Đang hoạt động
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.Count(p => p.IsActive && p.StartDate <= DateTime.Now && p.EndDate >= DateTime.Now)
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Sắp diễn ra
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.Count(p => p.IsActive && p.StartDate > DateTime.Now)
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Đã hết hạn
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.Count(p => p.EndDate < DateTime.Now || !p.IsActive)
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTable -->
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-primary">Danh sách khuyến mãi</h6>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                <thead>
+            <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                <thead class="thead-light">
                     <tr>
+                        <th>Mã</th>
                         <th>Tên khuyến mãi</th>
-                        <th>Mã (Code)</th>
                         <th>Loại</th>
                         <th>Giá trị</th>
-                        <th>Bắt đầu</th>
-                        <th>Kết thúc</th>
+                        <th>Phạm vi</th>
+                        <th>Thời gian</th>
+                        <th>Sử dụng</th>
                         <th>Trạng thái</th>
-                        <th></th>
+                        <th style="width: 180px;">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td>@item.Name</td>
-                            <td>@item.Code</td>
-                            <td>@item.DiscountType</td>
+                            <td>
+                                <strong class="text-primary">@item.Code</strong>
+                            </td>
+                            <td>
+                                @item.Name
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <br />
+                                    <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))...</small>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.DiscountType)
+                                {
+                                    case "percentage":
+                                        <span class="badge badge-info">
+                                            <i class="fas fa-percent"></i> %
+                                        </span>
+                                        break;
+                                    case "fixed_amount":
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-dollar-sign"></i> VND
+                                        </span>
+                                        break;
+                                    case "free_shipping":
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-shipping-fast"></i> Ship
+                                        </span>
+                                        break;
+                                }
+                            </td>
                             <td>
                                 @if (item.DiscountType == "percentage")
                                 {
-                                    <span>@item.DiscountValue %</span>
+                                    <strong class="text-success">@item.DiscountValue%</strong>
+                                }
+                                else if (item.DiscountType == "fixed_amount")
+                                {
+                                    <strong class="text-success">@item.DiscountValue.ToString("N0")</strong>
                                 }
                                 else
                                 {
-                                    <span>@item.DiscountValue.ToString("N0") VND</span>
+                                    <strong class="text-success">Free</strong>
+                                }
+                                @if (item.MaxDiscountAmount.HasValue)
+                                {
+                                    <br />
+                                    <small class="text-muted">Max: @item.MaxDiscountAmount.Value.ToString("N0")</small>
                                 }
                             </td>
-                            <td>@item.StartDate.ToShortDateString()</td>
-                            <td>@item.EndDate.ToShortDateString()</td>
                             <td>
-                                @if (item.IsActive && item.EndDate >= DateTime.Now)
+                                @switch (item.ApplicableTo)
                                 {
-                                    <span class="badge badge-success">Đang hoạt động</span>
+                                    case "all":
+                                        <span class="badge badge-primary">Tất cả</span>
+                                        break;
+                                    case "specific_products":
+                                        <span class="badge badge-info">Sản phẩm</span>
+                                        break;
+                                    case "specific_categories":
+                                        <span class="badge badge-success">Danh mục</span>
+                                        break;
+                                    case "specific_farmers":
+                                        <span class="badge badge-warning">Farmer</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <small>
+                                    <strong>Từ:</strong> @item.StartDate.ToString("dd/MM/yyyy")<br />
+                                    <strong>Đến:</strong> @item.EndDate.ToString("dd/MM/yyyy")
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-pill badge-primary">
+                                    @item.CurrentUsageCount
+                                </span>
+                                @if (item.TotalUsageLimit.HasValue)
+                                {
+                                    <text> / @item.TotalUsageLimit.Value</text>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsActive && item.EndDate >= DateTime.Now && item.StartDate <= DateTime.Now)
+                                {
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-check-circle"></i> Hoạt động
+                                    </span>
+                                }
+                                else if (item.IsActive && item.StartDate > DateTime.Now)
+                                {
+                                    <span class="badge badge-info">
+                                        <i class="fas fa-clock"></i> Chưa bắt đầu
+                                    </span>
+                                }
+                                else if (!item.IsActive)
+                                {
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-ban"></i> Đã tắt
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge badge-danger">Đã hết hạn</span>
+                                    <span class="badge badge-danger">
+                                        <i class="fas fa-times-circle"></i> Hết hạn
+                                    </span>
                                 }
                             </td>
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@item.PromotionId" class="btn btn-warning btn-sm">Sửa</a>
-                                <a asp-action="Details" asp-route-id="@item.PromotionId" class="btn btn-info btn-sm">Chi tiết</a>
-                                <a asp-action="Delete" asp-route-id="@item.PromotionId" class="btn btn-danger btn-sm">Xóa</a>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Details" asp-route-id="@item.PromotionId"
+                                       class="btn btn-sm btn-info"
+                                       title="Chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.PromotionId"
+                                       class="btn btn-sm btn-warning"
+                                       title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.PromotionId"
+                                       class="btn btn-sm btn-danger"
+                                       title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -82,3 +278,17 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+                },
+                "order": [[5, "desc"]], // Sort by date column
+                "pageLength": 25
+            });
+        });
+    </script>
+}

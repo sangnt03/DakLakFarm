@@ -8,11 +8,11 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
 {
     [Area("Management")]
     [Authorize(Roles = "Admin")]
-    public class ManagerFarmer : Controller
+    public class ManagerFarmerController : Controller
     {
         private readonly ApplicationDbContext _db;
 
-        public ManagerFarmer(ApplicationDbContext db)
+        public ManagerFarmerController(ApplicationDbContext db)
         {
             _db = db;
         }

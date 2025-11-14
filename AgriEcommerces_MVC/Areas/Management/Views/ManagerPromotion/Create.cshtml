@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Tạo mới Khuyến mãi";
-    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
 }
 
 <h1>Tạo mới Khuyến mãi</h1>
@@ -12,8 +11,9 @@
     <div class="col-md-9">
         <form asp-action="Create" method="post">
 
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
 
+            <!-- Thông tin cơ bản -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Thông tin cơ bản</h6>
@@ -22,26 +22,27 @@
                     <div class="row">
                         <div class="col-md-8">
                             <div class="form-group">
-                                <label asp-for="Name" class="control-label">Tên khuyến mãi</label>
-                                <input asp-for="Name" class="form-control" />
+                                <label asp-for="Name" class="control-label">Tên khuyến mãi <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="VD: Giảm giá mùa thu hoạch" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="Code" class="control-label">Mã (Code)</label>
-                                <input asp-for="Code" class="form-control" />
+                                <label asp-for="Code" class="control-label">Mã (Code) <span class="text-danger">*</span></label>
+                                <input asp-for="Code" class="form-control" placeholder="VD: HARVEST2024" style="text-transform: uppercase;" />
                                 <span asp-validation-for="Code" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label asp-for="Description" class="control-label">Mô tả</label>
-                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Mô tả chi tiết về chương trình khuyến mãi"></textarea>
                     </div>
                 </div>
             </div>
 
+            <!-- Giá trị & Điều kiện -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Giá trị & Điều kiện</h6>
@@ -50,8 +51,8 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="DiscountType" class="control-label">Loại giảm giá</label>
-                                <select asp-for="DiscountType" class="form-control">
+                                <label asp-for="DiscountType" class="control-label">Loại giảm giá <span class="text-danger">*</span></label>
+                                <select asp-for="DiscountType" class="form-control" id="discountTypeSelect">
                                     <option value="percentage">Phần trăm (%)</option>
                                     <option value="fixed_amount">Số tiền cố định (VND)</option>
                                     <option value="free_shipping">Miễn phí vận chuyển</option>
@@ -60,14 +61,20 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="DiscountValue" class="control-label">Giá trị giảm</label>
-                                <input asp-for="DiscountValue" type="number" class="form-control" />
+                                <label asp-for="DiscountValue" class="control-label">
+                                    Giá trị giảm <span class="text-danger">*</span>
+                                    <small id="discountValueHint" class="text-muted">(VD: 10 = 10%)</small>
+                                </label>
+                                <input asp-for="DiscountValue" type="number" step="0.01" class="form-control" placeholder="0" />
                                 <span asp-validation-for="DiscountValue" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="MaxDiscountAmount" class="control-label">Giảm tối đa (VND)</label>
+                                <label asp-for="MaxDiscountAmount" class="control-label">
+                                    Giảm tối đa (VND)
+                                    <small class="text-muted">(Tùy chọn)</small>
+                                </label>
                                 <input asp-for="MaxDiscountAmount" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
                             </div>
                         </div>
@@ -75,26 +82,35 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="MinOrderValue" class="control-label">Đơn hàng tối thiểu (VND)</label>
-                                <input asp-for="MinOrderValue" type="number" class="form-control" value="0" />
+                                <label asp-for="MinOrderValue" class="control-label">
+                                    Đơn hàng tối thiểu (VND)
+                                </label>
+                                <input asp-for="MinOrderValue" type="number" class="form-control" value="0" placeholder="0 = không yêu cầu" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="MaxUsagePerUser" class="control-label">Lượt dùng / Người</label>
-                                <input asp-for="MaxUsagePerUser" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
+                                <label asp-for="MaxUsagePerUser" class="control-label">
+                                    Lượt dùng / Người
+                                    <small class="text-muted">(Tùy chọn)</small>
+                                </label>
+                                <input asp-for="MaxUsagePerUser" type="number" class="form-control" placeholder="Bỏ trống = không giới hạn" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="TotalUsageLimit" class="control-label">Tổng lượt sử dụng</label>
-                                <input asp-for="TotalUsageLimit" type="number" class="form-control" placeholder="Bỏ trống nếu không giới hạn" />
+                                <label asp-for="TotalUsageLimit" class="control-label">
+                                    Tổng lượt sử dụng
+                                    <small class="text-muted">(Tùy chọn)</small>
+                                </label>
+                                <input asp-for="TotalUsageLimit" type="number" class="form-control" placeholder="Bỏ trống = không giới hạn" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Phạm vi & Thời gian -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Phạm vi & Thời gian</h6>
@@ -103,8 +119,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label asp-for="ApplicableTo" class="control-label">Phạm vi áp dụng</label>
-                                <select asp-for="ApplicableTo" class="form-control">
+                                <label asp-for="ApplicableTo" class="control-label">Phạm vi áp dụng <span class="text-danger">*</span></label>
+                                <select asp-for="ApplicableTo" class="form-control" id="applicableToSelect">
                                     <option value="all">Toàn bộ sản phẩm</option>
                                     <option value="specific_products">Sản phẩm cụ thể</option>
                                     <option value="specific_categories">Danh mục cụ thể</option>
@@ -123,17 +139,63 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Specific Products Selection -->
+                    <div class="form-group" id="productsSection" style="display:none;">
+                        <label>Chọn sản phẩm áp dụng: <span class="text-danger">*</span></label>
+                        <select name="selectedProducts" class="form-control" multiple size="8">
+                            @if (ViewBag.Products != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Products)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                        <small class="form-text text-muted">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều sản phẩm</small>
+                    </div>
+
+                    <!-- Specific Categories Selection -->
+                    <div class="form-group" id="categoriesSection" style="display:none;">
+                        <label>Chọn danh mục áp dụng: <span class="text-danger">*</span></label>
+                        <select name="selectedCategories" class="form-control" multiple size="6">
+                            @if (ViewBag.Categories != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Categories)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                        <small class="form-text text-muted">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục</small>
+                    </div>
+
+                    <!-- Specific Farmers Selection -->
+                    <div class="form-group" id="farmersSection" style="display:none;">
+                        <label>Chọn Farmer áp dụng: <span class="text-danger">*</span></label>
+                        <select name="selectedFarmers" class="form-control" multiple size="6">
+                            @if (ViewBag.Farmers != null)
+                            {
+                                @foreach (var item in (List<SelectListItem>)ViewBag.Farmers)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                        <small class="form-text text-muted">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều farmer</small>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="StartDate" class="control-label">Ngày bắt đầu</label>
+                                <label asp-for="StartDate" class="control-label">Ngày bắt đầu <span class="text-danger">*</span></label>
                                 <input asp-for="StartDate" type="datetime-local" class="form-control" />
                                 <span asp-validation-for="StartDate" class="text-danger"></span>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label asp-for="EndDate" class="control-label">Ngày kết thúc</label>
+                                <label asp-for="EndDate" class="control-label">Ngày kết thúc <span class="text-danger">*</span></label>
                                 <input asp-for="EndDate" type="datetime-local" class="form-control" />
                                 <span asp-validation-for="EndDate" class="text-danger"></span>
                             </div>
@@ -141,7 +203,7 @@
                         <div class="col-md-4">
                             <div class="form-group form-check" style="padding-top: 35px;">
                                 <label class="form-check-label">
-                                    <input class="form-check-input" asp-for="IsActive" checked /> Kích hoạt
+                                    <input class="form-check-input" asp-for="IsActive" checked /> Kích hoạt ngay
                                 </label>
                             </div>
                         </div>
@@ -150,16 +212,99 @@
             </div>
 
             <div class="form-group mt-3">
-                <input type="submit" value="Tạo mới khuyến mãi" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Tạo mới khuyến mãi
+                </button>
+                <a asp-action="Index" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Hủy bỏ
+                </a>
             </div>
         </form>
     </div>
+
+    <!-- Sidebar hướng dẫn -->
+    <div class="col-md-3">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-info-circle"></i> Hướng dẫn
+                </h6>
+            </div>
+            <div class="card-body small">
+                <h6 class="font-weight-bold">Loại giảm giá:</h6>
+                <ul class="mb-3">
+                    <li><strong>Phần trăm:</strong> Giảm theo % giá trị đơn hàng</li>
+                    <li><strong>Số tiền:</strong> Giảm một số tiền cố định</li>
+                    <li><strong>Free ship:</strong> Miễn phí vận chuyển</li>
+                </ul>
+
+                <h6 class="font-weight-bold">Phạm vi áp dụng:</h6>
+                <ul class="mb-3">
+                    <li><strong>Toàn bộ:</strong> Áp dụng cho tất cả sản phẩm</li>
+                    <li><strong>Sản phẩm:</strong> Chỉ áp dụng cho các sản phẩm được chọn</li>
+                    <li><strong>Danh mục:</strong> Áp dụng cho toàn bộ danh mục</li>
+                    <li><strong>Farmer:</strong> Áp dụng cho sản phẩm của farmer cụ thể</li>
+                </ul>
+
+                <div class="alert alert-warning small mb-0">
+                    <strong>Lưu ý:</strong> Mã khuyến mãi sẽ tự động chuyển thành chữ IN HOA.
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-@* Thêm đoạn này để bật validation phía client *@
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function() {
+            // Toggle sections based on ApplicableTo selection
+            function toggleSections() {
+                var value = $('#applicableToSelect').val();
+                $('#productsSection').hide();
+                $('#categoriesSection').hide();
+                $('#farmersSection').hide();
+
+                if (value === 'specific_products') {
+                    $('#productsSection').show();
+                } else if (value === 'specific_categories') {
+                    $('#categoriesSection').show();
+                } else if (value === 'specific_farmers') {
+                    $('#farmersSection').show();
+                }
+            }
+
+            // Update discount value hint based on type
+            function updateDiscountHint() {
+                var type = $('#discountTypeSelect').val();
+                if (type === 'percentage') {
+                    $('#discountValueHint').text('(VD: 10 = 10%)');
+                } else if (type === 'fixed_amount') {
+                    $('#discountValueHint').text('(VD: 50000 = 50,000 VND)');
+                } else {
+                    $('#discountValueHint').text('(Nhập 1 nếu miễn phí ship)');
+                }
+            }
+
+            // Initial load
+            toggleSections();
+            updateDiscountHint();
+
+            // Event handlers
+            $('#applicableToSelect').change(function() {
+                toggleSections();
+            });
+
+            $('#discountTypeSelect').change(function() {
+                updateDiscountHint();
+            });
+
+            // Auto uppercase for code input
+            $('input[name="Code"]').on('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    </script>
 }
