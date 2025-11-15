@@ -56,7 +56,7 @@ else
                         <strong>Tổng tiền:</strong>
                         <div>
                             <strong>@group.Sum(i => i.Total).ToString("N0") VNĐ</strong>
-                            <a asp-controller="Home" asp-action="Payment" asp-route-sellerId="@group.Key" class="btn btn-primary btn-sm ms-3">
+                            <a asp-controller="Order" asp-action="Index" asp-route-sellerId="@group.Key" class="btn btn-primary btn-sm ms-3">
                                 Thanh toán
                             </a>
                         </div>

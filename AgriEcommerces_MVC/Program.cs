@@ -15,8 +15,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-// 2) Đăng ký OrderService
+// Đăng ký OrderService
 builder.Services.AddScoped<IOrderService, OrderService>();
+// Đăng ký CheckoutService
+builder.Services.AddScoped<IPromotionService, PromotionService>();
 
 // 2) MVC + Razor Runtime Compilation
 builder.Services

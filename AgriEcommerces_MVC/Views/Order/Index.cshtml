@@ -1,0 +1,166 @@
+﻿@model AgriEcommerces_MVC.Models.ViewModel.CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var cartTotal = Model.Cart.GrandTotal;
+    var finalTotal = Model.FinalAmount;
+}
+
+<div class="container py-5">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" asp-validation-summary="ModelOnly"></div>
+    }
+
+    <form asp-action="CreateOrder" method="post" id="checkout-form">
+        <input type="hidden" asp-for="SellerId" />
+        <input type="hidden" asp-for="PromotionCode" id="applied-promo-code" />
+
+        <div class="row">
+            <div class="col-md-7">
+                <h4><i class="fas fa-map-marker-alt"></i> 1. Chọn địa chỉ giao hàng</h4>
+
+                <div id="saved-address-list">
+                    @foreach (var addr in Model.SavedAddresses)
+                    {
+                        <div class="card card-body mb-2 shadow-sm address-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" asp-for="SelectedAddressId" id="addr_@addr.id" value="@addr.id">
+                                <label class="form-check-label" for="addr_@addr.id">
+                                    <strong>@addr.recipient_name</strong> | @addr.phone_number
+                                    @if (addr.is_default)
+                                    {
+                                        <span class="badge bg-primary">Mặc định</span>
+                                    }
+                                    <br>
+                                    <small>@addr.full_address, @addr.ward_commune, @addr.district, @addr.province_city</small>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                    <span asp-validation-for="SelectedAddressId" class="text-danger"></span>
+                </div>
+
+                <a asp-action="Index" asp-controller="CustomerAddress" class="btn btn-outline-secondary btn-sm mt-2">
+                    <i class="fas fa-edit"></i> Quản lý địa chỉ
+                </a>
+
+                <hr class="my-4">
+
+                <h4><i class="fas fa-shopping-basket"></i> 2. Kiểm tra đơn hàng</h4>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>SL</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Cart.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @item.ProductName
+                                    <br><small class="text-muted">@item.UnitPrice.ToString("N0") VNĐ</small>
+                                </td>
+                                <td>@item.Quantity</td>
+                                <td class="text-end">@item.Total.ToString("N0") VNĐ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4><i class="fas fa-percent"></i> 3. Mã khuyến mãi</h4>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="Nhập mã giảm giá" id="promo-code-input">
+                            <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">Áp dụng</button>
+                        </div>
+                        <div id="promo-message" class="mb-3"></div>
+
+                        <hr>
+
+                        <h4><i class="fas fa-file-invoice-dollar"></i> 4. Thanh toán</h4>
+                        <div class="payment-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tạm tính:</span>
+                                <strong id="subtotal">@cartTotal.ToString("N0") VNĐ</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Giảm giá:</span>
+                                <strong id="discount-amount">@(Model.DiscountAmount.ToString("N0")) VNĐ</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3 h5">
+                                <span>Tổng cộng:</span>
+                                <strong id="final-total" class="text-danger">@finalTotal.ToString("N0") VNĐ</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-check-circle"></i> Đặt hàng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // --- 1. LOGIC CLICK CHỌN ĐỊA CHỈ ---
+            $('#saved-address-list .address-card').click(function (e) {
+                if (!$(e.target).is('input[type="radio"]')) {
+                     $(this).find('input[type="radio"]').prop('checked', true);
+                }
+            });
+
+            // --- 2. LOGIC ÁP DỤNG MÃ GIẢM GIÁ (AJAX) ---
+            $('#apply-promo-btn').click(function () {
+                var code = $('#promo-code-input').val();
+                var sellerId = $('input[name="SellerId"]').val();
+                var $msg = $('#promo-message');
+
+                if (!code) {
+                    $msg.html('<div class="alert alert-danger">Vui lòng nhập mã khuyến mãi.</div>');
+                    return;
+                }
+
+                $msg.html('<span class="text-muted">Đang kiểm tra...</span>');
+
+                $.ajax({
+                    url: '@Url.Action("ApplyPromotion", "Order")',
+                    type: 'POST',
+                    data: {
+                        code: code,
+                        sellerId: sellerId,
+                        // Bổ sung AntiForgeryToken nếu bạn dùng
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            $msg.html('<div class="alert alert-success">' + response.message + '</div>');
+                            $('#discount-amount').text(response.discountAmountDisplay);
+                            $('#final-total').text(response.finalAmountDisplay);
+                            $('#applied-promo-code').val(response.promotionCode);
+                        } else {
+                            $msg.html('<div class="alert alert-danger">' + response.message + '</div>');
+                            $('#discount-amount').text('0 VNĐ');
+                            $('#final-total').text($('#subtotal').text());
+                            $('#applied-promo-code').val('');
+                        }
+                    },
+                    error: function () {
+                        $msg.html('<div class="alert alert-danger">Có lỗi xảy ra, vui lòng thử lại.</div>');
+                    }
+                });
+            });
+        });
+    </script>
+}
