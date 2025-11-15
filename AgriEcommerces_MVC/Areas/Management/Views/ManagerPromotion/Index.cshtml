@@ -20,10 +20,7 @@
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"] 
     </div>
 }
 
@@ -32,9 +29,6 @@
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
     </div>
 }
 
@@ -135,7 +129,7 @@
                         <th>Giá trị</th>
                         <th>Phạm vi</th>
                         <th>Thời gian</th>
-                        <th>Sử dụng</th>
+                        <th>Lượt dùng</th>
                         <th>Trạng thái</th>
                         <th style="width: 180px;">Hành động</th>
                     </tr>
@@ -152,24 +146,24 @@
                                 @if (!string.IsNullOrEmpty(item.Description))
                                 {
                                     <br />
-                                    <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))...</small>
+                                    <small class="text-muted">@item.Description.Substring(0, Math.Min(50, item.Description.Length))</small>
                                 }
                             </td>
                             <td>
                                 @switch (item.DiscountType)
                                 {
                                     case "percentage":
-                                        <span class="badge badge-info">
+                                        <span class="badge">
                                             <i class="fas fa-percent"></i> %
                                         </span>
                                         break;
-                                    case "fixed_amount":
-                                        <span class="badge badge-success">
-                                            <i class="fas fa-dollar-sign"></i> VND
+                                    case "fixed_amount":    
+                                        <span class="badge">
+                                             VND
                                         </span>
                                         break;
                                     case "free_shipping":
-                                        <span class="badge badge-warning">
+                                        <span class="badge">
                                             <i class="fas fa-shipping-fast"></i> Ship
                                         </span>
                                         break;
@@ -264,11 +258,16 @@
                                        title="Chỉnh sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.PromotionId"
-                                       class="btn btn-sm btn-danger"
-                                       title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.PromotionId" method="post"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa khuyến mãi n không?');"
+                                          style="display: inline;">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -278,6 +277,11 @@
         </div>
     </div>
 </div>
+<style>
+    .badge {
+        color: black;
+    }
+</style>    
 
 @section Scripts {
     <script>

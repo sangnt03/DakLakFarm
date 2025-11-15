@@ -10,25 +10,26 @@ namespace AgriEcommerces_MVC.Models
         [Column("promotionid")]
         public int PromotionId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập mã khuyến mãi")]
         [Column("code")]
         [StringLength(50)]
         public string Code { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập tên khuyến mãi")]
         [Column("name")]
         [StringLength(200)]
         public string Name { get; set; }
 
         [Column("description")]
+        [Required(ErrorMessage = "Vui lòng nhập mô tả khuyến mãi")]
         public string Description { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng chọn loại giảm giá")]
         [Column("discounttype")]
         [StringLength(20)]
-        public string DiscountType { get; set; } // 'percentage', 'fixed_amount', 'free_shipping'
+        public string DiscountType { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Vui lòng nhập giá trị giảm")]
         [Column("discountvalue")]
         public decimal DiscountValue { get; set; }
 
@@ -74,10 +75,10 @@ namespace AgriEcommerces_MVC.Models
 
         // --- Navigation Properties ---
         // Liên kết với các bảng "nối"
-        public virtual user CreatedBy { get; set; }
-        public virtual ICollection<promotion_product> PromotionProducts { get; set; }
-        public virtual ICollection<promotion_category> PromotionCategories { get; set; }
-        public virtual ICollection<promotion_farmer> PromotionFarmers { get; set; }
-        public virtual ICollection<promotion_usagehistory> PromotionUsageHistory { get; set; }
+        public virtual user? CreatedBy { get; set; }
+        public virtual ICollection<promotion_product>? PromotionProducts { get; set; }
+        public virtual ICollection<promotion_category>? PromotionCategories { get; set; }
+        public virtual ICollection<promotion_farmer>? PromotionFarmers { get; set; }
+        public virtual ICollection<promotion_usagehistory>? PromotionUsageHistory { get; set; }
     }
 }

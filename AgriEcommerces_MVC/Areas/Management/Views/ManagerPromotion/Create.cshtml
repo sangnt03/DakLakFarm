@@ -11,7 +11,7 @@
     <div class="col-md-9">
         <form asp-action="Create" method="post">
 
-            <div asp-validation-summary="All" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <!-- Thông tin cơ bản -->
             <div class="card shadow mb-4">
@@ -202,8 +202,9 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group form-check" style="padding-top: 35px;">
-                                <label class="form-check-label">
-                                    <input class="form-check-input" asp-for="IsActive" checked /> Kích hoạt ngay
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" id="isActiveCheckbox" />
+                                <label class="form-check-label" for="isActiveCheckbox">
+                                    Kích hoạt ngay
                                 </label>
                             </div>
                         </div>

@@ -46,6 +46,17 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             int[] selectedCategories,
             int[] selectedFarmers)
         {
+            // Loại bỏ ModelState error cho Navigation Properties
+            ModelState.Remove("CreatedBy");
+            ModelState.Remove("PromotionProducts");
+            ModelState.Remove("PromotionCategories");
+            ModelState.Remove("PromotionFarmers");
+            ModelState.Remove("PromotionUsageHistory");
+
+            // Chuyển DateTime sang UTC
+            newPromotion.StartDate = ConvertToUtc(newPromotion.StartDate);
+            newPromotion.EndDate = ConvertToUtc(newPromotion.EndDate);
+
             // Xử lý code
             if (!string.IsNullOrEmpty(newPromotion.Code))
             {
@@ -67,6 +78,11 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             if (newPromotion.DiscountType == "percentage" && newPromotion.DiscountValue > 100)
             {
                 ModelState.AddModelError("DiscountValue", "Giá trị phần trăm không được vượt quá 100%.");
+            }
+
+            if (newPromotion.DiscountValue <= 0)
+            {
+                ModelState.AddModelError("DiscountValue", "Giá trị giảm giá phải lớn hơn 0.");
             }
 
             // Validate applicable scope
@@ -120,7 +136,7 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 .Include(p => p.PromotionProducts).ThenInclude(pp => pp.Product)
                 .Include(p => p.PromotionCategories).ThenInclude(pc => pc.Category)
                 .Include(p => p.PromotionFarmers).ThenInclude(pf => pf.Farmer)
-                .Include(p => p.PromotionUsageHistory)
+                .Include(p => p.PromotionUsageHistory).ThenInclude(h => h.User)
                 .FirstOrDefaultAsync(m => m.PromotionId == id);
 
             if (promotion == null)
@@ -153,9 +169,9 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             await LoadViewData();
 
             // Pass selected items to view
-            ViewBag.SelectedProducts = promotion.PromotionProducts.Select(pp => pp.ProductId).ToArray();
-            ViewBag.SelectedCategories = promotion.PromotionCategories.Select(pc => pc.CategoryId).ToArray();
-            ViewBag.SelectedFarmers = promotion.PromotionFarmers.Select(pf => pf.FarmerId).ToArray();
+            ViewBag.SelectedProducts = promotion.PromotionProducts?.Select(pp => pp.ProductId).ToArray() ?? Array.Empty<int>();
+            ViewBag.SelectedCategories = promotion.PromotionCategories?.Select(pc => pc.CategoryId).ToArray() ?? Array.Empty<int>();
+            ViewBag.SelectedFarmers = promotion.PromotionFarmers?.Select(pf => pf.FarmerId).ToArray() ?? Array.Empty<int>();
 
             return View(promotion);
         }
@@ -174,6 +190,18 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             {
                 return NotFound();
             }
+
+            // Loại bỏ ModelState error cho Navigation Properties
+            ModelState.Remove("CreatedBy");
+            ModelState.Remove("PromotionProducts");
+            ModelState.Remove("PromotionCategories");
+            ModelState.Remove("PromotionFarmers");
+            ModelState.Remove("PromotionUsageHistory");
+
+            // Chuyển DateTime sang UTC
+            promotion.StartDate = ConvertToUtc(promotion.StartDate);
+            promotion.EndDate = ConvertToUtc(promotion.EndDate);
+            promotion.CreatedAt = ConvertToUtc(promotion.CreatedAt);
 
             // Validate code uniqueness (exclude current promotion)
             if (!string.IsNullOrEmpty(promotion.Code))
@@ -197,6 +225,27 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             if (promotion.DiscountType == "percentage" && promotion.DiscountValue > 100)
             {
                 ModelState.AddModelError("DiscountValue", "Giá trị phần trăm không được vượt quá 100%.");
+            }
+
+            if (promotion.DiscountValue <= 0)
+            {
+                ModelState.AddModelError("DiscountValue", "Giá trị giảm giá phải lớn hơn 0.");
+            }
+
+            // Validate applicable scope
+            if (promotion.ApplicableTo == "specific_products" && (selectedProducts == null || selectedProducts.Length == 0))
+            {
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất một sản phẩm khi áp dụng cho sản phẩm cụ thể.");
+            }
+
+            if (promotion.ApplicableTo == "specific_categories" && (selectedCategories == null || selectedCategories.Length == 0))
+            {
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất một danh mục khi áp dụng cho danh mục cụ thể.");
+            }
+
+            if (promotion.ApplicableTo == "specific_farmers" && (selectedFarmers == null || selectedFarmers.Length == 0))
+            {
+                ModelState.AddModelError("", "Vui lòng chọn ít nhất một farmer khi áp dụng cho farmer cụ thể.");
             }
 
             if (ModelState.IsValid)
@@ -240,9 +289,9 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             }
 
             await LoadViewData();
-            ViewBag.SelectedProducts = selectedProducts;
-            ViewBag.SelectedCategories = selectedCategories;
-            ViewBag.SelectedFarmers = selectedFarmers;
+            ViewBag.SelectedProducts = selectedProducts ?? Array.Empty<int>();
+            ViewBag.SelectedCategories = selectedCategories ?? Array.Empty<int>();
+            ViewBag.SelectedFarmers = selectedFarmers ?? Array.Empty<int>();
 
             return View(promotion);
         }
@@ -283,7 +332,7 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             }
 
             // Check if promotion has been used
-            if (promotion.PromotionUsageHistory.Any())
+            if (promotion.PromotionUsageHistory != null && promotion.PromotionUsageHistory.Any())
             {
                 TempData["ErrorMessage"] = "Không thể xóa khuyến mãi đã được sử dụng. Vui lòng vô hiệu hóa thay vì xóa.";
                 return RedirectToAction(nameof(Index));
@@ -295,16 +344,32 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã xóa khuyến mãi '{promotion.Name}' thành công.";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa khuyến mãi.";
+                TempData["ErrorMessage"] = $"Có lỗi xảy ra khi xóa khuyến mãi: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
         }
 
-        // Helper method to add promotion relations
-        private async Task AddPromotionRelations(int promotionId, int[] products, int[] categories, int[] farmers)
+        #region Helper Methods
+
+        /// Convert DateTime to UTC if it's Unspecified
+        private DateTime ConvertToUtc(DateTime dateTime)
+        {
+            if (dateTime.Kind == DateTimeKind.Unspecified)
+            {
+                return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+            }
+            else if (dateTime.Kind == DateTimeKind.Local)
+            {
+                return dateTime.ToUniversalTime();
+            }
+            return dateTime;
+        }
+
+        /// Add promotion relations (products/categories/farmers)
+        private async Task AddPromotionRelations(int promotionId, int[]? products, int[]? categories, int[]? farmers)
         {
             if (products != null && products.Length > 0)
             {
@@ -345,10 +410,12 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             await _context.SaveChangesAsync();
         }
 
-        // Helper method to load ViewData
+        /// Load data for dropdowns
         private async Task LoadViewData()
         {
             ViewBag.Products = await _context.products
+                .Where(p => p.quantityavailable > 0)
+                .OrderBy(p => p.productname)
                 .Select(p => new SelectListItem
                 {
                     Value = p.productid.ToString(),
@@ -356,6 +423,7 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 }).ToListAsync();
 
             ViewBag.Categories = await _context.categories
+                .OrderBy(c => c.categoryname)
                 .Select(c => new SelectListItem
                 {
                     Value = c.categoryid.ToString(),
@@ -363,7 +431,8 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 }).ToListAsync();
 
             ViewBag.Farmers = await _context.users
-                .Where(u => u.role == "Farmer")
+                .Where(u => u.role == "Farmer" && u.isapproved == true)
+                .OrderBy(u => u.shop_name ?? u.fullname ?? u.email)
                 .Select(u => new SelectListItem
                 {
                     Value = u.userid.ToString(),
@@ -371,9 +440,12 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 }).ToListAsync();
         }
 
+        /// Check if promotion exists
         private bool PromotionExists(int id)
         {
             return _context.promotions.Any(e => e.PromotionId == id);
         }
+
+        #endregion
     }
 }
