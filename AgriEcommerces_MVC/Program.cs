@@ -1,10 +1,11 @@
-﻿using AgriEcommerces_MVC.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
-using Microsoft.Extensions.Logging;
-using AgriEcommerces_MVC.Areas.Farmer.Services;
+﻿using AgriEcommerces_MVC.Areas.Farmer.Services;
 using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
+using AgriEcommerces_MVC.Data;
+using AgriEcommerces_MVC.Service.EmailService;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IOrderService, OrderService>();
 // Đăng ký CheckoutService
 builder.Services.AddScoped<IPromotionService, PromotionService>();
+// Đăng ký EmailService
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 // 2) MVC + Razor Runtime Compilation
 builder.Services

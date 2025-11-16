@@ -2,6 +2,7 @@
 using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
+using AgriEcommerces_MVC.Service.EmailService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +13,20 @@ public class OrderController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly IPromotionService _promotionService;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<OrderController> _logger;
     private const string CART_KEY = "Cart";
 
-    public OrderController(ApplicationDbContext db, IPromotionService promotionService)
+    public OrderController(
+        ApplicationDbContext db,
+        IPromotionService promotionService,
+        IEmailService emailService,
+        ILogger<OrderController> logger)
     {
         _db = db;
         _promotionService = promotionService;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     // [GET] /Order/Index
@@ -32,7 +41,7 @@ public class OrderController : Controller
         if (!cartForPayment.Items.Any())
         {
             TempData["Error"] = "Giỏ hàng trống.";
-            return RedirectToAction("Index", "Cart"); // Về trang giỏ hàng
+            return RedirectToAction("Index", "Cart");
         }
 
         // 2. Lấy thông tin khách hàng
@@ -48,7 +57,6 @@ public class OrderController : Controller
         if (!savedAddresses.Any())
         {
             TempData["Error"] = "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước khi thanh toán.";
-            // Chuyển hướng đến trang quản lý/tạo địa chỉ của bạn
             return RedirectToAction("Index", "CustomerAddress", new { returnUrl = Url.Action("Index", "Order", new { sellerId }) });
         }
 
@@ -59,7 +67,6 @@ public class OrderController : Controller
             SellerId = sellerId,
             SavedAddresses = savedAddresses,
             FinalAmount = cartForPayment.GrandTotal,
-            // Tự động chọn địa chỉ mặc định hoặc địa chỉ đầu tiên
             SelectedAddressId = savedAddresses.FirstOrDefault(a => a.is_default)?.id ?? savedAddresses.First().id
         };
 
@@ -163,34 +170,34 @@ public class OrderController : Controller
         // 4. Quay lại view nếu có lỗi
         if (!ModelState.IsValid)
         {
-            // Tải lại danh sách địa chỉ đã lưu
             model.SavedAddresses = await _db.customer_addresses
                                           .Where(a => a.user_id == userId)
                                           .OrderByDescending(a => a.is_default)
                                           .ToListAsync();
-            return View("Index", model); // Quay lại trang Index (checkout)
+            return View("Index", model);
         }
 
         // 5. Tạo đơn hàng (Order)
-        // Ghép các trường địa chỉ từ CSDL
         string shippingAddressString = $"{selectedAddress.full_address}, {selectedAddress.ward_commune}, {selectedAddress.district}, {selectedAddress.province_city}";
+
+        DateTime orderDateTime = DateTime.UtcNow;
 
         var order = new order
         {
             customerid = userId,
-            // Sao chép thông tin từ địa chỉ qua đơn hàng
             customername = selectedAddress.recipient_name,
             customerphone = selectedAddress.phone_number,
             shippingaddress = shippingAddressString,
-
-            orderdate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+            orderdate = DateTime.SpecifyKind(orderDateTime, DateTimeKind.Unspecified),
             status = "Chờ duyệt",
-
-            totalamount = model.Cart.GrandTotal, // Tổng tiền gốc
+            totalamount = model.Cart.GrandTotal,
             discountamount = finalDiscountAmount,
-            FinalAmount = model.Cart.GrandTotal - finalDiscountAmount, // Tổng tiền cuối
+            FinalAmount = model.Cart.GrandTotal - finalDiscountAmount,
             promotionid = appliedPromo?.PromotionId,
-            PromotionCode = appliedPromo?.Code
+            PromotionCode = appliedPromo?.Code,
+
+            // TẠO MÃ TẠM THỜI (sẽ update sau khi có ID)
+            ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
         };
 
         // 6. Tạo chi tiết đơn hàng (Order Details)
@@ -205,8 +212,6 @@ public class OrderController : Controller
                 unitprice = item.UnitPrice,
                 sellerid = prod.userid
             });
-
-            // Cân nhắc trừ tồn kho tại đây
         }
 
         // 7. Cập nhật lịch sử và số lần dùng Promotion
@@ -224,11 +229,45 @@ public class OrderController : Controller
             });
         }
 
-        // 8. Lưu vào CSDL
+        // 8. Lưu vào CSDL (lần đầu với mã tạm)
         _db.orders.Add(order);
         await _db.SaveChangesAsync();
 
-        // 9. Cập nhật lại Session Cart
+        //Ngày + ID
+        order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(order.orderid, orderDateTime);
+
+        _db.orders.Update(order);
+        await _db.SaveChangesAsync();
+
+        // 9. GỬI EMAIL XÁC NHẬN
+        try
+        {
+            // Gửi email cho khách hàng
+            await _emailService.SendOrderConfirmationEmailAsync(order, user.email);
+
+            // Gửi email cho từng người bán (Farmer) có sản phẩm trong đơn
+            var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
+            foreach (var farmerGroup in farmerGroups)
+            {
+                var farmerId = farmerGroup.Key;
+                var farmer = await _db.users.FirstOrDefaultAsync(u => u.userid == farmerId && u.role == "Farmer");
+
+                if (farmer != null && !string.IsNullOrEmpty(farmer.email))
+                {
+                    var farmerProducts = farmerGroup.ToList();
+                    await _emailService.SendOrderNotificationToFarmerAsync(order, farmer.email, farmerProducts);
+                }
+            }
+
+            TempData["Success"] = "Đặt hàng thành công! Email xác nhận đã được gửi.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gửi email xác nhận đơn hàng #{OrderId}", order.orderid);
+            TempData["Warning"] = "Đặt hàng thành công nhưng không thể gửi email xác nhận.";
+        }
+
+        // 10. Cập nhật lại Session Cart
         var remainingItems = cartAll.Items
                                     .Where(i => !model.SellerId.HasValue || i.SellerId != model.SellerId.Value)
                                     .ToList();
@@ -242,7 +281,7 @@ public class OrderController : Controller
             HttpContext.Session.Remove(CART_KEY);
         }
 
-        // 10. Chuyển đến trang xác nhận
+        // 11. Chuyển đến trang xác nhận
         return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
     }
 
@@ -261,7 +300,17 @@ public class OrderController : Controller
             return NotFound();
         }
 
-        
+        // XỬ LÝ ĐƠN HÀNG CŨ CHƯA CÓ MÃ
+        if (string.IsNullOrEmpty(order.ordercode))
+        {
+            order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(
+                order.orderid,
+                order.orderdate ?? DateTime.UtcNow
+            );
+            _db.orders.Update(order);
+            await _db.SaveChangesAsync();
+        }
+
         return View(order);
     }
 }

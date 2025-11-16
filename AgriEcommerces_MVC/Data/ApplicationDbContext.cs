@@ -81,6 +81,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.orderdate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone");
+
             entity.Property(e => e.status).HasMaxLength(30);
             entity.Property(e => e.totalamount).HasPrecision(12, 2);
 

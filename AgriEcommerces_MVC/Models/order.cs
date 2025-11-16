@@ -8,6 +8,12 @@ namespace AgriEcommerces_MVC.Models;
 public partial class order
 {
     public int orderid { get; set; }
+
+    // MÃ ĐỌN HÀNG ĐẶC BIỆT - Hiển thị cho khách hàng
+    [StringLength(50)]
+    [Column("ordercode")]
+    public string ordercode { get; set; }
+
     public int customerid { get; set; }
     public DateTime? orderdate { get; set; }
 
