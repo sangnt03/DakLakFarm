@@ -288,7 +288,7 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<promotion_usagehistory>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("promotion_usagehistory_pkey");
+            entity.HasKey(e => e.UsageId).HasName("promotion_usagehistory_pkey");
 
             // UNIQUE: Một đơn hàng chỉ dùng 1 mã 1 lần
             entity.HasIndex(e => new { e.PromotionId, e.OrderId }, "idx_promo_usage_order_unique").IsUnique();
