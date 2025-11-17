@@ -6,5 +6,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
     {
         Task SendOrderConfirmationEmailAsync(order order, string customerEmail);
         Task SendOrderNotificationToFarmerAsync(order order, string farmerEmail, List<orderdetail> farmerProducts);
+        Task SendPasswordResetOtpAsync(string email, string otpCode);
     }
 }

@@ -27,7 +27,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress(order.customername, customerEmail));
-            message.Subject = $"Xác nhận đơn hàng #{order.orderid} - AgriEcommerce";
+            message.Subject = $"Xác nhận đơn hàng #{order.ordercode} - DakLakFarm";
 
             var bodyBuilder = new BodyBuilder
             {
@@ -48,7 +48,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress("Người bán", farmerEmail));
-            message.Subject = $"Thông báo đơn hàng mới #{order.orderid}";
+            message.Subject = $"Thông báo đơn hàng mới #{order.ordercode}";
 
             var bodyBuilder = new BodyBuilder
             {
@@ -58,6 +58,29 @@ namespace AgriEcommerces_MVC.Service.EmailService
 
             await SendEmailAsync(message, emailSettings);
         }
+
+        // MỚI: Phương thức gửi OTP đặt lại mật khẩu
+        public async Task SendPasswordResetOtpAsync(string email, string otpCode)
+        {
+            var emailSettings = _configuration.GetSection("EmailSettings");
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(
+                emailSettings["SenderName"],
+                emailSettings["SenderEmail"]
+            ));
+            message.To.Add(new MailboxAddress(email, email));
+            message.Subject = "Mã OTP đặt lại mật khẩu - DakLakFarm"; // Đã cập nhật thương hiệu
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = GeneratePasswordResetOtpHtml(email, otpCode)
+            };
+            message.Body = bodyBuilder.ToMessageBody();
+
+            await SendEmailAsync(message, emailSettings);
+        }
+
 
         private async Task SendEmailAsync(MimeMessage message, IConfigurationSection emailSettings)
         {
@@ -117,7 +140,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
         
         <div class='content'>
             <p>Xin chào <strong>{order.customername}</strong>,</p>
-            <p>Cảm ơn bạn đã đặt hàng tại <strong>AgriEcommerce</strong>. Đơn hàng của bạn đã được tiếp nhận và đang chờ xử lý.</p>
+            <p>Cảm ơn bạn đã đặt hàng tại <strong>DakLakFarm</strong>. Đơn hàng của bạn đã được tiếp nhận và đang chờ xử lý.</p>
             
             <div class='order-info'>
                 <h3>📋 Thông tin đơn hàng</h3>
@@ -184,12 +207,12 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 </ul>
             </div>
 
-            <p>Trân trọng,<br><strong>Đội ngũ AgriEcommerce</strong></p>
+            <p>Trân trọng,<br><strong>Đội ngũ DakLakFarm</strong></p>
         </div>
 
         <div class='footer'>
             <p>Email này được gửi tự động, vui lòng không trả lời.</p>
-            <p>&copy; 2025 AgriEcommerce. All rights reserved.</p>
+            <p>&copy; 2025 DakLakFarm. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -285,12 +308,72 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 <a href='#' class='action-btn'>Xem chi tiết đơn hàng</a>
             </center>
 
-            <p>Trân trọng,<br><strong>Hệ thống AgriEcommerce</strong></p>
+            <p>Trân trọng,<br><strong>Hệ thống DakLakFarm</strong></p>
         </div>
     </div>
 </body>
 </html>");
 
+            return sb.ToString();
+        }
+
+        // MỚI: Phương thức tạo HTML cho OTP
+        private string GeneratePasswordResetOtpHtml(string email, string otpCode)
+        {
+            var sb = new StringBuilder();
+            sb.Append($@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: #007bff; color: white; padding: 20px; text-align: center; }}
+        .content {{ background: #f9f9f9; padding: 20px; }}
+        .otp-code {{ 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #007bff; 
+            text-align: center; 
+            margin: 20px 0; 
+            letter-spacing: 5px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 5px;
+            font-family: monospace;
+        }}
+        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>🔑 Yêu cầu Đặt lại Mật khẩu</h1>
+        </div>
+        
+        <div class='content'>
+            <p>Xin chào <strong>{email}</strong>,</p>
+            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại <strong>DakLakFarm</strong>.</p>
+            <p>Mã OTP của bạn là:</p>
+            
+            <div class='otp-code'>
+                {otpCode}
+            </div>
+            
+            <p>Mã này sẽ hết hạn trong 5 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
+            <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
+            
+            <p>Trân trọng,<br><strong>Đội ngũ DakLakFarm</strong></p>
+        </div>
+
+        <div class='footer'>
+            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+            <p>&copy; 2025 DakLakFarm. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>");
             return sb.ToString();
         }
     }

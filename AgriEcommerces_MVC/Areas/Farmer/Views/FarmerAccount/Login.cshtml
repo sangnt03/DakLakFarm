@@ -9,7 +9,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] – Manager Area</title>
+    <title>@ViewData["Title"] – Farmer Area</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%232d8b57'/%3E%3Cpath d='M50 30c-8 0-15 7-15 15v10h30V45c0-8-7-15-15-15zM45 55h10v15H45z' fill='%23fff'/%3E%3C/svg%3E" />
 </head>
 
@@ -53,6 +53,11 @@
                         <div class="form-group">
                             <input asp-for="password" type="password" class="form-control" placeholder="Mật khẩu" />
                             <span asp-validation-for="password" class="text-danger"></span>
+                        </div>
+                        <div class="mt-3" style="text-align:right;">
+                            <a asp-area="" asp-controller="ForgotPassword" asp-action="Index" style="text-decoration:none; -webkit-text-fill-color:#1e6a42">
+                                Quên mật khẩu?
+                            </a>
                         </div>
 
                         <button type="submit" class="btn-login">

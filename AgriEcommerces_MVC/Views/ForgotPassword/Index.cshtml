@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Quên mật khẩu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-key fa-3x text-primary"></i>
+                        <h3 class="mt-3">Quên mật khẩu?</h3>
+                        <p class="text-muted">Nhập email của bạn để nhận mã OTP</p>
+                        <p class="text-muted mb-0 text-nowrap" style="font-size: 0.85rem;">
+                            Mã OTP sẽ được gửi đến email của bạn và có hiệu lực trong 10 phút
+                        </p>
+                    </div>
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fas fa-check-circle"></i> @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="SendOtp" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Nhập địa chỉ Email</label>
+                            <div class="input-group">
+                                
+                                <input type="email"
+                                       class="form-control"
+                                       id="email"
+                                       name="email"
+                                       placeholder="name@example.com"
+                                       required
+                                       autofocus>
+                                <div class="invalid-feedback">
+                                    Vui lòng nhập địa chỉ email.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Gửi mã OTP
+                            </button>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Quay lại đăng nhập
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

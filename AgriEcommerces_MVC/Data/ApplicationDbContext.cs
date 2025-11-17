@@ -41,6 +41,7 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<promotion_product> promotion_products { get; set; }
     public virtual DbSet<promotion_farmer> promotion_farmers { get; set; }
     public virtual DbSet<promotion_usagehistory> promotion_usagehistories { get; set; }
+    public virtual DbSet<password_reset> password_reset { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -245,10 +246,6 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.role).HasDefaultValue("Customer");
         });
 
-        // ================================================
-        // BẮT ĐẦU: CẤU HÌNH CÁC BẢNG KHUYẾN MÃI
-        // ================================================
-
         modelBuilder.Entity<promotion>(entity =>
         {
             entity.HasKey(e => e.PromotionId).HasName("promotions_pkey");
@@ -357,9 +354,19 @@ public partial class ApplicationDbContext : DbContext
                 .HasConstraintName("promo_usage_orderid_fkey");
         });
 
-        // ================================================
-        // KẾT THÚC: CẤU HÌNH CÁC BẢNG KHUYẾN MÃI
-        // ================================================
+        modelBuilder.Entity<password_reset>(entity =>
+        {
+            entity.ToTable("password_resets");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.OtpCode).IsRequired().HasMaxLength(6);
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.ExpiresAt).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.UsedAt).HasColumnType("timestamp without time zone");
+
+            entity.HasIndex(e => e.Email);
+            entity.HasIndex(e => e.OtpCode);
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }

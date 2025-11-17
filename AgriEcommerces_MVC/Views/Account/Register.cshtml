@@ -71,6 +71,13 @@
                             <span asp-validation-for="ConfirmPassword"
                                   class="text-danger small"></span>
                         </div>
+                        <!-- Password strength indicator -->
+                        <div class="mb-3">
+                            <div class="progress" style="height: 5px;">
+                                <div id="passwordStrength" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small id="strengthText" class="text-muted"></small>
+                        </div>
 
                         <div class="cf-turnstile mb-3"
                              data-sitekey="0x4AAAAAAB9xaHK9dVpPJWxh"
@@ -133,6 +140,46 @@
 
             // Cài đặt cho ô "Xác nhận mật khẩu"
             setupPasswordToggle("#toggleConfirmPassword", "#ConfirmPassword", "#confirmEyeIcon");
+        });
+                // Password strength checker
+        document.getElementById('Password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+
+            let strength = 0;
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 8) strength += 25;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 12;
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 13;
+
+            strengthBar.style.width = strength + '%';
+
+            if (strength < 40) {
+                strengthBar.className = 'progress-bar'; // Xóa class màu
+                strengthBar.style.backgroundColor = '#d9534f'; // Màu đỏ đậm hơn (hoặc 'crimson')
+                strengthText.textContent = 'Yếu';
+                strengthText.className = ''; // Xóa class màu
+                strengthText.style.color = '#d9534f';
+                strengthText.style.fontWeight = 'bold'; // In đậm
+            } 
+            else if (strength < 70) {
+                strengthBar.className = 'progress-bar';
+                strengthBar.style.backgroundColor = '#f0ad4e'; // Màu vàng đậm hơn (hoặc 'darkorange')
+                strengthText.textContent = 'Trung bình';
+                strengthText.className = '';
+                strengthText.style.color = '#f0ad4e';
+                strengthText.style.fontWeight = 'bold';
+            } 
+            else {
+                strengthBar.className = 'progress-bar';
+                strengthBar.style.backgroundColor = '#5cb85c'; // Màu xanh đậm hơn (hoặc 'green')
+                strengthText.textContent = 'Mạnh';
+                strengthText.className = '';
+                strengthText.style.color = '#5cb85c';
+                strengthText.style.fontWeight = 'bold';
+            }
         });
     </script>
 }

@@ -1,0 +1,99 @@
+﻿@{
+    ViewData["Title"] = "Xác thực OTP";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var email = ViewBag.Email as string;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-shield-alt fa-3x text-success"></i>
+                        <h3 class="mt-3">Xác thực OTP</h3>
+                        <p class="text-muted">
+                            Mã OTP đã được gửi đến<br>
+                            <strong>@email</strong>
+                        </p>
+                    </div>
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <i class="fas fa-check-circle"></i> @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="VerifyOtp" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="email" value="@email" />
+
+                        <div class="mb-3">
+                            <label for="otpCode" class="form-label">Nhập mã OTP (6 chữ số)</label>
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   id="otpCode"
+                                   name="otpCode"
+                                   placeholder="000000"
+                                   maxlength="6"
+                                   pattern="[0-9]{6}"
+                                   required
+                                   autofocus
+                                   style="font-size: 24px; letter-spacing: 10px;">
+                            <div class="form-text text-center">Vui lòng nhập mã 6 chữ số</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Xác thực
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-3">
+
+                    <div class="text-center">
+                        <p class="text-muted mb-2">Không nhận được mã?</p>
+                        <form asp-action="ResendOtp" method="post" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="email" value="@email" />
+                            <button type="submit" class="btn btn-link">
+                                <i class="fas fa-redo"></i> Gửi lại mã OTP
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-clock"></i>
+                <strong>Lưu ý:</strong> Mã OTP có hiệu lực trong 10 phút
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto format OTP input
+        document.getElementById('otpCode').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+}

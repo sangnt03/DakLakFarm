@@ -32,6 +32,11 @@
                             </button>
                             <span asp-validation-for="password" class="text-danger small"></span>
                         </div>
+                        <div class="text-end mt-3">
+                            <a asp-controller="ForgotPassword" asp-action="Index" class="text-decoration-none">
+                                Quên mật khẩu?
+                            </a>
+                        </div>
                         @if (!string.IsNullOrEmpty(Model.ReturnUrl))
                         {
                             <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
