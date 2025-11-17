@@ -3,6 +3,7 @@ using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
 using AgriEcommerces_MVC.Service.EmailService;
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,9 @@ public class OrderController : Controller
     private readonly ILogger<OrderController> _logger;
     private const string CART_KEY = "Cart";
 
+    // MÚI GIỜ VIỆT NAM (UTC+7)
+    private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+
     public OrderController(
         ApplicationDbContext db,
         IPromotionService promotionService,
@@ -27,6 +31,12 @@ public class OrderController : Controller
         _promotionService = promotionService;
         _emailService = emailService;
         _logger = logger;
+    }
+
+    // HÀM HỖ TRỢ: Lấy thời gian Việt Nam
+    private DateTime GetVietnamTime()
+    {
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
     }
 
     // [GET] /Order/Index
@@ -180,7 +190,8 @@ public class OrderController : Controller
         // 5. Tạo đơn hàng (Order)
         string shippingAddressString = $"{selectedAddress.full_address}, {selectedAddress.ward_commune}, {selectedAddress.district}, {selectedAddress.province_city}";
 
-        DateTime orderDateTime = DateTime.UtcNow;
+        // SỬ DỤNG THỜI GIAN VIỆT NAM
+        DateTime orderDateTime = GetVietnamTime();
 
         var order = new order
         {
@@ -195,8 +206,6 @@ public class OrderController : Controller
             FinalAmount = model.Cart.GrandTotal - finalDiscountAmount,
             promotionid = appliedPromo?.PromotionId,
             PromotionCode = appliedPromo?.Code,
-
-            // TẠO MÃ TẠM THỜI (sẽ update sau khi có ID)
             ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
         };
 
@@ -223,7 +232,7 @@ public class OrderController : Controller
                 PromotionId = appliedPromo.PromotionId,
                 UserId = userId,
                 OrderId = order.orderid,
-                UsedAt = DateTime.UtcNow,
+                UsedAt = GetVietnamTime(),
                 DiscountAmount = finalDiscountAmount,
                 Order = order
             });
@@ -233,19 +242,16 @@ public class OrderController : Controller
         _db.orders.Add(order);
         await _db.SaveChangesAsync();
 
-        //Ngày + ID
+        // Tạo mã đơn hàng chính thức
         order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(order.orderid, orderDateTime);
-
         _db.orders.Update(order);
         await _db.SaveChangesAsync();
 
         // 9. GỬI EMAIL XÁC NHẬN
         try
         {
-            // Gửi email cho khách hàng
             await _emailService.SendOrderConfirmationEmailAsync(order, user.email);
 
-            // Gửi email cho từng người bán (Farmer) có sản phẩm trong đơn
             var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
             foreach (var farmerGroup in farmerGroups)
             {
@@ -305,12 +311,116 @@ public class OrderController : Controller
         {
             order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(
                 order.orderid,
-                order.orderdate ?? DateTime.UtcNow
+                order.orderdate ?? GetVietnamTime()
             );
             _db.orders.Update(order);
             await _db.SaveChangesAsync();
         }
 
+        // LẤY THÔNG TIN HỦY ĐƠN NẾU CÓ
+        if (order.status == "Đã hủy")
+        {
+            ViewBag.Cancellation = await _db.order_cancellations
+                .Include(c => c.CancelledByUser)
+                .FirstOrDefaultAsync(c => c.OrderId == orderId);
+        }
+
         return View(order);
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelOrder(int orderId, string cancelReason, string returnUrl = null)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        // Lấy đơn hàng
+        var order = await _db.orders
+            .Include(o => o.orderdetails)
+            .FirstOrDefaultAsync(o => o.orderid == orderId && o.customerid == userId);
+
+        if (order == null)
+        {
+            TempData["Error"] = "Không tìm thấy đơn hàng.";
+            return RedirectBasedOnReturnUrl(returnUrl, orderId);
+        }
+
+        // Kiểm tra trạng thái - chỉ cho phép hủy khi đang "Chờ duyệt"
+        if (order.status != "Chờ duyệt")
+        {
+            TempData["Error"] = $"Không thể hủy đơn hàng ở trạng thái '{order.status}'.";
+            return RedirectBasedOnReturnUrl(returnUrl, orderId);
+        }
+
+        // Cập nhật trạng thái
+        order.status = "Đã hủy";
+        var vnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
+        // LƯU LỊCH SỬ HỦY ĐƠN VỚI THỜI GIAN VIỆT NAM
+        var cancellation = new order_cancellation
+        {
+            OrderId = orderId,
+            CancelledBy = userId,
+            CancelReason = string.IsNullOrWhiteSpace(cancelReason) ? "Không có lý do" : cancelReason,
+            CancelledAt = DateTime.SpecifyKind(vnTime, DateTimeKind.Unspecified),
+            RefundAmount = order.FinalAmount,
+            RefundStatus = "N/A"
+        };
+        _db.order_cancellations.Add(cancellation);
+
+        // Hoàn lại promotion nếu có
+        if (order.promotionid.HasValue)
+        {
+            var promotion = await _db.promotions.FindAsync(order.promotionid.Value);
+            if (promotion != null)
+            {
+                promotion.CurrentUsageCount--;
+
+                var usageHistory = await _db.promotion_usagehistories
+                    .FirstOrDefaultAsync(h => h.OrderId == orderId);
+                if (usageHistory != null)
+                {
+                    _db.promotion_usagehistories.Remove(usageHistory);
+                }
+            }
+        }
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Đơn hàng {OrderCode} đã được hủy bởi user {UserId} lúc {Time}",
+            order.ordercode, userId, GetVietnamTime());
+
+        TempData["Success"] = $"Đơn hàng {order.ordercode} đã được hủy thành công.";
+        return RedirectBasedOnReturnUrl(returnUrl, orderId);
+    }
+
+    // HÀM HỖ TRỢ: Redirect dựa trên returnUrl
+    private IActionResult RedirectBasedOnReturnUrl(string returnUrl, int orderId)
+    {
+        // Nếu có returnUrl và là local URL (bảo mật)
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        // Mặc định quay về OrderConfirmation
+        return RedirectToAction("OrderConfirmation", new { orderId });
+    }
+
+
+
+    // [GET] /Order/CancellationHistory - LỊCH SỬ HỦY ĐƠN
+    //[Authorize]
+    //public async Task<IActionResult> CancellationHistory()
+    //{
+    //    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+    //    var cancellations = await _db.order_cancellations
+    //        .Include(c => c.Order)
+    //        .Include(c => c.CancelledByUser)
+    //        .Where(c => c.Order.customerid == userId)
+    //        .OrderByDescending(c => c.CancelledAt)
+    //        .ToListAsync();
+
+    //    return View(cancellations);
+    //}
 }

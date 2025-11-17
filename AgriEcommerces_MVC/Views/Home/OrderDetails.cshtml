@@ -1,6 +1,6 @@
 ﻿@model AgriEcommerces_MVC.Models.order
 @{
-    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.orderid}";
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.ordercode}";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -10,6 +10,8 @@
     <p>
         <strong>Ngày đặt:</strong> @(Model.orderdate?.ToString("dd/MM/yyyy HH:mm") ?? "-")<br />
         <strong>Trạng thái:</strong> @Model.status<br />
+        <strong> Tên người nhận:</strong> @Model.customername<br />
+        <strong>Số điện thoại:</strong> @Model.customerphone<br />
         <strong>Địa chỉ giao:</strong> @Model.shippingaddress
     </p>
 
@@ -17,10 +19,11 @@
         <thead class="table-light">
             <tr>
                 <th>Ảnh</th>
-                <th>Sản phẩm</th>
+                <th>Tên Sản phẩm</th>
                 <th>Số lượng</th>
                 <th>Đơn giá</th>
-                <th>Thành tiền</th>
+                <th>Tạm tính</th>
+                <th>Giảm giá</th>
             </tr>
         </thead>
         <tbody>
@@ -43,14 +46,15 @@
                     <td>@d.product.productname</td>
                     <td>@d.quantity</td>
                     <td>@string.Format("{0:N0}", d.unitprice) VNĐ</td>
-                    <td>@string.Format("{0:N0}", d.quantity * d.unitprice) VNĐ</td>
+                    <td>@string.Format("{0:N0}", Model.totalamount) VNĐ</td>
+                    <td>@string.Format("{0:N0}", Model.discountamount) VNĐ</td>
                 </tr>
             }
         </tbody>
         <tfoot>
-            <tr>
-                <th colspan="4" class="text-end">Tổng cộng:</th>
-                <th>@string.Format("{0:N0}", Model.totalamount) VNĐ</th>
+            <tr style="-webkit-text-fill-color:orange">
+                <th colspan="5" class="text-end">Tổng cộng:</th>
+                <th>@string.Format("{0:N0}", Model.FinalAmount) VNĐ</th>
             </tr>
         </tfoot>
     </table>

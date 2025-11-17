@@ -20,6 +20,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<orderdetail> orderdetails { get; set; }
 
+    public virtual DbSet<order_cancellation> order_cancellations { get; set; }
+
     public virtual DbSet<priceprediction> pricepredictions { get; set; }
 
     public virtual DbSet<product> products { get; set; }
@@ -107,6 +109,43 @@ public partial class ApplicationDbContext : DbContext
                 .HasForeignKey(d => d.productid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("orderdetails_productid_fkey");
+        });
+        modelBuilder.Entity<order_cancellation>(entity =>
+        {
+            entity.ToTable("order_cancellations");
+
+            entity.HasKey(e => e.Id).HasName("order_cancellations_pkey");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.OrderId).HasColumnName("orderid");
+            entity.Property(e => e.CancelledBy).HasColumnName("cancelled_by");
+            entity.Property(e => e.CancelReason).HasColumnName("cancel_reason").HasMaxLength(500);
+
+            // QUAN TRỌNG: timestamp without time zone
+            entity.Property(e => e.CancelledAt)
+                .HasColumnName("cancelled_at")
+                .HasColumnType("timestamp without time zone");
+
+            entity.Property(e => e.RefundAmount).HasColumnName("refund_amount").HasPrecision(12, 2);
+            entity.Property(e => e.RefundStatus).HasColumnName("refund_status").HasMaxLength(50);
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId, "idx_order_cancellations_orderid");
+            entity.HasIndex(e => e.CancelledBy, "idx_order_cancellations_cancelled_by");
+            entity.HasIndex(e => e.CancelledAt, "idx_order_cancellations_cancelled_at");
+
+            // Foreign Keys
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .HasConstraintName("fk_order_cancellation_order")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CancelledByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CancelledBy)
+                .HasConstraintName("fk_order_cancellation_user")
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<priceprediction>(entity =>
