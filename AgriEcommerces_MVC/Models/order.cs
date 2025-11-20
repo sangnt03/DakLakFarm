@@ -50,4 +50,6 @@ public partial class order
     public virtual user customer { get; set; } = null!;
     public virtual ICollection<orderdetail> orderdetails { get; set; } = new List<orderdetail>();
     public virtual ICollection<promotion_usagehistory> promotion_usagehistories { get; set; } = new List<promotion_usagehistory>();
+    [InverseProperty("Order")]
+    public virtual ICollection<Payment> Payments { get; set; }
 }

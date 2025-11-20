@@ -17,6 +17,12 @@ public partial class orderdetail
     public decimal unitprice { get; set; }
 
     public int sellerid { get; set; }
+
+    [Column("admincommission")]
+    public decimal AdminCommission { get; set; }
+
+    [Column("farmerrevenue")]
+    public decimal FarmerRevenue { get; set; }
     public virtual order order { get; set; } = null!;
 
     public virtual product product { get; set; } = null!;

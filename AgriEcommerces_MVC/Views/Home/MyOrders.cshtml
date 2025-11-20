@@ -97,11 +97,13 @@
                                 @{
                                     var badgeClass = o.status switch
                                     {
-                                        "Chờ duyệt" => "bg-warning text-dark",
+                                        "Pending" => "status-badge bg-warning text-dark",
+                                        "Paid" => "bg-info text-success",
+                                        "Chờ duyệt" => "status-badge bg-warning text-dark",
                                         "Đang xử lý" => "bg-info text-dark",
                                         "Đang vận chuyển" => "bg-primary text-dark",
-                                        "Đã nhận hàng" => "bg-success text-dark",
-                                        "Đã hủy" => "bg-danger text-dark",
+                                        "Đã nhận hàng" => "status-badg bg-success text-while",
+                                        "Đã hủy" => "status-badge bg-danger text-white",
                                         _ => "bg-secondary"
                                     };
                                 }
@@ -113,11 +115,11 @@
                             <td>
                                 <div class="d-flex flex-wrap gap-1 justify-content-center">
                                     <a asp-action="OrderDetails" asp-route-id="@o.orderid"
-                                       class="btn btn-sm btn-outline-primary">
+                                       class="btn btn-sm btn-outline-info">
                                         <i class="fas fa-eye"></i> Xem chi tiết
                                     </a>
 
-                                    @if (o.status == "Chờ duyệt")
+                                    @if (o.status == "Chờ duyệt" || o.status == "Pending")
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-danger"
                                                 data-bs-toggle="modal"
@@ -147,7 +149,7 @@
                                                 <a asp-controller="Review"
                                                    asp-action="Create"
                                                    asp-route-productid="@detail.productid"
-                                                   class="btn btn-sm btn-outline-info">
+                                                   class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-star"></i> Đánh giá
                                                 </a>
                                             }
@@ -163,6 +165,7 @@
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <form asp-controller="Order" asp-action="CancelOrder" method="post">
+                                            <input type="hidden" name="orderId" value="@o.orderid" />
                                             <input type="hidden" name="returnUrl" value="@Url.Action("MyOrders", "Home")" />
                                             @Html.AntiForgeryToken()
                                             <div class="modal-header bg-danger text-white">

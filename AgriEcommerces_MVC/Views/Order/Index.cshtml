@@ -7,103 +7,199 @@
 }
 
 <div class="container py-5">
-    <h2>@ViewData["Title"]</h2>
+    <h2><i class="fas fa-shopping-cart"></i> @ViewData["Title"]</h2>
 
     @if (!ViewData.ModelState.IsValid)
     {
         <div class="alert alert-danger" asp-validation-summary="ModelOnly"></div>
     }
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <form asp-action="CreateOrder" method="post" id="checkout-form">
+        @Html.AntiForgeryToken()
         <input type="hidden" asp-for="SellerId" />
         <input type="hidden" asp-for="PromotionCode" id="applied-promo-code" />
 
         <div class="row">
             <div class="col-md-7">
-                <h4><i class="fas fa-map-marker-alt"></i> 1. Chọn địa chỉ giao hàng</h4>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> 1. Địa chỉ giao hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="saved-address-list">
+                            @if (Model.SavedAddresses != null && Model.SavedAddresses.Any())
+                            {
+                                foreach (var addr in Model.SavedAddresses)
+                                {
+                                    <div class="card card-body mb-2 address-card @(addr.id == Model.SelectedAddressId ? "border-primary" : "")" style="cursor: pointer;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="SelectedAddressId"
+                                                   id="addr_@addr.id" value="@addr.id"
+                                                   checked="@(addr.id == Model.SelectedAddressId)">
+                                            <label class="form-check-label w-100" for="addr_@addr.id">
+                                                <div>
+                                                    <strong>@addr.recipient_name</strong> | <span class="text-muted">@addr.phone_number</span>
+                                                    @if (addr.is_default)
+                                                    {
+                                                        <span class="badge bg-primary ms-2">Mặc định</span>
+                                                    }
+                                                    <br>
+                                                    <small class="text-muted">@addr.full_address, @addr.ward_commune, @addr.district, @addr.province_city</small>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-circle"></i> Bạn chưa có địa chỉ giao hàng nào. Vui lòng thêm mới bên dưới.
+                                </div>
+                            }
 
-                <div id="saved-address-list">
-                    @foreach (var addr in Model.SavedAddresses)
-                    {
-                        <div class="card card-body mb-2 shadow-sm address-card">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" asp-for="SelectedAddressId" id="addr_@addr.id" value="@addr.id">
-                                <label class="form-check-label" for="addr_@addr.id">
-                                    <strong>@addr.recipient_name</strong> | @addr.phone_number
-                                    @if (addr.is_default)
-                                    {
-                                        <span class="badge bg-primary">Mặc định</span>
-                                    }
-                                    <br>
-                                    <small>@addr.full_address, @addr.ward_commune, @addr.district, @addr.province_city</small>
-                                </label>
-                            </div>
+                            <span asp-validation-for="SelectedAddressId" class="text-danger"></span>
                         </div>
-                    }
-                    <span asp-validation-for="SelectedAddressId" class="text-danger"></span>
+
+                        <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#createAddressModal">
+                            <i class="fas fa-plus"></i> Thêm địa chỉ nhanh
+                        </button>
+
+                        <a asp-action="Index" asp-controller="CustomerAddress"
+                           asp-route-returnUrl="@Url.Action("Index", "Order", new { sellerId = Model.SellerId })"
+                           class="btn btn-outline-secondary btn-sm mt-2">
+                            <i class="fas fa-edit"></i> Quản lý địa chỉ
+                        </a>
+                    </div>
                 </div>
 
-                <a asp-action="Index" asp-controller="CustomerAddress" class="btn btn-outline-secondary btn-sm mt-2">
-                    <i class="fas fa-edit"></i> Quản lý địa chỉ
-                </a>
-
-                <hr class="my-4">
-
-                <h4><i class="fas fa-shopping-basket"></i> 2. Kiểm tra đơn hàng</h4>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Sản phẩm</th>
-                            <th>SL</th>
-                            <th class="text-end">Thành tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Cart.Items)
-                        {
-                            <tr>
-                                <td>
-                                    @item.ProductName
-                                    <br><small class="text-muted">@item.UnitPrice.ToString("N0") VNĐ</small>
-                                </td>
-                                <td>@item.Quantity</td>
-                                <td class="text-end">@item.Total.ToString("N0") VNĐ</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-shopping-basket"></i> 2. Kiểm tra đơn hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th class="text-center">Số lượng</th>
+                                        <th class="text-end">Đơn giá</th>
+                                        <th class="text-end">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Cart.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.ProductName</strong>
+                                                <br>
+                                                <small class="text-muted">@item.UnitPrice</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info text-dark">@item.Quantity</span>
+                                            </td>
+                                            <td class="text-end">
+                                                @item.UnitPrice.ToString("N0") VNĐ
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>@item.Total.ToString("N0") VNĐ</strong>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Tạm tính:</strong></td>
+                                        <td class="text-end"><strong id="subtotal">@cartTotal.ToString("N0") VNĐ</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-5">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0"><i class="fas fa-percent"></i> 3. Mã khuyến mãi</h5>
+                    </div>
                     <div class="card-body">
-                        <h4><i class="fas fa-percent"></i> 3. Mã khuyến mãi</h4>
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" placeholder="Nhập mã giảm giá" id="promo-code-input">
-                            <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">Áp dụng</button>
+                            <input type="text" class="form-control" placeholder="Nhập mã giảm giá"
+                                   id="promo-code-input" value="@Model.PromotionCode">
+                            <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">
+                                <i class="fas fa-tag"></i> Áp dụng
+                            </button>
                         </div>
-                        <div id="promo-message" class="mb-3"></div>
+                        <div id="promo-message"></div>
+                    </div>
+                </div>
 
-                        <hr>
-
-                        <h4><i class="fas fa-file-invoice-dollar"></i> 4. Thanh toán</h4>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> 4. Thanh toán</h5>
+                    </div>
+                    <div class="card-body">
                         <div class="payment-summary">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Tạm tính:</span>
-                                <strong id="subtotal">@cartTotal.ToString("N0") VNĐ</strong>
+                                <strong id="subtotal-display">@cartTotal.ToString("N0") VNĐ</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2 text-success">
                                 <span>Giảm giá:</span>
-                                <strong id="discount-amount">@(Model.DiscountAmount.ToString("N0")) VNĐ</strong>
+                                <strong id="discount-amount">-@(Model.DiscountAmount.ToString("N0")) VNĐ</strong>
                             </div>
-                            <div class="d-flex justify-content-between mb-3 h5">
-                                <span>Tổng cộng:</span>
-                                <strong id="final-total" class="text-danger">@finalTotal.ToString("N0") VNĐ</strong>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5 class="mb-0">Tổng cộng:</h5>
+                                <h4 id="final-total" style="-webkit-text-fill-color:orange">@finalTotal.ToString("N0") VNĐ</h4>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-success btn-lg w-100">
-                            <i class="fas fa-check-circle"></i> Đặt hàng
+                        <hr>
+                        <div class="mb-4">
+                            <h6 class="mb-3"><i class="fas fa-money-check-alt"></i> Phương thức thanh toán:</h6>
+
+                            <div class="form-check p-3 border rounded mb-2 bg-light">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" id="payment_cod" value="COD" checked>
+                                <label class="form-check-label w-100" for="payment_cod" style="cursor: pointer;">
+                                    <strong><i class="fas fa-truck"></i> Thanh toán khi nhận hàng (COD)</strong>
+                                    <div class="text-muted small">Bạn sẽ thanh toán bằng tiền mặt khi shipper giao hàng đến.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded mb-2 bg-light">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" id="payment_vnpay" value="VNPay">
+                                <label class="form-check-label w-100" for="payment_vnpay" style="cursor: pointer;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span><strong><i class="fas fa-qrcode"></i> Ví VNPAY / Thẻ ngân hàng</strong></span>
+                                        <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" alt="VNPay" height="24">
+                                    </div>
+                                    <div class="text-muted small">Quét mã QR hoặc dùng thẻ ATM/Visa nội địa.</div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 border rounded mb-2 bg-light opacity-50">
+                                <input class="form-check-input" type="radio" name="PaymentMethod" id="payment_momo" value="MoMo" disabled>
+                                <label class="form-check-label w-100" for="payment_momo">
+                                    <strong><i class="fas fa-wallet"></i> Ví MoMo</strong> (Sắp ra mắt)
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100" id="checkout-btn">
+                            <i class="fas fa-check"></i> Đặt hàng ngay
                         </button>
                     </div>
                 </div>
@@ -112,54 +208,282 @@
     </form>
 </div>
 
+<div class="modal fade" id="createAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm địa chỉ giao hàng mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quick-address-form">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="modalRecipientName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="modalPhoneNumber" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalProvince" required>
+                                <option value="">-- Chọn Tỉnh/Thành --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quận/Huyện <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalDistrict" required disabled>
+                                <option value="">-- Chọn Quận/Huyện --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Phường/Xã <span class="text-danger">*</span></label>
+                            <select class="form-select" id="modalWard" required disabled>
+                                <option value="">-- Chọn Phường/Xã --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ cụ thể (Số nhà, đường) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="modalFullAddress" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="modalIsDefault" checked>
+                        <label class="form-check-label" for="modalIsDefault">Đặt làm địa chỉ mặc định</label>
+                    </div>
+                </form>
+                <div id="modal-error-msg" class="text-danger mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btn-save-address">Lưu địa chỉ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .address-card {
+            transition: all 0.3s ease;
+        }
+
+            .address-card:hover {
+                border-color: #0d6efd !important;
+                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            }
+
+            .address-card input[type="radio"]:checked ~ label .fa-check-circle {
+                display: inline-block !important;
+            }
+
+        .payment-summary {
+            font-size: 1.1rem;
+        }
+
+        #checkout-btn {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+            #checkout-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+            }
+    </style>
+}
+
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // --- 1. LOGIC CLICK CHỌN ĐỊA CHỈ ---
+            // --- 1. LOGIC CLICK CHỌN ĐỊA CHỈ (CŨ) ---
             $('#saved-address-list .address-card').click(function (e) {
                 if (!$(e.target).is('input[type="radio"]')) {
-                     $(this).find('input[type="radio"]').prop('checked', true);
+                    $(this).find('input[type="radio"]').prop('checked', true);
+                }
+                $('#saved-address-list .address-card').removeClass('border-primary');
+                $(this).addClass('border-primary');
+            });
+
+            // --- 2. LOGIC API TỈNH THÀNH (ĐÃ SỬA LẠI URL CHO KHỚP API CỦA BẠN) ---
+            // API của bạn:
+            // Tỉnh:   /api/Provinces
+            // Huyện:  /api/Provinces/GetDistricts?provinceCode=...
+            // Xã:     /api/Provinces/GetWards?districtCode=...
+
+            // Load Tỉnh khi mở trang
+            loadProvinces();
+
+            function loadProvinces() {
+                $.getJSON('/api/Provinces', function (data) {
+                    var $select = $('#modalProvince');
+                    $select.empty().append('<option value="">-- Chọn Tỉnh/Thành --</option>');
+                    $.each(data, function (i, item) {
+                        // Controller trả về List object { name, code }
+                        // Sử dụng item.name hoặc item.Name tùy cấu hình JSON (thường JS nhận là camelCase)
+                        $select.append(`<option value="${item.code}" data-name="${item.name}">${item.name}</option>`);
+                    });
+                });
+            }
+
+            // Khi chọn Tỉnh -> Load Huyện
+            $('#modalProvince').change(function () {
+                var code = $(this).val();
+                $('#modalDistrict').prop('disabled', true).empty().append('<option value="">-- Chọn Quận/Huyện --</option>');
+                $('#modalWard').prop('disabled', true).empty().append('<option value="">-- Chọn Phường/Xã --</option>');
+
+                if (code) {
+                    // URL ĐÃ SỬA: /api/Provinces/GetDistricts
+                    $.getJSON('/api/Provinces/GetDistricts?provinceCode=' + code, function (data) {
+                        var $d = $('#modalDistrict');
+                        $d.prop('disabled', false);
+                        $.each(data, function (i, item) {
+                            $d.append(`<option value="${item.code}" data-name="${item.name}">${item.name}</option>`);
+                        });
+                    });
                 }
             });
 
-            // --- 2. LOGIC ÁP DỤNG MÃ GIẢM GIÁ (AJAX) ---
-            $('#apply-promo-btn').click(function () {
-                var code = $('#promo-code-input').val();
-                var sellerId = $('input[name="SellerId"]').val();
-                var $msg = $('#promo-message');
+            // Khi chọn Huyện -> Load Xã
+            $('#modalDistrict').change(function () {
+                var code = $(this).val();
+                $('#modalWard').prop('disabled', true).empty().append('<option value="">-- Chọn Phường/Xã --</option>');
 
-                if (!code) {
-                    $msg.html('<div class="alert alert-danger">Vui lòng nhập mã khuyến mãi.</div>');
+                if (code) {
+                    // URL ĐÃ SỬA: /api/Provinces/GetWards
+                    $.getJSON('/api/Provinces/GetWards?districtCode=' + code, function (data) {
+                        var $w = $('#modalWard');
+                        $w.prop('disabled', false);
+                        $.each(data, function (i, item) {
+                            $w.append(`<option value="${item.code}" data-name="${item.name}">${item.name}</option>`);
+                        });
+                    });
+                }
+            });
+
+
+            // --- 3. XỬ LÝ LƯU ĐỊA CHỈ AJAX ---
+            $('#btn-save-address').click(function () {
+                // Lấy TÊN hiển thị (Text) của select box vì DB lưu tên
+                var provinceName = $('#modalProvince option:selected').data('name') || $('#modalProvince option:selected').text();
+                var districtName = $('#modalDistrict option:selected').data('name') || $('#modalDistrict option:selected').text();
+                var wardName = $('#modalWard option:selected').data('name') || $('#modalWard option:selected').text();
+
+                // Kiểm tra nếu chưa chọn (value rỗng) thì gán rỗng để validate chặn lại
+                if($('#modalProvince').val() === "") provinceName = "";
+                if($('#modalDistrict').val() === "") districtName = "";
+                if($('#modalWard').val() === "") wardName = "";
+
+                var data = {
+                    RecipientName: $('#modalRecipientName').val(),
+                    PhoneNumber: $('#modalPhoneNumber').val(),
+                    ProvinceCity: provinceName,
+                    District: districtName,
+                    WardCommune: wardName,
+                    FullAddress: $('#modalFullAddress').val(),
+                    IsDefault: $('#modalIsDefault').is(':checked')
+                };
+
+                // Validate sơ bộ
+                if (!data.RecipientName || !data.PhoneNumber || !data.ProvinceCity || !data.District || !data.WardCommune || !data.FullAddress) {
+                    $('#modal-error-msg').text('Vui lòng điền đầy đủ thông tin có dấu (*).');
                     return;
                 }
 
-                $msg.html('<span class="text-muted">Đang kiểm tra...</span>');
+                // Gửi AJAX
+                var $btn = $(this);
+                $btn.prop('disabled', true).text('Đang lưu...');
+                $('#modal-error-msg').text('');
+
+                $.ajax({
+                    url: '@Url.Action("CreateAjax", "CustomerAddress")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        if (res.success) {
+                            location.reload(); // Reload để thấy địa chỉ mới
+                        } else {
+                            $('#modal-error-msg').text(res.message);
+                            $btn.prop('disabled', false).text('Lưu địa chỉ');
+                        }
+                    },
+                    error: function (err) {
+                        console.error(err);
+                        $('#modal-error-msg').text('Có lỗi xảy ra khi kết nối server.');
+                        $btn.prop('disabled', false).text('Lưu địa chỉ');
+                    }
+                });
+            });
+
+
+            // --- 4. LOGIC ÁP DỤNG MÃ GIẢM GIÁ (CŨ) ---
+            $('#apply-promo-btn').click(function () {
+                var code = $('#promo-code-input').val().trim();
+                var sellerId = $('input[name="SellerId"]').val();
+                var $msg = $('#promo-message');
+                var $btn = $(this);
+
+                if (!code) {
+                    $msg.html('<div class="alert alert-warning alert-dismissible fade show"><i class="fas fa-exclamation-triangle"></i> Vui lòng nhập mã khuyến mãi.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                    return;
+                }
+
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang kiểm tra...');
+                $msg.html('');
 
                 $.ajax({
                     url: '@Url.Action("ApplyPromotion", "Order")',
                     type: 'POST',
                     data: {
                         code: code,
-                        sellerId: sellerId,
-                        // Bổ sung AntiForgeryToken nếu bạn dùng
+                        sellerId: sellerId
                     },
                     success: function (response) {
                         if (response.success) {
-                            $msg.html('<div class="alert alert-success">' + response.message + '</div>');
-                            $('#discount-amount').text(response.discountAmountDisplay);
+                            $msg.html('<div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle"></i> ' + response.message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                            $('#discount-amount').text('-' + response.discountAmountDisplay);
                             $('#final-total').text(response.finalAmountDisplay);
                             $('#applied-promo-code').val(response.promotionCode);
+                            $('#discount-amount, #final-total').addClass('text-success fw-bold');
+                            setTimeout(function () {
+                                $('#discount-amount').removeClass('text-success fw-bold').addClass('text-success');
+                                $('#final-total').removeClass('text-success fw-bold').addClass('text-danger');
+                            }, 1000);
                         } else {
-                            $msg.html('<div class="alert alert-danger">' + response.message + '</div>');
-                            $('#discount-amount').text('0 VNĐ');
+                            $msg.html('<div class="alert alert-danger alert-dismissible fade show"><i class="fas fa-times-circle"></i> ' + response.message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                            $('#discount-amount').text('-0 đ');
                             $('#final-total').text($('#subtotal').text());
                             $('#applied-promo-code').val('');
                         }
                     },
                     error: function () {
-                        $msg.html('<div class="alert alert-danger">Có lỗi xảy ra, vui lòng thử lại.</div>');
+                        $msg.html('<div class="alert alert-danger alert-dismissible fade show"><i class="fas fa-exclamation-triangle"></i> Có lỗi xảy ra, vui lòng thử lại.<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-tag"></i> Áp dụng');
                     }
                 });
+            });
+
+            // --- 5. XÁC NHẬN TRƯỚC KHI SUBMIT (CŨ) ---
+            $('#checkout-form').submit(function (e) {
+                var selectedAddress = $('input[name="SelectedAddressId"]:checked').val();
+
+                if (!selectedAddress) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn địa chỉ giao hàng! Nếu chưa có, vui lòng nhấn "Thêm địa chỉ nhanh".');
+                    return false;
+                }
+
+                $('#checkout-btn').prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
+
+                return true;
             });
         });
     </script>

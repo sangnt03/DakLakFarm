@@ -1,138 +1,154 @@
 ﻿@model AgriEcommerces_MVC.Models.order
 @{
-    ViewData["Title"] = "Xác nhận đơn hàng";
+    ViewData["Title"] = "Chi tiết đơn hàng";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var payment = Model.Payments?.FirstOrDefault();
 }
 
-<div class="container py-5">
+<div class="container py-5" id="order-container">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Success Alert -->
-            <div class="alert alert-success text-center shadow-sm">
-                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                <h3 class="mb-2">🎉 Đặt hàng thành công!</h3>
-                <p class="mb-0">Đơn hàng của bạn đã được tiếp nhận và đang chờ xử lý.</p>
+        <div class="col-lg-8" id="printable-area">
+
+            <div class="d-none d-print-block text-center mb-3">
+                <h3 class="fw-bold">DakLakFarm</h3>
+                <p class="mb-1">Địa chỉ: 06 Trần Văn Ơn, Phường Phú Lợi, TP. Hồ Chí Minh</p>
+                <p>Hotline: 0999999999</p>
+                <hr />
+                <h4>HÓA ĐƠN BÁN HÀNG</h4>
             </div>
 
-            <!-- Order Information -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin đơn hàng</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong><i class="fas fa-hashtag text-muted"></i> Mã đơn hàng:</strong> @Model.ordercode
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong><i class="fas fa-calendar-alt text-muted"></i> Ngày đặt:</strong> @Model.orderdate?.ToString("dd/MM/yyyy HH:mm")
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong><i class="fas fa-user text-muted"></i> Người nhận:</strong> @Model.customername
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong><i class="fas fa-phone text-muted"></i> Số điện thoại:</strong> @Model.customerphone
-                        </div>
-                        <div class="col-12 mb-3">
-                            <strong><i class="fas fa-map-marker-alt text-muted"></i> Địa chỉ giao hàng:</strong>
-                            <p class="mb-0">@Model.shippingaddress</p>
-                        </div>
-                        <div class="col-12">
-                            <strong><i class="fas fa-clock text-muted"></i> Trạng thái:</strong>
-                            @{
-                                var statusBadgeClass = Model.status switch
-                                {
-                                    "Chờ duyệt" => "bg-warning text-dark",
-                                    "Đang xử lý" => "bg-info text-dark",
-                                    "Đang giao" => "bg-primary text-dark",
-                                    "Hoàn thành" => "bg-success text-dark",
-                                    "Đã hủy" => "bg-danger text-dark",
-                                    _ => "bg-secondary text-dark"
-                                };
-                            }
-                            <span class="badge @statusBadgeClass">@Model.status</span>
-                        </div>
+            <div class="no-print mb-4">
+                @if (Model.status == "Paid")
+                {
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                        <h4>Thanh toán thành công!</h4>
+                        <p class="mb-0">Đơn hàng <strong>@Model.ordercode</strong> đã được thanh toán.</p>
                     </div>
-
-                    @* HIỂN THỊ THÔNG TIN HỦY ĐƠN NẾU CÓ *@
-                    @if (Model.status == "Đã hủy" && ViewBag.Cancellation != null)
+                }
+                else if (Model.status == "Pending")
+                {
+                    if (payment != null && payment.PaymentMethod == "COD")
                     {
-                        var cancellation = ViewBag.Cancellation as AgriEcommerces_MVC.Models.order_cancellation;
-                        <hr class="my-3">
-                        <div class="alert alert-danger mb-0">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-ban"></i> Thông tin hủy đơn
-                            </h6>
-                            <p class="mb-1">
-                                <strong>Thời gian hủy:</strong> @cancellation.CancelledAt.ToString("dd/MM/yyyy HH:mm")
-                            </p>
-                            @if (!string.IsNullOrEmpty(cancellation.CancelReason))
-                            {
-                                <p class="mb-0">
-                                    <strong>Lý do:</strong> @cancellation.CancelReason
-                                </p>
-                            }
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-clipboard-check fa-3x mb-3"></i>
+                            <h4>Đang chờ duyệt (COD)</h4>
+                            <p class="mb-0">Đơn hàng <strong>@Model.ordercode</strong> đã được ghi nhận.</p>
                         </div>
                     }
+                    else
+                    {
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-hourglass-half fa-3x mb-3"></i>
+                            <h4>Chờ thanh toán</h4>
+                            <p class="mb-0">Đơn hàng <strong>@Model.ordercode</strong> đang chờ thanh toán.</p>
+
+                            <div class="alert alert-light border-warning mt-3 text-dark">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                <strong>Lưu ý:</strong> Đơn hàng sẽ hủy sau 5 phút nếu chưa thanh toán.
+                            </div>
+
+                            <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
+                               class="btn btn-primary mt-2">
+                                <i class="fas fa-credit-card"></i> Thanh toán ngay
+                            </a>
+                        </div>
+                    }
+                }
+                else if (Model.status == "Đã hủy")
+                {
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-times-circle fa-3x mb-3"></i>
+                        <h4>Đơn hàng đã bị hủy</h4>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle fa-3x mb-3"></i>
+                        <h4>Trạng thái: @Model.status</h4>
+                    </div>
+                }
+            </div>
+
+            <div class="card shadow-sm mb-3 print-compact">
+                <div class="card-header bg-success text-white d-print-none">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Thông tin khách hàng</h5>
+                </div>
+                <div class="card-header d-none d-print-block border-bottom py-1">
+                    <h6 class="mb-0 fw-bold">THÔNG TIN KHÁCH HÀNG</h6>
+                </div>
+
+                <div class="card-body py-2">
+                    <div class="row">
+                        <div class="col-6 mb-1">
+                            <strong>Mã đơn:</strong> @Model.ordercode
+                        </div>
+                        <div class="col-6 mb-1">
+                            <strong>Ngày đặt:</strong> @Model.orderdate?.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                        <div class="col-6 mb-1">
+                            <strong>Khách hàng:</strong> @Model.customername
+                        </div>
+                        <div class="col-6 mb-1">
+                            <strong>SĐT:</strong> @Model.customerphone
+                        </div>
+                        <div class="col-12 mb-1">
+                            <strong>Địa chỉ:</strong> @Model.shippingaddress
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Order Details -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-secondary  text-white">
-                    <h5 class="mb-0"><i class="fas fa-shopping-basket"></i> Chi tiết đơn hàng</h5>
+            <div class="card shadow-sm mb-3 print-compact">
+                <div class="card-header bg-info text-white d-print-none">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Chi tiết đơn hàng</h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-header d-none d-print-block border-bottom py-1">
+                    <h6 class="mb-0 fw-bold">CHI TIẾT ĐƠN HÀNG</h6>
+                </div>
+
+                <div class="card-body py-2">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table class="table table-hover table-bordered mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Sản phẩm</th>
-                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-center" style="width: 50px;">SL</th>
                                     <th class="text-end">Đơn giá</th>
                                     <th class="text-end">Thành tiền</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.orderdetails)
+                                @foreach (var detail in Model.orderdetails)
                                 {
                                     <tr>
                                         <td>
-                                            <strong>@item.product.productname</strong>
+                                            <strong>@detail.product.productname</strong>
                                         </td>
-                                        <td class="text-center">
-                                            <span class="badge bg-secondary text-dark">@item.quantity</span>
-                                        </td>
-                                        <td class="text-end">@item.unitprice.ToString("N0") VNĐ</td>
-                                        <td class="text-end"><strong>@item.SumPrice.ToString("N0") VNĐ</strong></td>
+                                        <td class="text-center">@detail.quantity</td>
+                                        <td class="text-end">@detail.unitprice.ToString("N0")</td>
+                                        <td class="text-end"><strong>@detail.SumPrice.ToString("N0")</strong></td>
                                     </tr>
                                 }
                             </tbody>
-                            <tfoot style="border-top: 2px solid #dee2e6;">
+                            <tfoot>
                                 <tr>
-                                    <th colspan="3" class="text-end">Tạm tính:</th>
-                                    <td class="text-end">@Model.totalamount.ToString("N0") VNĐ</td>
+                                    <td colspan="3" class="text-end">Tạm tính:</td>
+                                    <td class="text-end">@Model.totalamount.ToString("N0")</td>
                                 </tr>
-
                                 @if (Model.discountamount > 0)
                                 {
-                                    <tr class="table-success">
-                                        <th colspan="3" class="text-end">
-                                            <i class="fas fa-tag"></i> Giảm giá (@Model.PromotionCode):
-                                        </th>
-                                        <td class="text-end text-success">
-                                            <strong>-@Model.discountamount.ToString("N0") VNĐ</strong>
+                                    <tr>
+                                        <td colspan="3" class="text-end">
+                                            Giảm giá @(!string.IsNullOrEmpty(Model.PromotionCode) ? $"({Model.PromotionCode})" : ""):
                                         </td>
+                                        <td class="text-end">-@Model.discountamount.ToString("N0")</td>
                                     </tr>
                                 }
-
-                                <tr style="background: #f8f9fa; border-top: 2px solid #000;">
-                                    <th colspan="3" class="text-end h5 mb-0">
-                                        <i class="fas fa-money-bill-wave"></i> Tổng cộng:
-                                    </th>
-                                    <th class="text-end h4 mb-0" style="-webkit-text-fill-color:orangered">
-                                        @Model.FinalAmount.ToString("N0") VNĐ
-                                    </th>
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">TỔNG THANH TOÁN:</td>
+                                    <td class="text-end fw-bold" style="-webkit-text-fill-color:orange">@Model.FinalAmount.ToString("N0") VNĐ</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -140,34 +156,84 @@
                 </div>
             </div>
 
-            <!-- Additional Info -->
-            <div class="alert alert-info">
-                <h6><i class="fas fa-info-circle"></i> Lưu ý:</h6>
-                <ul class="mb-0">
-                    <li>Thông tin đơn hàng đã được gửi đến địa chỉ email của bạn</li>
-                    <li>Đơn hàng sẽ được xử lý trong vòng 3-4 ngày làm việc</li>
-                    <li>Bạn có thể tra cứu đơn hàng bằng mã: <strong>@Model.ordercode</strong></li>
-                    <li>Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>0999999999</strong></li>
-                </ul>
-            </div>
+            @if (payment != null)
+            {
+                <div class="card shadow-sm mb-3 print-compact">
+                    <div class="card-header bg-primary text-white d-print-none">
+                        <h5 class="mb-0"><i class="fas fa-credit-card"></i> Lịch sử thanh toán</h5>
+                    </div>
+                    <div class="card-header d-none d-print-block border-bottom py-1">
+                        <h6 class="mb-0 fw-bold">THÔNG TIN THANH TOÁN</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row">
+                            <div class="col-6 mb-1">
+                                <strong>Phương thức:</strong> @payment.PaymentMethod
+                            </div>
+                            <div class="col-6 mb-1">
+                                <strong>Trạng thái:</strong> @payment.Status
+                            </div>
+                            <div class="col-12 mb-1">
+                                <strong>Thời gian:</strong>
+                                @{
+                                    // // Lấy giờ gốc từ dữ liệu (đang bị hiểu là UTC: 14:37)
+                                    DateTime rawTime = payment.CreateDate;
 
-            <!-- Action Buttons -->
-            <div class="d-flex gap-2 justify-content-center flex-wrap">
-                <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">
-                    <i class="fas fa-shopping-cart"></i> Tiếp tục mua sắm
+                                    // // Chuyển đổi sang giờ Việt Nam (Cộng 7 tiếng)
+                                    // // Cách 1: Cộng thủ công (Nhanh, hiệu quả nếu server cố định)
+                                    DateTime vnTime = rawTime.AddHours(7);
+
+                                    // // Cách 2 (Chuẩn hơn): Dùng TimeZoneInfo (nếu bạn muốn code chặt chẽ)
+                                    // /*
+                                    try {
+                                    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Windows
+                                    vnTime = TimeZoneInfo.ConvertTimeFromUtc(rawTime, timeZone);
+                                    } catch {
+                                    // Fallback cho Linux/Docker nếu không tìm thấy ID trên
+                                    vnTime = rawTime.AddHours(7);
+                                    }
+                                    
+                                }
+                                @vnTime.ToString("dd/MM/yyyy HH:mm:ss")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="d-none d-print-block text-center mt-4">
+                <p class="mb-0">Cảm ơn quý khách đã mua hàng!</p>
+              
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center no-print mt-4">
+        <div class="col-lg-8 text-center">
+            <div class="d-flex justify-content-center gap-2">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Tiếp tục mua sắm
                 </a>
-                <a asp-controller="Home" asp-action="MyOrders" class="btn btn-outline-secondary btn-lg">
-                    <i class="fas fa-list"></i> Đơn hàng của tôi
-                </a>
-                <button onclick="window.print()" class="btn btn-outline-info btn-lg">
-                    <i class="fas fa-print"></i> In đơn hàng
+
+                @* Chỉ hiện nút Thanh toán ngay nếu là Pending VÀ KHÔNG PHẢI COD *@
+                @if (Model.status == "Pending" && (payment == null || payment.PaymentMethod != "COD"))
+                {
+                    <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-credit-card"></i> Thanh toán ngay
+                    </a>
+                }
+
+                @* Nút In *@
+                <button onclick="window.print()" class="btn btn-outline-info">
+                    <i class="fas fa-print"></i> In hóa đơn
                 </button>
 
-                @* NÚT HỦY ĐƠN - CHỈ HIỂN THỊ KHI TRẠNG THÁI LÀ "Chờ duyệt" *@
-                @if (Model.status == "Chờ duyệt")
+                @* Nút Hủy *@
+                @if (Model.status == "Pending" || Model.status == "Chờ duyệt")
                 {
-                    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
-                        <i class="fas fa-times-circle"></i> Hủy đơn hàng
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                        <i class="fas fa-times"></i> Hủy đơn
                     </button>
                 }
             </div>
@@ -175,146 +241,129 @@
     </div>
 </div>
 
-@* MODAL XÁC NHẬN HỦY ĐƠN *@
-<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form asp-action="CancelOrder" method="post" id="cancelOrderForm">
-                <input type="hidden" name="orderId" value="@Model.orderid" />
-                @Html.AntiForgeryToken()
+@if (Model.status == "Pending" || Model.status == "Chờ duyệt")
+{
+    <div class="modal fade no-print" id="cancelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="CancelOrder" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@Model.orderid" />
+                    <input type="hidden" name="returnUrl" value="@Url.Action("OrderConfirmation", new { orderId = Model.orderid })" />
 
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="cancelOrderModalLabel">
-                        <i class="fas fa-exclamation-triangle"></i> Xác nhận hủy đơn hàng
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="alert alert-warning mb-3">
-                        <i class="fas fa-info-circle"></i>
-                        Bạn có chắc chắn muốn hủy đơn hàng <strong>@Model.ordercode</strong>?
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Hủy đơn hàng</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="cancelReason" class="form-label">
-                            Lý do hủy đơn <span class="text-muted">(không bắt buộc)</span>:
-                        </label>
-                        <textarea class="form-control" id="cancelReason" name="cancelReason" rows="3"
-                                  placeholder="Ví dụ: Đặt nhầm sản phẩm, muốn thay đổi địa chỉ, tìm được giá tốt hơn..."></textarea>
+                    <div class="modal-body">
+                        <p>Bạn có chắc muốn hủy đơn hàng <strong>@Model.ordercode</strong>?</p>
+                        <div class="mb-3">
+                            <label class="form-label">Lý do hủy (tùy chọn)</label>
+                            <textarea name="cancelReason" class="form-control" rows="3"
+                                  placeholder="Nhập lý do hủy đơn..."></textarea>
+                        </div>
                     </div>
-
-                    <div class="bg-light p-3 rounded">
-                        <p class="mb-2 text-muted small"><strong>Lưu ý khi hủy đơn:</strong></p>
-                        <ul class="mb-0 small text-muted">
-                            <li>Mã khuyến mãi (nếu có) sẽ được hoàn lại vào tài khoản</li>
-                            <li>Sản phẩm sẽ được trả lại kho</li>
-                            <li>Bạn có thể đặt hàng mới bất cứ lúc nào</li>
-                        </ul>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-check"></i> Xác nhận hủy
+                        </button>
                     </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Đóng
-                    </button>
-                    <button type="submit" class="btn btn-danger" id="confirmCancelBtn">
-                        <i class="fas fa-check"></i> Xác nhận hủy đơn
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-
-@section Scripts {
-    <script>
-        // Hiển thị loading khi submit form hủy đơn
-        document.getElementById('cancelOrderForm')?.addEventListener('submit', function() {
-            var btn = document.getElementById('confirmCancelBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
-            }
-        });
-    </script>
 }
 
-<style>
-    .gap-2 {
-        gap: 0.5rem !important;
-    }
+@section Styles {
+    <style>
+        /* --- CSS DÀNH RIÊNG CHO CHẾ ĐỘ IN (PRINT) --- */
+        @@media print {
+            @@page {
+                size: A4;
+                margin-left: 30mm; /* Căn lề giấy 10mm đều các bên */
+            }
 
-    @@media print {
-        /* --- 1. Ẩn các thành phần không cần thiết --- */
-        nav, footer, .btn, .modal, .alert-info, .alert-success, .d-flex.gap-2 {
-            display: none !important;
-        }
-        /* --- 2. Thiết lập lại layout trang in --- */
-        body {
-            font-size: 10pt; /* Giảm font 1 chút cho vừa vặn */
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: #fff !important;
-        }
-        /* Xóa bỏ layout container, row, col để nội dung trải full */
-        .container, .row, [class*="col-"] {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        /* --- 3. Tối giản hóa Card và Bảng --- */
-        .card {
-            /* Xóa shadow, border, và margin */
-            box-shadow: none !important;
-            border: none !important;
-            margin-bottom: 1rem !important; /* Giữ lại chút margin giữa các card */
-            page-break-inside: avoid; /* Tránh ngắt trang giữa card */
-        }
-
-        .card-header {
-            /* Xóa màu nền, để chữ đen */
-            background-color: transparent !important;
-            color: #000 !important;
-            padding: 0.5rem 0 !important;
-            border-bottom: 2px solid #000 !important; /* Thêm border đậm cho header */
-        }
-
-        .card-body {
-            padding: 0.5rem 0 !important; /* Giảm padding */
-        }
-
-        .table-responsive {
-            overflow-x: visible !important; /* Không cần scroll khi in */
-        }
-
-        .table {
-            width: 100% !important;
-        }
-        /* --- 4. Tối giản hóa các chi tiết khác --- */
-        /* Chuyển badge trạng thái thành text thường */
-        .badge {
-            background-color: transparent !important;
-            color: #000 !important;
-            border: 1px solid #000;
-            font-weight: bold;
-        }
-        /* Đảm bảo text màu (như .text-success) ra màu đen */
-        .text-success, .text-primary, .text-muted, [style*="orangered"], h5 {
-            color: #000 !important;
-            -webkit-text-fill-color: initial !important; /* Ghi đè style inline */
-        }
-
-        h3, h4, h5, h6 {
-            color: #000 !important;
-            font-weight: bold;
-        }
-        /* Ẩn các icon nếu muốn */
-        /*
-            .fas, .fa {
+            /* 1. Ẩn toàn bộ web */
+            body * {
+                visibility: hidden;
+            }
+            
+            /* 2. Ẩn các thành phần thừa */
+            header, footer, nav, .no-print, .modal, .alert {
                 display: none !important;
             }
-            */
-    }
-</style>
+
+            /* 3. Hiện vùng in */
+            #order-container, #printable-area, #printable-area * {
+                visibility: visible;
+            }
+
+            /* 4. Định vị lại vùng in về góc trang */
+            #order-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%; /* Chiếm toàn bộ chiều ngang */
+                margin: 0;
+                padding: 0;
+            }
+
+            /* --- [SỬA LỖI CĂN GIỮA TẠI ĐÂY] --- */
+            /* Reset cột col-lg-8 của Bootstrap để nó bung full trang giấy */
+            #printable-area {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                margin: 0 !important; /* Margin đã được xử lý bởi
+            }
+            
+            /* Tắt flexbox của dòng (row) để tránh xung đột căn chỉnh */
+            .row {
+                display: block !important; 
+                margin: 0 !important;
+            }
+            /* ---------------------------------- */
+
+            /* 5. Thu nhỏ nội dung để vừa vặn đẹp hơn */
+            #printable-area {
+                font-size: 12pt; 
+            }
+
+            /* 6. Tinh chỉnh Card (Khung viền) */
+            .card {
+                border: 1px solid #000 !important;
+                margin-bottom: 15px !important;
+                width: 100% !important; /* Đảm bảo khung viền rộng 100% */
+            }
+            
+            .card-header, .card-body {
+                padding: 8px 15px !important;
+            }
+
+            /* 7. Màu sắc khi in */
+            .bg-success, .bg-primary, .bg-info, .bg-danger, .badge {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: black !important;
+                background-color: #f0f0f0 !important;
+            }
+            
+            /* 8. Font chữ */
+            body {
+                font-family: "Times New Roman", Times, serif;
+                color: #000;
+            }
+            
+            a {
+                text-decoration: none !important;
+                color: #000 !important;
+            }
+            
+            /* Ẩn link URL hiển thị ở chân trang (nếu trình duyệt hỗ trợ) */
+            a[href]:after {
+                content: none !important;
+            }
+        }
+    </style>
+}

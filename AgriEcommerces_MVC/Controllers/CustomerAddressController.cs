@@ -130,6 +130,44 @@ namespace AgriEcommerces_MVC.Controllers
             TempData["SuccessMessage"] = "Thêm địa chỉ mới thành công!";
             return RedirectToAction(nameof(Index));
         }
+        // POST: /CustomerAddress/CreateAjax
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromBody] AddressViewModel vm)
+        {
+            int userId = GetCurrentUserId();
+            if (userId == -1) return Unauthorized();
+
+            // Validate dữ liệu cơ bản
+            if (string.IsNullOrEmpty(vm.RecipientName) || string.IsNullOrEmpty(vm.PhoneNumber) || string.IsNullOrEmpty(vm.FullAddress))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập đầy đủ thông tin." });
+            }
+
+            // Nếu chọn là mặc định, xóa các mặc định cũ
+            if (vm.IsDefault)
+            {
+                await ClearAllDefaults(userId);
+            }
+
+            var newAddress = new customer_address
+            {
+                user_id = userId,
+                recipient_name = vm.RecipientName,
+                phone_number = vm.PhoneNumber,
+                full_address = vm.FullAddress,
+                province_city = vm.ProvinceCity,
+                district = vm.District,
+                ward_commune = vm.WardCommune,
+                is_default = vm.IsDefault,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            };
+
+            _db.customer_addresses.Add(newAddress);
+            await _db.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Thêm địa chỉ thành công!" });
+        }
 
         // GET: /CustomerAddress/Edit/5
         public async Task<IActionResult> Edit(int id)

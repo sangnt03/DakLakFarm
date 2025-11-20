@@ -1,0 +1,157 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.PayoutRequest>
+
+@{
+    ViewData["Title"] = "Quản lý rút tiền";
+    var currentStatus = ViewBag.CurrentStatus as string;
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Xử lý yêu cầu rút tiền</h2>
+        <a asp-action="Report" class="btn btn-info">
+            <i class="bi bi-bar-chart"></i> Báo cáo
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link @(currentStatus == "Pending" ? "active" : "")"
+               asp-action="Index" asp-route-status="Pending">
+                Chờ xử lý
+                <span class="badge bg-warning">
+                    @Model.Count(r => r.Status == "Pending")
+                </span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(currentStatus == "Completed" ? "active" : "")"
+               asp-action="Index" asp-route-status="Completed">
+                Đã hoàn thành
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(currentStatus == "Rejected" ? "active" : "")"
+               asp-action="Index" asp-route-status="Rejected">
+                Đã từ chối
+            </a>
+        </li>
+    </ul>
+
+    <!-- Bảng danh sách -->
+    <div class="card">
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <p class="text-center text-muted">Không có yêu cầu nào</p>
+            }
+            else
+            {
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Farmer</th>
+                            <th>Số tiền</th>
+                            <th>Ngày yêu cầu</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>#@request.PayoutRequestId</td>
+                                <td>
+                                    <strong>@request.Farmer.fullname</strong><br>
+                                    <small class="text-muted">@request.Farmer.email</small>
+                                </td>
+                                <td><strong class="text-success">@request.Amount.ToString("N0") đ</strong></td>
+                                <td>@request.RequestDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    @switch (request.Status)
+                                    {
+                                        case "Pending":
+                                            <span class="badge bg-warning">Chờ xử lý</span>
+                                            break;
+                                        case "Completed":
+                                            <span class="badge bg-success">Đã hoàn thành</span>
+                                            break;
+                                        case "Rejected":
+                                            <span class="badge bg-danger">Đã từ chối</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@request.PayoutRequestId"
+                                       class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+
+                                    @if (request.Status == "Pending")
+                                    {
+                                        <form asp-action="Approve" method="post" class="d-inline"
+                                              onsubmit="return confirm('Xác nhận duyệt yêu cầu này?')">
+                                            <input type="hidden" name="id" value="@request.PayoutRequestId" />
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-check-circle"></i> Duyệt
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#rejectModal@(request.PayoutRequestId)">
+                                            <i class="bi bi-x-circle"></i> Từ chối
+                                        </button>
+
+                                        <!-- Modal từ chối -->
+                                        <div class="modal fade" id="rejectModal@(request.PayoutRequestId)" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <form asp-action="Reject" method="post">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Từ chối yêu cầu</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="id" value="@request.PayoutRequestId" />
+                                                            <div class="mb-3">
+                                                                <label>Lý do từ chối</label>
+                                                                <textarea name="reason" class="form-control" rows="3" required></textarea>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                            <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

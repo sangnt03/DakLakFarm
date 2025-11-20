@@ -3,7 +3,6 @@ using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
 using AgriEcommerces_MVC.Service.EmailService;
-using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +16,7 @@ public class OrderController : Controller
     private readonly IEmailService _emailService;
     private readonly ILogger<OrderController> _logger;
     private const string CART_KEY = "Cart";
+    private const decimal COMMISSION_RATE = 0.10m; // 10% hoa hồng Admin
 
     // MÚI GIỜ VIỆT NAM (UTC+7)
     private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
@@ -64,11 +64,11 @@ public class OrderController : Controller
                                       .ToListAsync();
 
         // 4. KIỂM TRA QUAN TRỌNG: Nếu không có địa chỉ, không cho thanh toán
-        if (!savedAddresses.Any())
-        {
-            TempData["Error"] = "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước khi thanh toán.";
-            return RedirectToAction("Index", "CustomerAddress", new { returnUrl = Url.Action("Index", "Order", new { sellerId }) });
-        }
+        //if (!savedAddresses.Any())
+        //{
+        //    TempData["Error"] = "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước khi thanh toán.";
+        //    return RedirectToAction("Index", "CustomerAddress", new { returnUrl = Url.Action("Index", "Order", new { sellerId }) });
+        //}
 
         // 5. Tạo CheckoutViewModel
         var model = new CheckoutViewModel
@@ -77,7 +77,8 @@ public class OrderController : Controller
             SellerId = sellerId,
             SavedAddresses = savedAddresses,
             FinalAmount = cartForPayment.GrandTotal,
-            SelectedAddressId = savedAddresses.FirstOrDefault(a => a.is_default)?.id ?? savedAddresses.First().id
+            SelectedAddressId = savedAddresses.FirstOrDefault(a => a.is_default)?.id
+                            ?? savedAddresses.FirstOrDefault()?.id
         };
 
         return View(model);
@@ -122,12 +123,13 @@ public class OrderController : Controller
         });
     }
 
-    // [POST] /Order/CreateOrder
+    // [POST] /Order/CreateOrder - UPDATED: Tạo đơn với trạng thái Pending
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
     {
         ModelState.Remove(nameof(model.Cart));
+
         // 1. Lấy giỏ hàng và thông tin user
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var user = await _db.users.FindAsync(userId);
@@ -187,10 +189,8 @@ public class OrderController : Controller
             return View("Index", model);
         }
 
-        // 5. Tạo đơn hàng (Order)
+        // 5. Tạo đơn hàng (Order) với trạng thái Pending
         string shippingAddressString = $"{selectedAddress.full_address}, {selectedAddress.ward_commune}, {selectedAddress.district}, {selectedAddress.province_city}";
-
-        // SỬ DỤNG THỜI GIAN VIỆT NAM
         DateTime orderDateTime = GetVietnamTime();
 
         var order = new order
@@ -200,7 +200,7 @@ public class OrderController : Controller
             customerphone = selectedAddress.phone_number,
             shippingaddress = shippingAddressString,
             orderdate = DateTime.SpecifyKind(orderDateTime, DateTimeKind.Unspecified),
-            status = "Chờ duyệt",
+            status = "Pending", // ← THAY ĐỔI: Chờ thanh toán thay vì "Chờ duyệt"
             totalamount = model.Cart.GrandTotal,
             discountamount = finalDiscountAmount,
             FinalAmount = model.Cart.GrandTotal - finalDiscountAmount,
@@ -209,36 +209,32 @@ public class OrderController : Controller
             ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
         };
 
-        // 6. Tạo chi tiết đơn hàng (Order Details)
+        // 6. Tạo chi tiết đơn hàng và TÍNH HOA HỒNG
         order.orderdetails = new List<orderdetail>();
         foreach (var item in model.Cart.Items)
         {
             var prod = await _db.products.AsNoTracking().FirstOrDefaultAsync(p => p.productid == item.ProductId);
+
+            // ====== TÍNH HOA HỒNG ADMIN VÀ DOANH THU FARMER ======
+            decimal itemTotal = item.Quantity * item.UnitPrice;
+            decimal adminCommission = itemTotal * COMMISSION_RATE; // 10%
+            decimal farmerRevenue = itemTotal - adminCommission;
+
             order.orderdetails.Add(new orderdetail
             {
                 productid = item.ProductId,
                 quantity = item.Quantity,
                 unitprice = item.UnitPrice,
-                sellerid = prod.userid
+                sellerid = prod.userid,
+                AdminCommission = adminCommission,      // ← MỚI
+                FarmerRevenue = farmerRevenue           // ← MỚI
             });
         }
 
-        // 7. Cập nhật lịch sử và số lần dùng Promotion
-        if (appliedPromo != null)
-        {
-            appliedPromo.CurrentUsageCount++;
-            _db.promotion_usagehistories.Add(new promotion_usagehistory
-            {
-                PromotionId = appliedPromo.PromotionId,
-                UserId = userId,
-                OrderId = order.orderid,
-                UsedAt = GetVietnamTime(),
-                DiscountAmount = finalDiscountAmount,
-                Order = order
-            });
-        }
+        // 7. Tạm thời CHƯA cập nhật promotion (chỉ cập nhật sau khi thanh toán thành công)
+        // Sẽ được xử lý trong IPN Callback
 
-        // 8. Lưu vào CSDL (lần đầu với mã tạm)
+        // 8. Lưu vào CSDL
         _db.orders.Add(order);
         await _db.SaveChangesAsync();
 
@@ -247,33 +243,9 @@ public class OrderController : Controller
         _db.orders.Update(order);
         await _db.SaveChangesAsync();
 
-        // 9. GỬI EMAIL XÁC NHẬN
-        try
-        {
-            await _emailService.SendOrderConfirmationEmailAsync(order, user.email);
+        _logger.LogInformation($"Order {order.ordercode} created with status Pending, waiting for payment");
 
-            var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
-            foreach (var farmerGroup in farmerGroups)
-            {
-                var farmerId = farmerGroup.Key;
-                var farmer = await _db.users.FirstOrDefaultAsync(u => u.userid == farmerId && u.role == "Farmer");
-
-                if (farmer != null && !string.IsNullOrEmpty(farmer.email))
-                {
-                    var farmerProducts = farmerGroup.ToList();
-                    await _emailService.SendOrderNotificationToFarmerAsync(order, farmer.email, farmerProducts);
-                }
-            }
-
-            TempData["Success"] = "Đặt hàng thành công! Email xác nhận đã được gửi.";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Lỗi khi gửi email xác nhận đơn hàng #{OrderId}", order.orderid);
-            TempData["Warning"] = "Đặt hàng thành công nhưng không thể gửi email xác nhận.";
-        }
-
-        // 10. Cập nhật lại Session Cart
+        // 9. Cập nhật lại Session Cart
         var remainingItems = cartAll.Items
                                     .Where(i => !model.SellerId.HasValue || i.SellerId != model.SellerId.Value)
                                     .ToList();
@@ -287,8 +259,47 @@ public class OrderController : Controller
             HttpContext.Session.Remove(CART_KEY);
         }
 
-        // 11. Chuyển đến trang xác nhận
-        return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
+        // 10. CHUYỂN HƯỚNG ĐẾN TRANG THANH TOÁN
+        switch (model.PaymentMethod)
+        {
+            case "VNPay":
+                // -> Chuyển sang PaymentController để xử lý VNPay
+                return RedirectToAction("CreatePayment", "Payment", new { orderId = order.orderid });
+
+            case "MoMo":
+                // -> Sau này bạn làm thêm Action CreateMoMoPayment
+                // return RedirectToAction("CreateMoMoPayment", "Payment", new { orderId = order.orderid });
+                TempData["Error"] = "Phương thức MoMo chưa được hỗ trợ.";
+                return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
+
+            case "COD":
+            default:
+                // -> COD: Tạo bản ghi Payment là "Pending" (Chưa trả tiền) nhưng đơn hàng thành công
+                var payment = new Payment
+                {
+                    OrderId = order.orderid,
+                    PaymentMethod = "COD",
+                    Amount = order.FinalAmount,
+                    Status = "Pending", // Chưa thanh toán
+                    CreateDate = GetVietnamTime()
+                };
+                _db.Payments.Add(payment);
+                await _db.SaveChangesAsync();
+
+                // Gửi email xác nhận đơn hàng (COD gửi luôn vì không cần đợi thanh toán)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        // Gọi EmailService gửi mail cho khách và Farmer ở đây
+                        // await _emailService.SendOrderConfirmationEmailAsync(order, ...);
+                    }
+                    catch { }
+                });
+
+                TempData["Success"] = "Đặt hàng thành công (Thanh toán khi nhận hàng)!";
+                return RedirectToAction("OrderConfirmation", "Order", new { orderId = order.orderid });
+        }
     }
 
     // [GET] /Order/OrderConfirmation
@@ -299,6 +310,7 @@ public class OrderController : Controller
         var order = await _db.orders
             .Include(o => o.orderdetails)
             .ThenInclude(od => od.product)
+            .Include(o => o.Payments) // ← MỚI: Include thông tin thanh toán
             .FirstOrDefaultAsync(o => o.orderid == orderId && o.customerid == userId);
 
         if (order == null)
@@ -328,6 +340,7 @@ public class OrderController : Controller
         return View(order);
     }
 
+    // [POST] Hủy đơn hàng - CẬP NHẬT: Chỉ cho phép hủy khi Pending hoặc Chờ duyệt
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelOrder(int orderId, string cancelReason, string returnUrl = null)
@@ -337,6 +350,7 @@ public class OrderController : Controller
         // Lấy đơn hàng
         var order = await _db.orders
             .Include(o => o.orderdetails)
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.orderid == orderId && o.customerid == userId);
 
         if (order == null)
@@ -345,17 +359,26 @@ public class OrderController : Controller
             return RedirectBasedOnReturnUrl(returnUrl, orderId);
         }
 
-        // Kiểm tra trạng thái - chỉ cho phép hủy khi đang "Chờ duyệt"
-        if (order.status != "Chờ duyệt")
+        // Kiểm tra trạng thái - chỉ cho phép hủy khi đang "Pending" hoặc "Chờ duyệt"
+        if (order.status != "Pending" && order.status != "Chờ duyệt")
         {
             TempData["Error"] = $"Không thể hủy đơn hàng ở trạng thái '{order.status}'.";
             return RedirectBasedOnReturnUrl(returnUrl, orderId);
         }
 
+        // Kiểm tra nếu đơn đã thanh toán thành công thì KHÔNG cho hủy
+        var successfulPayment = order.Payments?.FirstOrDefault(p => p.Status == "Success");
+        if (successfulPayment != null)
+        {
+            TempData["Error"] = "Không thể hủy đơn hàng đã thanh toán thành công. Vui lòng liên hệ hỗ trợ.";
+            return RedirectBasedOnReturnUrl(returnUrl, orderId);
+        }
+
         // Cập nhật trạng thái
         order.status = "Đã hủy";
-        var vnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
-        // LƯU LỊCH SỬ HỦY ĐƠN VỚI THỜI GIAN VIỆT NAM
+        var vnTime = GetVietnamTime();
+
+        // LƯU LỊCH SỬ HỦY ĐƠN
         var cancellation = new order_cancellation
         {
             OrderId = orderId,
@@ -387,7 +410,7 @@ public class OrderController : Controller
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Đơn hàng {OrderCode} đã được hủy bởi user {UserId} lúc {Time}",
-            order.ordercode, userId, GetVietnamTime());
+            order.ordercode, userId, vnTime);
 
         TempData["Success"] = $"Đơn hàng {order.ordercode} đã được hủy thành công.";
         return RedirectBasedOnReturnUrl(returnUrl, orderId);
@@ -396,31 +419,10 @@ public class OrderController : Controller
     // HÀM HỖ TRỢ: Redirect dựa trên returnUrl
     private IActionResult RedirectBasedOnReturnUrl(string returnUrl, int orderId)
     {
-        // Nếu có returnUrl và là local URL (bảo mật)
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);
         }
-
-        // Mặc định quay về OrderConfirmation
         return RedirectToAction("OrderConfirmation", new { orderId });
     }
-
-
-
-    // [GET] /Order/CancellationHistory - LỊCH SỬ HỦY ĐƠN
-    //[Authorize]
-    //public async Task<IActionResult> CancellationHistory()
-    //{
-    //    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-    //    var cancellations = await _db.order_cancellations
-    //        .Include(c => c.Order)
-    //        .Include(c => c.CancelledByUser)
-    //        .Where(c => c.Order.customerid == userId)
-    //        .OrderByDescending(c => c.CancelledAt)
-    //        .ToListAsync();
-
-    //    return View(cancellations);
-    //}
 }

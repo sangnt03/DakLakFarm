@@ -368,6 +368,11 @@
                     <span>Quản lý đơn hàng</span>
                 </a>
             </li>
+            <li class="sidebar-menu-item">
+                <a class="sidebar-menu-link" asp-area="Farmer" asp-controller="Wallet" asp-action="Index">
+                    <i class="fas fa-wallet sidebar-menu-icon"></i>
+                    <span>Ví của tôi</span>
+                </a>
         </ul>
 
     </aside>
@@ -473,6 +478,7 @@
             });
         });
     </script>
+    @await RenderSectionAsync("Styles", required: false)
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

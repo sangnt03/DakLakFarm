@@ -22,5 +22,8 @@ namespace AgriEcommerces_MVC.Models.ViewModel
         public decimal DiscountAmount { get; set; }
         public decimal FinalAmount { get; set; } // Tổng tiền cuối
         public bool IsPromotionApplied { get; set; }
+
+        public string PaymentMethod { get; set; } = "COD"; // Mặc định là COD
+
     }
 }

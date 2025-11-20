@@ -42,6 +42,10 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<promotion_farmer> promotion_farmers { get; set; }
     public virtual DbSet<promotion_usagehistory> promotion_usagehistories { get; set; }
     public virtual DbSet<password_reset> password_reset { get; set; }
+    public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<WalletTransaction> WalletTransaction { get; set; }
+    public virtual DbSet<PayoutRequest> PayoutRequests { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -366,6 +370,97 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => e.Email);
             entity.HasIndex(e => e.OtpCode);
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("payments"); // Chỉ định tên bảng là 'payments' (lowercase)
+
+            entity.HasKey(e => e.PaymentId).HasName("pk_payments");
+
+            // Cấu hình Precision cho cột 'amount'
+            entity.Property(e => e.Amount).HasPrecision(12, 2);
+
+            // Cấu hình độ dài cột
+            entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(30);
+            entity.Property(e => e.GatewayTransactionCode).HasMaxLength(100);
+
+            // Cấu hình Timezone
+            entity.Property(e => e.CreateDate)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Khóa ngoại đến 'orders'
+            entity.HasOne(d => d.order)
+                .WithMany(p => p.Payments) // Giả định có ICollection<Payment> Payments trong entity 'order'
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade) // Nếu xóa Order thì xóa luôn Payment
+                .HasConstraintName("fk_payments_order");
+        });
+
+        modelBuilder.Entity<WalletTransaction>(entity =>
+        {
+            // Lưu ý: Tên DbSet là 'WalletTransaction' (số ít) nên EF sẽ mặc định
+            // tìm bảng 'WalletTransaction'. Cần chỉ rõ tên bảng là 'wallettransactions'.
+            entity.ToTable("wallettransactions");
+
+            entity.HasKey(e => e.TransactionId).HasName("pk_wallettransactions");
+
+            // Cấu hình Precision cho cột 'amount'
+            entity.Property(e => e.Amount).HasPrecision(12, 2);
+
+            // Cấu hình độ dài cột
+            entity.Property(e => e.Type).HasMaxLength(50);
+
+            // Cấu hình Timezone
+            entity.Property(e => e.CreateDate)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Index cho 'farmerid' để tra cứu nhanh
+            entity.HasIndex(e => e.FarmerId, "idx_wallettransactions_farmerid");
+
+            // Khóa ngoại đến 'users' (Farmer)
+            entity.HasOne(d => d.Farmer)
+                .WithMany(p => p.WalletTransactions) // Giả định có ICollection<WalletTransaction> WalletTransactions trong entity 'user'
+                .HasForeignKey(d => d.FarmerId)
+                .OnDelete(DeleteBehavior.ClientSetNull) // Không cho xóa Farmer nếu còn giao dịch
+                .HasConstraintName("fk_wallettransactions_user");
+        });
+
+        modelBuilder.Entity<PayoutRequest>(entity =>
+        {
+            entity.ToTable("payoutrequests"); // Chỉ định tên bảng 'payoutrequests'
+
+            entity.HasKey(e => e.PayoutRequestId).HasName("pk_payoutrequests");
+
+            // Cấu hình Precision cho cột 'amount'
+            entity.Property(e => e.Amount).HasPrecision(12, 2);
+
+            // Cấu hình độ dài cột
+            entity.Property(e => e.Status).HasMaxLength(30);
+
+            // Cấu hình cột 'bankdetails' là kiểu jsonb
+            entity.Property(e => e.BankDetails).HasColumnType("jsonb");
+
+            // Cấu hình Timezone
+            entity.Property(e => e.RequestDate)
+                .HasColumnType("timestamp without time zone")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.CompletedDate)
+                .HasColumnType("timestamp without time zone"); // Nullable
+
+            // Index cho 'status' để Admin lọc nhanh
+            entity.HasIndex(e => e.Status, "idx_payoutrequests_status");
+
+            // Khóa ngoại đến 'users' (Farmer)
+            entity.HasOne(d => d.Farmer)
+                .WithMany(p => p.PayoutRequests) // Giả định có ICollection<PayoutRequest> PayoutRequests trong entity 'user'
+                .HasForeignKey(d => d.FarmerId)
+                .OnDelete(DeleteBehavior.ClientSetNull) // Không cho xóa Farmer nếu còn yêu cầu
+                .HasConstraintName("fk_payoutrequests_user");
         });
 
         OnModelCreatingPartial(modelBuilder);

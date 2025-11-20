@@ -1,0 +1,178 @@
+﻿@model IEnumerable<AgriEcommerces_MVC.Models.PayoutRequest>
+
+@{
+    ViewData["Title"] = "Lịch sử rút tiền";
+}
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-area="Farmer" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Ví của tôi</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Lịch sử rút tiền</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history"></i> Lịch sử Rút tiền</h2>
+        <a asp-action="RequestPayout" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tạo yêu cầu rút tiền
+        </a>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox fs-1"></i>
+                    <p class="mt-3">Bạn chưa có yêu cầu rút tiền nào</p>
+                    <a asp-action="RequestPayout" class="btn btn-primary mt-2">
+                        <i class="bi bi-plus-circle"></i> Tạo yêu cầu ngay
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã yêu cầu</th>
+                                <th>Số tiền</th>
+                                <th>Ngày yêu cầu</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày hoàn thành</th>
+                                <th>Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in Model)
+                            {
+                                <tr>
+                                    <td><strong>#@request.PayoutRequestId</strong></td>
+                                    <td>
+                                        <strong class="text-primary">@request.Amount.ToString("N0") đ</strong>
+                                    </td>
+                                    <td>
+                                        <small>@request.RequestDate.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        @switch (request.Status)
+                                        {
+                                            case "Pending":
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bi bi-hourglass-split"></i> Chờ xử lý
+                                                </span>
+                                                break;
+                                            case "Completed":
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle"></i> Đã hoàn thành
+                                                </span>
+                                                break;
+                                            case "Rejected":
+                                                <span class="badge bg-danger">
+                                                    <i class="bi bi-x-circle"></i> Đã từ chối
+                                                </span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (request.CompletedDate.HasValue)
+                                        {
+                                            <small>@request.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-info"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#detailModal@(request.PayoutRequestId)">
+                                            <i class="bi bi-eye"></i> Xem
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Modal chi tiết -->
+                                <div class="modal fade" id="detailModal@(request.PayoutRequestId)" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Chi tiết yêu cầu #@request.PayoutRequestId</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <strong>Số tiền:</strong>
+                                                    <span class="text-primary">@request.Amount.ToString("N0") đ</span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>Trạng thái:</strong>
+                                                    @switch (request.Status)
+                                                    {
+                                                        case "Pending":
+                                                            <span class="badge bg-warning text-dark">Chờ xử lý</span>
+                                                            break;
+                                                        case "Completed":
+                                                            <span class="badge bg-success">Đã hoàn thành</span>
+                                                            break;
+                                                        case "Rejected":
+                                                            <span class="badge bg-danger">Đã từ chối</span>
+                                                            break;
+                                                    }
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>Ngày yêu cầu:</strong>
+                                                    @request.RequestDate.ToString("dd/MM/yyyy HH:mm")
+                                                </div>
+                                                @if (request.CompletedDate.HasValue)
+                                                {
+                                                    <div class="mb-3">
+                                                        <strong>Ngày xử lý:</strong>
+                                                        @request.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                                    </div>
+                                                }
+                                                <hr>
+                                                <h6>Thông tin ngân hàng:</h6>
+                                                @{
+                                                    try
+                                                    {
+                                                        var bankDetails = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(request.BankDetails);
+                                                        <div class="ms-3">
+                                                            <p class="mb-1"><strong>Ngân hàng:</strong> @bankDetails.bankName</p>
+                                                            <p class="mb-1"><strong>Số tài khoản:</strong> @bankDetails.accountNumber</p>
+                                                            <p class="mb-1"><strong>Chủ tài khoản:</strong> @bankDetails.accountName</p>
+                                                        </div>
+                                                    }
+                                                    catch
+                                                    {
+                                                        <p class="text-muted">Không thể hiển thị thông tin ngân hàng</p>
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

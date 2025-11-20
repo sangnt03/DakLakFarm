@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Thanh toán thất bại";
+    var orderCode = ViewBag.OrderCode as string;
+    var error = ViewBag.Error as string;
+    var orderId = (int)ViewBag.OrderId;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow border-danger">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-times-circle text-danger" style="font-size: 80px;"></i>
+
+                    <h2 class="mt-4 text-danger">Thanh toán thất bại!</h2>
+
+                    <p class="lead mb-4">
+                        Đơn hàng <strong>@orderCode</strong> chưa được thanh toán thành công.
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(error))
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Lý do:</strong> @error
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@orderId"
+                           class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-redo"></i> Thử lại
+                        </a>
+
+                        <a asp-controller="Order" asp-action="OrderConfirmation" asp-route-orderId="@orderId"
+                           class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-file-invoice"></i> Xem đơn hàng
+                        </a>
+                    </div>
+
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            Nếu bạn gặp vấn đề, vui lòng liên hệ
+                            <a href="mailto:support@daklakfarm.com">support@daklakfarm.com</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

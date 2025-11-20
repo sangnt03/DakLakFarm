@@ -2,6 +2,9 @@
 using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
 using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Service.EmailService;
+using AgriEcommerces_MVC.Service.VnPayService;
+using AgriEcommerces_MVC.Service.WalletService;
+using AgriEcommerces_MVC.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +25,12 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 // Đăng ký EmailService
 builder.Services.AddScoped<IEmailService, EmailService>();
+// Đăng ký VnPayService
+builder.Services.AddScoped<VNPayService>();
+// Đăng ký WalletService
+builder.Services.AddScoped<WalletService>();
+// Đăng ký UnpaidOrderCleanupService chạy nền tự động xóa đơn hàng chưa thanh toán sau 5 phút với phương thức VNPAY,...
+builder.Services.AddHostedService<UnpaidOrderCleanupService>();
 
 
 // 2) MVC + Razor Runtime Compilation

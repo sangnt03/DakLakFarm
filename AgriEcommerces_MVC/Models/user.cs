@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AgriEcommerces_MVC.Models;
 
@@ -39,5 +40,11 @@ public partial class user
     public virtual ICollection<promotion_farmer> promotion_farmers { get; set; } = new List<promotion_farmer>();
     
     public virtual ICollection<promotion_usagehistory> promotion_usagehistories { get; set; } = new List<promotion_usagehistory>();
+    [InverseProperty("Farmer")]
+    public virtual ICollection<WalletTransaction> WalletTransactions { get; set; }
+
+    // Một Farmer có thể có nhiều yêu cầu rút tiền
+    [InverseProperty("Farmer")]
+    public virtual ICollection<PayoutRequest> PayoutRequests { get; set; }
 
 }
