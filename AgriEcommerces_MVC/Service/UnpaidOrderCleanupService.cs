@@ -8,14 +8,23 @@ namespace AgriEcommerces_MVC.Service
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<UnpaidOrderCleanupService> _logger;
-
-        // Múi giờ Việt Nam (UTC+7)
-        private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        private readonly TimeZoneInfo _vietnamTimeZone;
 
         public UnpaidOrderCleanupService(IServiceProvider serviceProvider, ILogger<UnpaidOrderCleanupService> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+
+            
+            // Xử lý đa nền tảng: Windows dùng "SE Asia Standard Time", Linux (Render) dùng "Asia/Ho_Chi_Minh"
+            try
+            {
+                _vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Windows
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                _vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); // Linux / Docker
+            }
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,8 +42,8 @@ namespace AgriEcommerces_MVC.Service
                     _logger.LogError(ex, "Lỗi xảy ra khi quét đơn hàng chưa thanh toán.");
                 }
 
-                // Chờ 1 phút trước khi quét lại lần nữa
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                // Chờ 1 phút trước khi quét lại
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
 
@@ -44,73 +53,60 @@ namespace AgriEcommerces_MVC.Service
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                // 1. Lấy thời gian hiện tại theo giờ VN
-                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
+                // 1. Lấy thời gian hiện tại theo giờ VN (đã fix lỗi timezone)
+                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _vietnamTimeZone);
 
-                // 2. Đơn hàng được coi là quá hạn nếu tạo trước mốc này (5 phút trước)
+                // 2. Đơn hàng quá hạn 5 phút
                 var expirationTime = now.AddMinutes(-5);
 
-                // 3. Tìm các đơn hàng thỏa mãn:
-                // - Trạng thái là "Pending" (Chờ thanh toán)
-                // - Ngày tạo < thời gian hết hạn
-                // - Load kèm bảng Payments để kiểm tra phương thức
+                // 3. Tìm đơn hàng
                 var expiredOrders = await context.orders
                     .Include(o => o.Payments)
                     .Where(o => o.status == "Pending" && o.orderdate < expirationTime)
                     .ToListAsync();
 
-                // 4. LỌC QUAN TRỌNG: Giữ lại đơn COD, chỉ hủy đơn Online (VNPay, MoMo...)
-                // Logic: Nếu đơn hàng có bất kỳ Payment nào là "COD" -> Bỏ qua (không hủy)
-                //        Nếu không có Payment hoặc PaymentMethod != "COD" -> Hủy
+                // 4. Lọc đơn cần hủy (Không hủy đơn COD)
                 var ordersToCancel = expiredOrders
                     .Where(o => !o.Payments.Any(p => p.PaymentMethod == "COD"))
                     .ToList();
 
                 if (ordersToCancel.Any())
                 {
-                    _logger.LogInformation($"Tìm thấy {ordersToCancel.Count} đơn hàng treo quá hạn 5 phút. Đang tiến hành hủy...");
+                    _logger.LogInformation($"Tìm thấy {ordersToCancel.Count} đơn hàng treo quá hạn. Đang hủy...");
 
                     foreach (var order in ordersToCancel)
                     {
-                        // --- CẬP NHẬT TRẠNG THÁI ORDER ---
+                        // Cập nhật trạng thái Order
                         order.status = "Đã hủy";
 
-                        // --- TẠO LỊCH SỬ HỦY (Bắt buộc do bạn có bảng order_cancellation) ---
+                        // Tạo lịch sử hủy
                         var cancellation = new order_cancellation
                         {
                             OrderId = order.orderid,
-
-                            // Vì service chạy ngầm, không có User login. 
-                            // Ta gán CancelledBy = CustomerId (coi như khách hàng bỏ đơn)
-                            // Hoặc bạn có thể set cứng ID của Admin (ví dụ: 1)
                             CancelledBy = order.customerid,
-
                             CancelReason = "Hủy tự động do quá hạn thanh toán (5 phút)",
                             CancelledAt = now,
-                            RefundAmount = 0, // Chưa thanh toán nên hoàn tiền = 0
+                            RefundAmount = 0,
                             RefundStatus = "N/A"
                         };
-
                         context.order_cancellations.Add(cancellation);
 
-                        // --- CẬP NHẬT TRẠNG THÁI PAYMENT (Nếu có) ---
-                        // Nếu đã có bản ghi payment (ví dụ VNPay Pending), chuyển sang Failed
+                        // Cập nhật trạng thái Payment
                         foreach (var pay in order.Payments)
                         {
                             if (pay.Status == "Pending")
                             {
-                                pay.Status = "Đã Hủy"; // Hoặc "Failed"
+                                pay.Status = "Đã Hủy";
                             }
                         }
 
-                        // Hoàn lại số lượt dùng mã giảm giá (nếu có)
+                        // Hoàn lại mã giảm giá (nếu có)
                         if (order.promotionid.HasValue)
                         {
                             var promotion = await context.promotions.FindAsync(order.promotionid.Value);
                             if (promotion != null)
                             {
                                 promotion.CurrentUsageCount--;
-                                // Xóa lịch sử dùng mã
                                 var usageHistory = await context.promotion_usagehistories
                                     .FirstOrDefaultAsync(h => h.OrderId == order.orderid);
                                 if (usageHistory != null)
@@ -122,7 +118,7 @@ namespace AgriEcommerces_MVC.Service
                     }
 
                     await context.SaveChangesAsync();
-                    _logger.LogInformation($"Đã hủy tự động {ordersToCancel.Count} đơn hàng.");
+                    _logger.LogInformation($"Đã hủy thành công {ordersToCancel.Count} đơn hàng.");
                 }
             }
         }
