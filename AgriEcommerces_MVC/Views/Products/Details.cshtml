@@ -550,7 +550,7 @@
                             <div class="section-label">Số lượng</div>
                             <div class="quantity-wrapper">
                                 <button type="button" data-type="minus">−</button>
-                                <input type="text" class="input-number" value="1" readonly />
+                                <input type="text" class="input-number" value="1" min="1" />
                                 <button type="button" data-type="plus">+</button>
                             </div>
                         </div>
@@ -688,20 +688,29 @@
             }
         }
 
+                // Hàm gọi API với xử lý authentication VÀ hiển thị lỗi chi tiết
         async function fetchWithAuth(url) {
             try {
                 const resp = await fetch(url, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
+
                 if (resp.status === 401) {
                     handleUnauthorized();
                     return null;
                 }
+
+                // --- ĐOẠN SỬA ĐỔI ---
                 if (!resp.ok) {
-                    console.error('Lỗi API:', resp.status);
-                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    // Lấy nội dung lỗi từ Controller (BadRequest)
+                    const errorMsg = await resp.text();
+                    alert(errorMsg); // Hiển thị: "Kho chỉ còn 10 sản phẩm..."
                     return null;
                 }
+                // --------------------
+
                 return await resp.text();
             } catch (error) {
                 console.error('Lỗi kết nối:', error);

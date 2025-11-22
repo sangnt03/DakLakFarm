@@ -14,9 +14,6 @@ namespace AgriEcommerces_MVC.Service.VnPayService
             _configuration = configuration;
         }
 
-        /// <summary>
-        /// Tạo URL thanh toán VNPay - 100% CHUẨN
-        /// </summary>
         public string CreatePaymentUrl(int orderId, decimal amount, string orderInfo, string ipAddress)
         {
             string vnp_TmnCode = "QUUH0J2I";
@@ -47,7 +44,6 @@ namespace AgriEcommerces_MVC.Service.VnPayService
             vnpayData.Add("vnp_ReturnUrl", vnp_ReturnUrl);
             vnpayData.Add("vnp_TxnRef", orderId.ToString());
 
-            // ✅ THEO CHUẨN VNPAY: URL encode cả key và value
             StringBuilder data = new StringBuilder();
             foreach (KeyValuePair<string, string> kv in vnpayData)
             {
@@ -58,32 +54,17 @@ namespace AgriEcommerces_MVC.Service.VnPayService
             }
 
             string queryString = data.ToString();
-
-            // ✅ Xóa ký tự '&' cuối cùng để tạo signData
             string signData = queryString;
             if (signData.Length > 0)
             {
                 signData = signData.Remove(signData.Length - 1, 1);
             }
 
-            // ✅ Tạo hash từ signData đã encode
             string vnp_SecureHash = HmacSHA512(vnp_HashSecret, signData);
-
-            // ✅ Tạo URL cuối cùng
             string paymentUrl = vnp_Url + "?" + queryString + "vnp_SecureHash=" + vnp_SecureHash;
-
-            Console.WriteLine("=== VNPAY PAYMENT URL DEBUG (CHUẨN) ===");
-            Console.WriteLine($"SignData: {signData}");
-            Console.WriteLine($"SecureHash: {vnp_SecureHash}");
-            Console.WriteLine($"PaymentUrl: {paymentUrl}");
-            Console.WriteLine("========================================");
-
             return paymentUrl;
         }
 
-        /// <summary>
-        /// Validate chữ ký từ VNPay IPN
-        /// </summary>
         public bool ValidateSignature(IQueryCollection collections, string inputHash, string secretKey)
         {
             var vnpayData = new SortedList<string, string>();
@@ -98,19 +79,12 @@ namespace AgriEcommerces_MVC.Service.VnPayService
                     vnpayData.Add(item.Key, item.Value.ToString());
                 }
             }
-
-            // Tạo chuỗi dữ liệu để hash
             var signData = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={kv.Value}"));
-
-            // Tính toán chữ ký
             var checkSum = HmacSHA512(secretKey, signData);
 
             return checkSum.Equals(inputHash, StringComparison.InvariantCultureIgnoreCase);
         }
 
-        /// <summary>
-        /// Mã hóa HMAC SHA512 - trả về lowercase hex string
-        /// </summary>
         private string HmacSHA512(string key, string inputData)
         {
             var hash = new StringBuilder();
@@ -140,9 +114,6 @@ namespace AgriEcommerces_MVC.Service.VnPayService
             }
         }
 
-        /// <summary>
-        /// Parse response code từ VNPay
-        /// </summary>
         public string GetResponseDescription(string responseCode)
         {
             return responseCode switch

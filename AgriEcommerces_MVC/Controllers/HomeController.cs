@@ -81,89 +81,6 @@ namespace AgriEcommerces_MVC.Controllers
             return View(model);
         }
 
-        // POST: Xử lý thanh toán
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Payment(PaymentViewModel model)
-        {
-            // 1) Lấy giỏ hàng gốc
-            var cartAll = HttpContext.Session
-                                 .GetObject<CartViewModel>(CART_KEY)
-                           ?? new CartViewModel();
-
-            // 2) Gán nhóm cần thanh toán lại
-            model.Cart = model.SellerId.HasValue
-                ? new CartViewModel
-                {
-                    Items = cartAll.Items
-                                   .Where(i => i.SellerId == model.SellerId.Value)
-                                   .ToList()
-                }
-                : cartAll;
-
-            // 3) Validate
-            ModelState.Remove(nameof(model.Cart));
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            // 4) Lấy userId từ Claim
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Challenge();
-            var userId = int.Parse(userIdClaim.Value);
-
-            // 5) Tạo order
-            var order = new order
-            {
-                customerid = userId,
-                customername = model.customername,
-                customerphone = model.customerphone,
-                orderdate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                totalamount = model.Cart.GrandTotal,
-                status = "Chờ duyệt",
-                shippingaddress = $"{model.address}, {model.ward}, {model.district}, {model.province}"
-            };
-
-            // 6) Tạo orderdetails chỉ cho nhóm này
-            order.orderdetails = new List<orderdetail>();
-            foreach (var item in model.Cart.Items)
-            {
-                var prod = await _db.products
-                                    .AsNoTracking()
-                                    .FirstOrDefaultAsync(p => p.productid == item.ProductId);
-                order.orderdetails.Add(new orderdetail
-                {
-                    productid = item.ProductId,
-                    quantity = item.Quantity,
-                    unitprice = item.UnitPrice,
-                    sellerid = prod.userid
-                });
-            }
-
-            // 7) Lưu
-            _db.orders.Add(order);
-            await _db.SaveChangesAsync();
-
-            // 8) Cập nhật lại session: xoá nhóm đã thanh toán
-            var remainingItems = cartAll.Items
-                                        .Where(i => !model.SellerId.HasValue
-                                                 || i.SellerId != model.SellerId.Value)
-                                        .ToList();
-            if (remainingItems.Any())
-            {
-                cartAll.Items = remainingItems;
-                HttpContext.Session.SetObject(CART_KEY, cartAll);
-            }
-            else
-            {
-                HttpContext.Session.Remove(CART_KEY);
-            }
-
-            // 9) Redirect confirmation
-            return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
-        }
-
         [Authorize]
         public IActionResult OrderConfirmation(int orderId)
         {
@@ -233,6 +150,7 @@ namespace AgriEcommerces_MVC.Controllers
             return View(order);
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmReceived(int orderid)
@@ -241,27 +159,65 @@ namespace AgriEcommerces_MVC.Controllers
             if (userIdClaim == null) return Challenge();
             int userId = int.Parse(userIdClaim.Value);
 
+            // Lấy đơn hàng, chi tiết và thông tin thanh toán
             var order = await _db.orders
+                .Include(o => o.orderdetails)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.orderid == orderid && o.customerid == userId);
 
             if (order == null) return NotFound();
+            if (order.status != "Đang vận chuyển" && order.status != "Đã duyệt" && order.status != "Pending")
+            {
+                TempData["Error"] = "Trạng thái đơn hàng không hợp lệ để xác nhận.";
+                return RedirectToAction("MyOrders");
+            }
 
-            // Cập nhật trạng thái
-            if (order.status == "Đang vận chuyển" || order.status == "Đã duyệt")
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
                 order.status = "Đã nhận hàng";
+                var codPayment = order.Payments?.FirstOrDefault(p => p.PaymentMethod == "COD" && p.Status == "Pending");
+                if (codPayment != null)
+                {
+                    codPayment.Status = "Success";
+                    codPayment.CreateDate = DateTimeHelper.GetVietnamTime();
+                    _db.Payments.Update(codPayment);
+                }
+
+                foreach (var detail in order.orderdetails)
+                {
+                    if (detail.FarmerRevenue > 0)
+                    {
+                        var walletTransaction = new WalletTransaction
+                        {
+                            FarmerId = detail.sellerid,
+                            Amount = detail.FarmerRevenue,
+                            Type = "OrderRevenue",
+                            ReferenceId = detail.orderdetailid,
+                            Description = $"Doanh thu đơn hàng {order.ordercode}",
+                            CreateDate = DateTimeHelper.GetVietnamTime()
+                        };
+
+                        _db.WalletTransaction.Add(walletTransaction);
+                    }
+                }
+                _db.orders.Update(order);
                 await _db.SaveChangesAsync();
-                TempData["Success"] = "Đã xác nhận nhận hàng thành công!";
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "Xác nhận thành công! Cảm ơn bạn đã mua sắm.";
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Đơn hàng không thể xác nhận trong trạng thái hiện tại.";
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Lỗi ConfirmReceived");
+                TempData["Error"] = "Có lỗi xảy ra.";
             }
 
             return RedirectToAction("MyOrders");
         }
 
-        [HttpGet]
+    [HttpGet]
         [Authorize]
         public async Task<IActionResult> EditProfile()
         {

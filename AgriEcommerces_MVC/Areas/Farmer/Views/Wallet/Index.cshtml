@@ -43,12 +43,12 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="card-subtitle mb-2 opacity-75">Số dư khả dụng</h6>
-                            <h2 class="card-title mb-0">@balance.ToString("N0") đ</h2>
+                            <h6 class="card-subtitle mb-2 text-muted">Số dư khả dụng</h6>
+                            <h2 class="card-title" style="-webkit-text-fill-color:orangered">@balance.ToString("N0") đ</h2>
                         </div>
                         <i class="bi bi-wallet2 fs-1 opacity-50"></i>
                     </div>
-                    <a asp-action="RequestPayout" class="btn btn-light btn-sm mt-3 w-100">
+                    <a asp-action="RequestPayout" class="btn btn-outline-primary btn-sm mt-3 w-100">
                         <i class="bi bi-cash-coin"></i> Rút tiền
                     </a>
                 </div>

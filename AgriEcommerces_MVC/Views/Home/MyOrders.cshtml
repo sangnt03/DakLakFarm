@@ -28,7 +28,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="text-danger" style="-webkit-text-fill-color:orangered">@Model.Count(o => o.status == "Chờ duyệt")</h5>
+                    <h5 class="text-danger" style="-webkit-text-fill-color:orangered">@Model.Count(o => o.status == "Chờ duyệt" || o.status == "Pending")</h5>
                     <small class="text-muted">Chờ duyệt</small>
                 </div>
             </div>
@@ -44,7 +44,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="text-primary">@Model.Count(o => o.status == "Đ vận chuyển")</h5>
+                    <h5 class="text-primary">@Model.Count(o => o.status == "Đang vận chuyển")</h5>
                     <small class="text-muted">Đang vận chuyển</small>
                 </div>
             </div>
@@ -98,12 +98,12 @@
                                     var badgeClass = o.status switch
                                     {
                                         "Pending" => "status-badge bg-warning text-dark",
-                                        "Paid" => "bg-info text-success",
+                                        "Paid" => "bg-info text-success text-dark",
                                         "Chờ duyệt" => "status-badge bg-warning text-dark",
                                         "Đang xử lý" => "bg-info text-dark",
                                         "Đang vận chuyển" => "bg-primary text-dark",
-                                        "Đã nhận hàng" => "status-badg bg-success text-while",
-                                        "Đã hủy" => "status-badge bg-danger text-white",
+                                        "Đã nhận hàng" => "status-badg bg-success text-dark",
+                                        "Đã hủy" => "status-badge bg-danger text-dark",
                                         _ => "bg-secondary"
                                     };
                                 }

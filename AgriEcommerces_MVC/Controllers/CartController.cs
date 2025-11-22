@@ -31,7 +31,7 @@ public class CartController : Controller
                    ?? new CartViewModel();
         return View(cart);
     }
-   
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> AddAjax(int id, int qty = 1)
@@ -45,7 +45,19 @@ public class CartController : Controller
 
         if (p != null)
         {
+            // --- LOGIC KIỂM TRA TỒN KHO MỚI ---
+            // Tính tổng số lượng khách muốn mua (đã có trong giỏ + muốn thêm)
             var exist = cart.Items.FirstOrDefault(i => i.ProductId == id);
+            int currentInCart = exist?.Quantity ?? 0;
+            int totalRequested = currentInCart + qty;
+
+            if (totalRequested > p.quantityavailable)
+            {
+                // Trả về lỗi 400 (BadRequest) kèm thông báo để JavaScript hiển thị
+                return BadRequest($"Kho chỉ còn {p.quantityavailable} sản phẩm. Bạn đã có {currentInCart} trong giỏ.");
+            }
+            // ----------------------------------
+
             if (exist != null)
                 exist.Quantity += qty;
             else
@@ -61,13 +73,14 @@ public class CartController : Controller
                     UnitPrice = p.price,
                     Quantity = qty,
                     ImageUrl = imageUrl,
-                    SellerId = p.userid       // gán SellerId
+                    SellerId = p.userid
                 });
             }
         }
         else
         {
             _logger.LogWarning($"Product not found with ID: {id}");
+            return NotFound("Sản phẩm không tồn tại.");
         }
 
         HttpContext.Session.SetObject(CART_KEY, cart);
@@ -90,8 +103,8 @@ public class CartController : Controller
         HttpContext.Session.SetObject(CART_KEY, cart);
         return PartialView("_CartBody", cart);
     }
-    
-    [Authorize]    
+
+    [Authorize]
     [HttpGet]
     public IActionResult UpdateAjax(int id, int qty)
     {
@@ -101,6 +114,19 @@ public class CartController : Controller
         var item = cart.Items.FirstOrDefault(i => i.ProductId == id);
         if (item != null)
         {
+            // --- LOGIC KIỂM TRA TỒN KHO MỚI ---
+            // Lấy thông tin tồn kho thực tế từ DB
+            var productInDb = _db.products.Find(id);
+            if (productInDb != null)
+            {
+                // Nếu khách tăng số lượng (qty > 0) và số lượng đó lớn hơn kho
+                if (qty > 0 && qty > productInDb.quantityavailable)
+                {
+                    return BadRequest($"Kho chỉ còn {productInDb.quantityavailable} sản phẩm.");
+                }
+            }
+            // ----------------------------------
+
             if (qty <= 0)
                 cart.Items.Remove(item);
             else

@@ -1,5 +1,6 @@
 ﻿using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Helpers;
+using AgriEcommerces_MVC.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgriEcommerces_MVC.Service.WalletService
@@ -13,107 +14,83 @@ namespace AgriEcommerces_MVC.Service.WalletService
             _context = context;
         }
 
-        /// <summary>
-        /// Lấy số dư khả dụng của Farmer
-        /// </summary>
+        // 1. Lấy số dư khả dụng
         public async Task<decimal> GetAvailableBalance(int farmerId)
         {
+            // - Field: FarmerId, Amount
             var balance = await _context.WalletTransaction
                 .Where(t => t.FarmerId == farmerId)
-                .SumAsync(t => t.Amount);
+                .SumAsync(t => (decimal?)t.Amount) ?? 0;
 
             return balance;
         }
 
-        /// <summary>
-        /// Lấy lịch sử giao dịch ví
-        /// </summary>
-        public async Task<List<Models.WalletTransaction>> GetTransactionHistory(int farmerId, int pageSize = 20, int page = 1)
+        // 2. Lấy lịch sử giao dịch
+        public async Task<List<WalletTransaction>> GetTransactionHistory(int farmerId)
         {
             return await _context.WalletTransaction
                 .Where(t => t.FarmerId == farmerId)
                 .OrderByDescending(t => t.CreateDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Tạo yêu cầu rút tiền
-        /// </summary>
+        // 3. Farmer tạo yêu cầu rút tiền
         public async Task<bool> CreatePayoutRequest(int farmerId, decimal amount, string bankDetails)
         {
-            // Kiểm tra số dư khả dụng
-            var availableBalance = await GetAvailableBalance(farmerId);
+            // Kiểm tra số dư
+            var balance = await GetAvailableBalance(farmerId);
+            if (balance < amount) return false;
 
-            if (availableBalance < amount)
-            {
-                return false; // Số dư không đủ
-            }
-
-            // Kiểm tra có yêu cầu đang chờ xử lý không
-            var hasPendingRequest = await _context.PayoutRequests
+            // Kiểm tra yêu cầu Pending cũ
+            // - Field: Status, FarmerId
+            var hasPending = await _context.PayoutRequests
                 .AnyAsync(p => p.FarmerId == farmerId && p.Status == "Pending");
 
-            if (hasPendingRequest)
-            {
-                return false; // Chỉ cho phép 1 yêu cầu Pending tại một thời điểm
-            }
+            if (hasPending) return false;
 
-            // ✅ SỬ DỤNG DateTimeHelper
-            var payoutRequest = new Models.PayoutRequest
+            var request = new PayoutRequest
             {
                 FarmerId = farmerId,
                 Amount = amount,
                 Status = "Pending",
-                BankDetails = bankDetails,
+                BankDetails = bankDetails, // Lưu chuỗi JSON vào cột jsonb
                 RequestDate = DateTimeHelper.GetVietnamTime()
             };
 
-            _context.PayoutRequests.Add(payoutRequest);
+            _context.PayoutRequests.Add(request);
             await _context.SaveChangesAsync();
-
             return true;
         }
 
-        /// <summary>
-        /// Admin duyệt yêu cầu rút tiền
-        /// </summary>
+        // 4. Admin DUYỆT yêu cầu -> Trừ tiền ví
         public async Task<bool> ApprovePayoutRequest(int payoutRequestId, int adminId)
         {
-            var request = await _context.PayoutRequests
-                .Include(p => p.Farmer)
-                .FirstOrDefaultAsync(p => p.PayoutRequestId == payoutRequestId);
-
-            if (request == null || request.Status != "Pending")
-            {
-                return false;
-            }
+            var request = await _context.PayoutRequests.FindAsync(payoutRequestId);
+            if (request == null || request.Status != "Pending") return false;
 
             using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
-                // ✅ SỬ DỤNG DateTimeHelper
+                // A. Update trạng thái PayoutRequest
                 request.Status = "Completed";
                 request.CompletedDate = DateTimeHelper.GetVietnamTime();
 
-                // Tạo giao dịch trừ tiền trong ví Farmer
-                var walletTransaction = new Models.WalletTransaction
+                // B. Tạo giao dịch trừ tiền (WalletTransaction)
+                //
+                var walletTx = new WalletTransaction
                 {
                     FarmerId = request.FarmerId,
                     Amount = -request.Amount, // Số âm để trừ tiền
                     Type = "Payout",
-                    ReferenceId = request.PayoutRequestId,
-                    Description = $"Rút tiền vào tài khoản ngân hàng",
+                    ReferenceId = request.PayoutRequestId, // Link tới ID yêu cầu rút
+                    Description = $"Rút tiền thành công (Yêu cầu #{request.PayoutRequestId})",
                     CreateDate = DateTimeHelper.GetVietnamTime()
                 };
 
-                _context.WalletTransaction.Add(walletTransaction);
+                _context.WalletTransaction.Add(walletTx);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-
                 return true;
             }
             catch
@@ -123,31 +100,24 @@ namespace AgriEcommerces_MVC.Service.WalletService
             }
         }
 
-        /// <summary>
-        /// Admin từ chối yêu cầu rút tiền
-        /// </summary>
+        // 5. Admin TỪ CHỐI yêu cầu
         public async Task<bool> RejectPayoutRequest(int payoutRequestId, string reason)
         {
-            var request = await _context.PayoutRequests
-                .FirstOrDefaultAsync(p => p.PayoutRequestId == payoutRequestId);
+            var request = await _context.PayoutRequests.FindAsync(payoutRequestId);
+            if (request == null || request.Status != "Pending") return false;
 
-            if (request == null || request.Status != "Pending")
-            {
-                return false;
-            }
-
-            // ✅ SỬ DỤNG DateTimeHelper
             request.Status = "Rejected";
             request.CompletedDate = DateTimeHelper.GetVietnamTime();
+
+            // Có thể lưu lý do từ chối vào một chỗ khác hoặc gửi email thông báo cho Farmer
+            // Hiện tại Model PayoutRequest chưa có cột 'Reason', bạn có thể bổ sung sau nếu cần.
 
             await _context.SaveChangesAsync();
             return true;
         }
 
-        /// <summary>
-        /// Lấy danh sách yêu cầu rút tiền của một Farmer
-        /// </summary>
-        public async Task<List<Models.PayoutRequest>> GetPayoutRequestsByFarmer(int farmerId)
+        // 6. Lấy danh sách yêu cầu rút tiền của 1 Farmer
+        public async Task<List<PayoutRequest>> GetPayoutRequestsByFarmer(int farmerId)
         {
             return await _context.PayoutRequests
                 .Where(p => p.FarmerId == farmerId)

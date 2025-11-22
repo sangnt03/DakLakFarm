@@ -174,7 +174,7 @@
                                                 <input type="text"
                                                        class="form-control text-center mx-2 input-number"
                                                        value="1"
-                                                       readonly
+                                                       min="1"
                                                        style="width:48px; padding:0.25rem 0;" />
                                                 <button type="button"
                                                         class="btn btn-outline-secondary p-0 d-flex justify-content-center align-items-center"
@@ -203,70 +203,141 @@
 
 @section Scripts {
     <script>
+        // 1. Hàm xử lý khi chưa đăng nhập
+        function handleUnauthorized() {
+            if(confirm('Vui lòng đăng nhập để mua hàng. Bạn có muốn đến trang đăng nhập ngay không?')){
+                 const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                 window.location.href = '/Account/Login?returnUrl=' + returnUrl;
+            }
+        }
+
+        // 2. Hàm gọi API với xử lý lỗi chi tiết (Hiển thị thông báo hết hàng từ Controller)
+        async function fetchWithAuth(url) {
+            try {
+                const resp = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (resp.status === 401) {
+                    handleUnauthorized();
+                    return null;
+                }
+
+                // Nếu Server trả về lỗi (ví dụ: Kho không đủ hàng)
+                if (!resp.ok) {
+                    const errorMsg = await resp.text();
+                    alert(errorMsg); // Hiển thị alert: "Kho chỉ còn 10 sản phẩm..."
+                    return null;
+                }
+
+                return await resp.text();
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                alert('Không thể kết nối đến server!');
+                return null;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- SỰ KIỆN 1: Xử lý khi người dùng TỰ NHẬP SỐ (Change) ---
+            document.body.addEventListener('change', e => {
+                if (e.target.classList.contains('input-number')) {
+                    let val = parseInt(e.target.value) || 1;
+                    // Không cho nhập số âm hoặc 0
+                    if (val < 1) val = 1;
+                    e.target.value = val;
+                }
+            });
+
+            // --- SỰ KIỆN 2: Xử lý CLICK (Nút +/-, Add to Cart, Xóa...) ---
             document.body.addEventListener('click', async e => {
                 const minusOrPlus = e.target.closest('button[data-type]');
                 const addBtn = e.target.closest('.add-to-cart');
+                const qtyBtn = e.target.closest('.qty-btn'); // Nút +/- trong Offcanvas Cart
+                const remBtn = e.target.closest('.remove-btn'); // Nút xóa trong Offcanvas
 
-                // 1) Xử lý + / − trong product list
+                // A) Xử lý nút +/- ở danh sách sản phẩm
                 if (minusOrPlus && !minusOrPlus.classList.contains('qty-btn')) {
-                    // là nút trên trang Products, data-type="minus" hoặc "plus"
                     e.preventDefault();
                     const wrapper = minusOrPlus.closest('.quantity-wrapper');
+                    // Tìm input (lúc này đã bỏ readonly)
                     const input = wrapper.querySelector('input.input-number');
+
                     let v = parseInt(input.value, 10) || 0;
                     if (minusOrPlus.getAttribute('data-type') === 'plus') v++;
-                    else if (v > 1) v--;
+                    else if (v > 1) v--; // Chỉ trừ khi > 1
+
                     input.value = v < 1 ? 1 : v;
                     return;
                 }
 
-                // 2) Xử lý Add to Cart
+                // B) Xử lý nút "Add to Cart"
                 if (addBtn) {
                     e.preventDefault();
                     const id = addBtn.getAttribute('data-id');
                     const wrapper = addBtn.closest('.product-item');
+
+                    // Lấy giá trị từ ô input (người dùng có thể đã nhập tay số 100)
                     const input = wrapper.querySelector('input.input-number');
                     let qty = parseInt(input.value, 10);
                     if (isNaN(qty) || qty < 1) qty = 1;
 
+                    // Gọi API thêm vào giỏ
                     const url = '@Url.Action("AddAjax", "Cart")';
-                    const resp = await fetch(`${url}?id=${id}&qty=${qty}`);
-                    if (!resp.ok) return console.error('AddAjax lỗi', resp.status);
-                    const html = await resp.text();
+                    const html = await fetchWithAuth(`${url}?id=${id}&qty=${qty}`);
 
-                    document.getElementById('offcanvasCartBody').innerHTML = html;
-                    new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+                    // Nếu html null nghĩa là lỗi (hết hàng hoặc chưa login), dừng lại
+                    if (!html) return;
+
+                    // Cập nhật giao diện giỏ hàng
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) {
+                        offcanvasBody.innerHTML = html;
+                        new bootstrap.Offcanvas(document.getElementById('offcanvasCart')).show();
+                    }
                     return;
                 }
 
-                // 3) Các nút trong offcanvas (qty-btn, remove-btn) vẫn như cũ...
-                const qtyBtn = e.target.closest('.qty-btn');
+                // C) Xử lý nút +/- TRONG Offcanvas Cart (nếu có hiển thị ở trang này)
                 if (qtyBtn) {
                     e.preventDefault();
                     const id = qtyBtn.getAttribute('data-id');
                     const action = qtyBtn.getAttribute('data-action');
                     const li = qtyBtn.closest('li');
-                    const span = li.querySelector('.qty-value');
-                    let qty = parseInt(span.textContent, 10) || 0;
-                    qty = (action === 'plus' ? qty + 1 : qty - 1);
-                    if (qty < 0) qty = 0;
+                    const span = li.querySelector('.qty-value'); // Hoặc input nếu bạn đã đổi trong _CartBody
+
+                    // Logic lấy số lượng hiện tại (xử lý cả trường hợp span hoặc input)
+                    let currentQty = 0;
+                    if(span.tagName === 'INPUT') currentQty = parseInt(span.value, 10);
+                    else currentQty = parseInt(span.textContent, 10);
+
+                    let newQty = (action === 'plus' ? currentQty + 1 : currentQty - 1);
+                    if (newQty < 1) newQty = 1;
 
                     const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
-                    const r2 = await fetch(`${updateUrl}?id=${id}&qty=${qty}`);
-                    const h2 = await r2.text();
-                    document.getElementById('offcanvasCartBody').innerHTML = h2;
+                    const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=${newQty}`);
+
+                    if (!html) return; // Lỗi kho -> không cập nhật
+
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) offcanvasBody.innerHTML = html;
                     return;
                 }
 
-                const remBtn = e.target.closest('.remove-btn');
+                // D) Xử lý nút Xóa trong Offcanvas
                 if (remBtn) {
                     e.preventDefault();
+                    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
+
                     const id = remBtn.getAttribute('data-id');
                     const updateUrl = '@Url.Action("UpdateAjax", "Cart")';
-                    const r3 = await fetch(`${updateUrl}?id=${id}&qty=0`);
-                    const h3 = await r3.text();
-                    document.getElementById('offcanvasCartBody').innerHTML = h3;
+                    const html = await fetchWithAuth(`${updateUrl}?id=${id}&qty=0`);
+
+                    if (!html) return;
+
+                    const offcanvasBody = document.getElementById('offcanvasCartBody');
+                    if (offcanvasBody) offcanvasBody.innerHTML = html;
                 }
             });
         });

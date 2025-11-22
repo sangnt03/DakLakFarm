@@ -77,7 +77,7 @@ else
             window.location.href = '/Account/Login?returnUrl=' + returnUrl;
         }
 
-        // Hàm gọi API với xử lý lỗi
+                // Hàm gọi API với xử lý authentication VÀ hiển thị lỗi chi tiết
         async function fetchWithAuth(url) {
             try {
                 const resp = await fetch(url, {
@@ -92,8 +92,8 @@ else
                 }
 
                 if (!resp.ok) {
-                    console.error('Lỗi API:', resp.status);
-                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    const errorMsg = await resp.text();
+                    alert(errorMsg);
                     return null;
                 }
 

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
 
 [Authorize]
 public class OrderController : Controller
@@ -17,6 +18,7 @@ public class OrderController : Controller
     private readonly ILogger<OrderController> _logger;
     private const string CART_KEY = "Cart";
     private const decimal COMMISSION_RATE = 0.10m; // 10% hoa hồng Admin
+    private readonly IServiceScopeFactory _scopeFactory;
 
     // MÚI GIỜ VIỆT NAM (UTC+7)
     private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
@@ -25,12 +27,14 @@ public class OrderController : Controller
         ApplicationDbContext db,
         IPromotionService promotionService,
         IEmailService emailService,
-        ILogger<OrderController> logger)
+        ILogger<OrderController> logger,
+        IServiceScopeFactory scopeFactory)
     {
         _db = db;
         _promotionService = promotionService;
         _emailService = emailService;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     // HÀM HỖ TRỢ: Lấy thời gian Việt Nam
@@ -209,25 +213,33 @@ public class OrderController : Controller
             ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
         };
 
-        // 6. Tạo chi tiết đơn hàng và TÍNH HOA HỒNG
         order.orderdetails = new List<orderdetail>();
+        decimal originalCartTotal = model.Cart.Items.Sum(i => i.Quantity * i.UnitPrice);
         foreach (var item in model.Cart.Items)
         {
-            var prod = await _db.products.AsNoTracking().FirstOrDefaultAsync(p => p.productid == item.ProductId);
-
-            // ====== TÍNH HOA HỒNG ADMIN VÀ DOANH THU FARMER ======
-            decimal itemTotal = item.Quantity * item.UnitPrice;
-            decimal adminCommission = itemTotal * COMMISSION_RATE; // 10%
-            decimal farmerRevenue = itemTotal - adminCommission;
+            var prod = await _db.products.FirstOrDefaultAsync(p => p.productid == item.ProductId);
+            if (prod != null)
+            {
+                prod.quantityavailable -= item.Quantity;
+                _db.products.Update(prod);
+            }
+            decimal itemTotalOriginal = item.Quantity * item.UnitPrice;
+            decimal farmerRevenue = itemTotalOriginal * (1 - COMMISSION_RATE);
+            decimal itemDiscountShare = 0;
+            if (originalCartTotal > 0 && finalDiscountAmount > 0)
+            {
+                itemDiscountShare = (itemTotalOriginal / originalCartTotal) * finalDiscountAmount;
+            }
+            decimal adminCommission = (itemTotalOriginal * COMMISSION_RATE) - itemDiscountShare;
 
             order.orderdetails.Add(new orderdetail
             {
                 productid = item.ProductId,
                 quantity = item.Quantity,
                 unitprice = item.UnitPrice,
-                sellerid = prod.userid,
-                AdminCommission = adminCommission,      // ← MỚI
-                FarmerRevenue = farmerRevenue           // ← MỚI
+                sellerid = prod?.userid ?? 0,
+                AdminCommission = adminCommission,
+                FarmerRevenue = farmerRevenue
             });
         }
 
@@ -272,29 +284,67 @@ public class OrderController : Controller
                 TempData["Error"] = "Phương thức MoMo chưa được hỗ trợ.";
                 return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
 
+            // [OrderController.cs] - Bên trong Action CreateOrder
             case "COD":
             default:
-                // -> COD: Tạo bản ghi Payment là "Pending" (Chưa trả tiền) nhưng đơn hàng thành công
+                // 1. Tạo Payment Pending
                 var payment = new Payment
                 {
                     OrderId = order.orderid,
                     PaymentMethod = "COD",
                     Amount = order.FinalAmount,
-                    Status = "Pending", // Chưa thanh toán
+                    Status = "Pending",
                     CreateDate = GetVietnamTime()
                 };
                 _db.Payments.Add(payment);
                 await _db.SaveChangesAsync();
 
-                // Gửi email xác nhận đơn hàng (COD gửi luôn vì không cần đợi thanh toán)
+                int orderIdForMail = order.orderid;
+
+                // 3. Gửi Email chạy ngầm (Background Task)
                 _ = Task.Run(async () =>
                 {
-                    try
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        // Gọi EmailService gửi mail cho khách và Farmer ở đây
-                        // await _emailService.SendOrderConfirmationEmailAsync(order, ...);
+                        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+
+                        try
+                        {
+                            // Query lại dữ liệu từ DB để đảm bảo chính xác và kết nối còn sống
+                            var orderInScope = await context.orders
+                                .AsNoTracking() // Quan trọng: Đọc nhanh, không chiếm dụng bộ nhớ theo dõi
+                                .Include(o => o.customer)
+                                .Include(o => o.orderdetails).ThenInclude(od => od.product)
+                                .FirstOrDefaultAsync(o => o.orderid == orderIdForMail);
+
+                            if (orderInScope != null)
+                            {
+                                // A. Gửi cho Khách
+                                if (orderInScope.customer != null && !string.IsNullOrEmpty(orderInScope.customer.email))
+                                {
+                                    await emailService.SendOrderConfirmationEmailAsync(orderInScope, orderInScope.customer.email);
+                                }
+
+                                // B. Gửi cho Farmer (Nhóm theo người bán)
+                                var farmerGroups = orderInScope.orderdetails.GroupBy(od => od.sellerid);
+                                foreach (var group in farmerGroups)
+                                {
+                                    var farmerId = group.Key;
+                                    var farmer = await context.users.FindAsync(farmerId);
+
+                                    if (farmer != null && !string.IsNullOrEmpty(farmer.email))
+                                    {
+                                        await emailService.SendOrderNotificationToFarmerAsync(orderInScope, farmer.email, group.ToList());
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Lỗi gửi email background cho đơn hàng COD #{orderIdForMail}");
+                        }
                     }
-                    catch { }
                 });
 
                 TempData["Success"] = "Đặt hàng thành công (Thanh toán khi nhận hàng)!";

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Security.Claims;
+
 
 namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
 {
@@ -18,15 +20,12 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Trang dashboard ví của Farmer
-        /// GET: /Farmer/Wallet/Index
-        /// </summary>
+
         public async Task<IActionResult> Index()
         {
             try
             {
-                var farmerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var farmerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
                 // Lấy số dư khả dụng
                 var balance = await _walletService.GetAvailableBalance(farmerId);
@@ -47,16 +46,12 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             }
         }
 
-        /// <summary>
-        /// Trang yêu cầu rút tiền
-        /// GET: /Farmer/Wallet/RequestPayout
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> RequestPayout()
         {
             try
             {
-                var farmerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var farmerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
                 var balance = await _walletService.GetAvailableBalance(farmerId);
 
                 ViewBag.Balance = balance;
@@ -71,17 +66,13 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             }
         }
 
-        /// <summary>
-        /// Xử lý yêu cầu rút tiền
-        /// POST: /Farmer/Wallet/RequestPayout
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RequestPayout(decimal amount, string bankName, string accountNumber, string accountName)
         {
             try
             {
-                var farmerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var farmerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
                 // Validate số tiền tối thiểu
                 if (amount < 100000)
@@ -130,13 +121,11 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             }
         }
 
-        /// Lịch sử yêu cầu rút tiền
-        /// GET: /Farmer/Wallet/PayoutHistory
         public async Task<IActionResult> PayoutHistory()
         {
             try
             {
-                var farmerId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                var farmerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
                 var payoutRequests = await _walletService.GetPayoutRequestsByFarmer(farmerId);
 

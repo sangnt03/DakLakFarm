@@ -1,6 +1,7 @@
 ﻿using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
+using AgriEcommerces_MVC.Service.EmailService;
 using AgriEcommerces_MVC.Service.VnPayService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,22 +17,22 @@ namespace AgriEcommerces_MVC.Controllers
         private readonly VNPayService _vnPayService;
         private readonly ILogger<PaymentController> _logger;
         private readonly IConfiguration _configuration;
-
+        private readonly IEmailService _emailService;
         public PaymentController(
             ApplicationDbContext context,
             VNPayService vnPayService,
             ILogger<PaymentController> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEmailService emailService)
+
         {
             _context = context;
             _vnPayService = vnPayService;
             _logger = logger;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
-        /// <summary>
-        /// Bước 1: Tạo đơn hàng và chuyển sang thanh toán VNPay
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> CreatePayment(int orderId)
         {
@@ -152,10 +153,6 @@ namespace AgriEcommerces_MVC.Controllers
 
                 // 2. Lấy HashSecret từ cấu hình (BẮT BUỘC ĐỂ CHECK CHỮ KÝ)
                 string vnp_HashSecret = _configuration["VNPay:HashSecret"];
-
-                // -------------------------------------------------------------
-                // 🚨 BƯỚC QUAN TRỌNG NHẤT: KIỂM TRA CHỮ KÝ BẢO MẬT
-                // -------------------------------------------------------------
                 bool checkSignature = _vnPayService.ValidateSignature(queryParams, vnp_SecureHash, vnp_HashSecret);
 
                 if (!checkSignature)
@@ -165,9 +162,6 @@ namespace AgriEcommerces_MVC.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                // -------------------------------------------------------------
-                // NẾU CHỮ KÝ ĐÚNG -> XỬ LÝ KẾT QUẢ
-                // -------------------------------------------------------------
                 int orderId = int.Parse(vnp_TxnRef);
 
                 // Lấy thông tin Order và Payment
@@ -178,22 +172,17 @@ namespace AgriEcommerces_MVC.Controllers
 
                 if (vnp_ResponseCode == "00")
                 {
-                    // --- THANH TOÁN THÀNH CÔNG ---
-
-                    // 1. Cập nhật trạng thái đơn hàng
                     if (order.status != "Paid")
                     {
                         order.status = "Paid";
                     }
 
-                    // 2. Cập nhật bảng Payment (Quan trọng để tracking dòng tiền)
                     if (payment != null)
                     {
                         payment.Status = "Completed";
                     }
-
                     await _context.SaveChangesAsync();
-
+                    
                     _logger.LogInformation($"Order {orderId} payment successful via VNPay.");
                     TempData["Success"] = "Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.";
 
@@ -201,11 +190,8 @@ namespace AgriEcommerces_MVC.Controllers
                 }
                 else
                 {
-                    // --- THANH TOÁN THẤT BẠI (Do hủy, không đủ tiền, lỗi thẻ...) ---
-
                     var errorMessage = _vnPayService.GetResponseDescription(vnp_ResponseCode);
 
-                    // Cập nhật trạng thái Payment thành Failed
                     if (payment != null)
                     {
                         payment.Status = "Failed";
@@ -226,9 +212,6 @@ namespace AgriEcommerces_MVC.Controllers
             }
         }
 
-        /// <summary>
-        /// Hiển thị trang thanh toán thất bại
-        /// </summary>
         public async Task<IActionResult> PaymentFailed(int orderId, string error)
         {
             var order = await _context.orders.FindAsync(orderId);

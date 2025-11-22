@@ -4,23 +4,17 @@
 }
 
 <style>
-    /*
-          Chúng ta sẽ dùng font chữ mặc định của Bootstrap (system-ui)
-          nhưng bạn có thể thêm Google Font nếu muốn
-        */
-
-    /* Card và Bảng */
+    /* Giữ nguyên CSS cũ của bạn */
     .card.order-table-card {
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        overflow: hidden; /* Giúp bo góc cho table bên trong */
+        overflow: hidden;
     }
 
-    /* Tiêu đề bảng */
     .table thead th {
-        background-color: #f4f8f4; /* Màu xanh lá rất nhạt */
-        color: #1a531b; /* Màu xanh lá đậm cho chữ */
+        background-color: #f4f8f4;
+        color: #1a531b;
         border-bottom-width: 2px;
         border-color: #d4e0d4;
         font-weight: 600;
@@ -29,22 +23,19 @@
         letter-spacing: 0.5px;
     }
 
-    /* Căn chỉnh nội dung trong bảng */
     .table {
-        margin-bottom: 0; /* Bỏ margin-bottom trong card */
+        margin-bottom: 0;
     }
 
         .table td, .table th {
             vertical-align: middle;
-            padding: 1rem; /* Padding đồng nhất */
+            padding: 1rem;
         }
 
-    /* Tinh chỉnh hover */
     .table-hover > tbody > tr:hover {
         background-color: #fafffa;
     }
 
-    /* Tinh chỉnh các chi tiết */
     .customer-name {
         font-weight: 600;
         color: #212529;
@@ -57,34 +48,21 @@
 
     .product-name-list span {
         display: block;
-        padding: 2px 0; /* Khoảng cách nhỏ giữa các sản phẩm */
-    }
-
-    .price-list span {
-        display: block;
         padding: 2px 0;
-        font-size: 0.9em;
     }
 
     .shipping-address {
         font-size: 0.85em;
         color: #666;
         line-height: 1.5;
-        max-width: 250px; /* Tránh địa chỉ quá dài */
+        max-width: 250px;
     }
 
     .order-code {
         font-weight: 600;
-        color: #0d6efd; /* Giữ màu Primary cho mã đơn */
+        color: #0d6efd;
     }
 
-    .total-price {
-        font-weight: 700;
-        font-size: 1.05em;
-        color: #198754; /* Màu xanh lá success */
-    }
-
-    /* Căn chỉnh lại kích thước Badge */
     .badge.status-badge {
         font-size: 0.75em;
         font-weight: 600;
@@ -93,49 +71,47 @@
 </style>
 
 <div class="container my-4">
-
     <h2 class="mb-4 pb-2 border-bottom">
         <i class="fas fa-tasks text-success"></i> @ViewData["Title"]
     </h2>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show">
             @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show">
             @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
     <div class="card shadow-sm order-table-card">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-
                 <thead class="table-light">
                     <tr>
-                        <th class="text-center" style="width: 200px;">Mã ĐH</th>
-                        <th>Tên sản phẩm</th>
+                        <th class="text-center" style="width: 150px;">Mã ĐH</th>
+                        <th>Sản phẩm</th>
                         <th style="width: 180px;">Khách hàng</th>
                         <th style="min-width: 200px;">Địa chỉ</th>
                         <th class="text-center" style="width: 130px;">Trạng thái</th>
-                        <th class="text-center" style="width: 130px;">Hành động</th>
+                        <th class="text-center" style="width: 150px;">Hành động</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @{
+                        // Group đơn hàng để hiển thị gọn gàng
                         var groupedOrders = Model.GroupBy(d => d.orderid);
 
                         if (!groupedOrders.Any())
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted fst-italic py-5">
+                                <td colspan="6" class="text-center text-muted fst-italic py-5">
                                     <i class="fas fa-inbox fa-2x mb-2"></i>
                                     <p class="mb-0">Không có đơn hàng nào.</p>
                                 </td>
@@ -145,16 +121,26 @@
                         foreach (var group in groupedOrders)
                         {
                             var firstDetail = group.First();
+                            var status = firstDetail.order.status; // Lấy trạng thái hiện tại
+
                             <tr>
                                 <td class="text-center">
                                     <strong class="order-code">@firstDetail.order.ordercode</strong>
+                                    <br />
+                                    <small class="text-muted">@firstDetail.order.orderdate?.ToString("dd/MM/yy HH:mm")</small>
                                 </td>
 
                                 <td class="product-name-list">
                                     @foreach (var detail in group)
                                     {
-                                        <span>@detail.product.productname</span>
+                                        <span>
+                                            <strong>@detail.quantity</strong> x @detail.product.productname
+                                            <span class="text-muted small">(@detail.unitprice.ToString("N0")đ)</span>
+                                        </span>
                                     }
+                                    <div class="mt-1 text-success fw-bold border-top pt-1">
+                                        Tổng: @firstDetail.order.FinalAmount.ToString("N0") VNĐ
+                                    </div>
                                 </td>
 
                                 <td>
@@ -170,51 +156,87 @@
 
                                 <td class="text-center">
                                     @{
-                                        string statusClass = "bg-secondary";
-                                        string textClass = "text-white";
-                                        if (firstDetail.order.status == "Chờ duyệt") { statusClass = "bg-warning"; textClass = "text-dark"; }
-                                        else if (firstDetail.order.status == "Đã duyệt") { statusClass = "bg-info"; textClass = "text-dark"; }
-                                        else if (firstDetail.order.status == "Đang vận chuyển") { statusClass = "bg-primary"; }
-                                        else if (firstDetail.order.status == "Đã nhận hàng") { statusClass = "bg-success"; }
-                                        else if (firstDetail.order.status == "Đã hủy") { statusClass = "bg-danger"; }
+                                        string badgeClass = "bg-secondary";
+                                        string displayText = status;
+
+                                        // Xử lý hiển thị Badge đa ngôn ngữ
+                                        if (status == "Chờ duyệt" || status == "Pending")
+                                        {
+                                            badgeClass = "bg-warning text-dark";
+                                            displayText = "Chờ duyệt";
+                                        }
+                                        else if (status == "Đã duyệt" || status == "Approved")
+                                        {
+                                            badgeClass = "bg-info text-dark";
+                                            displayText = "Đã duyệt";
+                                        }
+                                        else if (status == "Paid")
+                                        {
+                                            badgeClass = "bg-info text-dark";
+                                            displayText = "Đã thanh toán";
+                                        }
+                                        else if (status == "Đang vận chuyển" || status == "Shipped")
+                                        {
+                                            badgeClass = "bg-primary";
+                                            displayText = "Đang giao";
+                                        }
+                                        else if (status == "Đã nhận hàng" || status == "Completed")
+                                        {
+                                            badgeClass = "bg-success";
+                                            displayText = "Hoàn tất";
+                                        }
+                                        else if (status == "Đã hủy" || status == "Cancelled")
+                                        {
+                                            badgeClass = "bg-danger";
+                                            displayText = "Đã hủy";
+                                        }
                                     }
-                                    <span class="badge status-badge @statusClass @textClass">
-                                        @firstDetail.order.status
+                                    <span class="badge status-badge @badgeClass">
+                                        @displayText
                                     </span>
                                 </td>
 
                                 <td class="text-center">
-                                    @if (firstDetail.order.status == "Chờ duyệt")
+                                    @* LOGIC HIỂN THỊ NÚT DUYỆT *@
+
+                                    @* Trường hợp 1: Cần Duyệt (Pending / Chờ duyệt) *@
+                                    @if (status == "Chờ duyệt" || status == "Pending")
                                     {
-                                        <form asp-area="Farmer"
-                                              asp-controller="OrdersManagement"
-                                              asp-action="Approve"
-                                              method="post"
+                                        <form asp-area="Farmer" asp-controller="OrdersManagement" asp-action="Approve" method="post"
                                               asp-route-id="@firstDetail.orderdetailid"
-                                              onsubmit="return confirm('Bạn có chắc chắn muốn duyệt đơn hàng này?');">
+                                              onsubmit="return confirm('Xác nhận duyệt đơn hàng COD này?');">
                                             @Html.AntiForgeryToken()
-                                            <button typeG="submit" class="btn btn-success btn-sm w-100">
-                                                <i class="fas fa-check fa-fw"></i> Duyệt
+                                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                                <i class="fas fa-check fa-fw"></i> Duyệt đơn
                                             </button>
                                         </form>
                                     }
-                                    else if (firstDetail.order.status == "Đã duyệt")
+                                    @* Trường hợp 2: Cần Giao Hàng (Đã duyệt / Approved / Paid) *@
+                                    else if (status == "Đã duyệt" || status == "Approved" || status == "Paid")
                                     {
-                                        <form asp-area="Farmer"
-                                              asp-controller="OrdersManagement"
-                                              asp-action="Approve"
-                                              method="post"
+                                        <form asp-area="Farmer" asp-controller="OrdersManagement" asp-action="Approve" method="post"
                                               asp-route-id="@firstDetail.orderdetailid"
-                                              onsubmit="return confirm('Bạn có chắc chắn muốn chuyển đơn hàng này sang trạng thái Đang vận chuyển?');">
+                                              onsubmit="return confirm('Xác nhận bắt đầu giao hàng?');">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-primary btn-sm w-100">
                                                 <i class="fas fa-truck fa-fw"></i> Vận chuyển
                                             </button>
                                         </form>
                                     }
-                                    else
+                                    @* Trường hợp 3: Đang giao *@
+                                    else if (status == "Đang vận chuyển" || status == "Shipped")
                                     {
-                                        <span class="text-muted small fst-italic">Đã xử lý</span>
+                                        <span class="text-primary small fw-bold"><i class="fas fa-shipping-fast"></i> Đang giao</span>
+                                    }
+                                    @* Trường hợp 4: Hoàn tất *@
+                                    else if (status == "Đã nhận hàng" || status == "Completed")
+                                    {
+                                        <span class="text-success small fw-bold"><i class="fas fa-check-circle"></i> Hoàn thành</span>
+                                    }
+                                    @* Trường hợp 5: Đã hủy *@
+                                    else if (status == "Đã hủy" || status == "Cancelled")
+                                    {
+                                        <span class="text-muted small"><i class="fas fa-ban"></i> Đã hủy</span>
                                     }
                                 </td>
                             </tr>

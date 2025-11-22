@@ -32,10 +32,6 @@ namespace AgriEcommerces_MVC.Controllers.ApiController
             _logger = logger;
         }
 
-        /// <summary>
-        /// IPN Webhook từ VNPay (Server-to-Server)
-        /// QUAN TRỌNG: Đây là nơi xác nhận thanh toán thực sự!
-        /// </summary>
         [HttpGet("VNPayIPN")]
         public async Task<IActionResult> VNPayIPN()
         {
@@ -121,23 +117,8 @@ namespace AgriEcommerces_MVC.Controllers.ApiController
                             }
                         }
 
-                        // Ghi nhận doanh thu Farmer
-                        foreach (var detail in order.orderdetails)
-                        {
-                            _context.WalletTransaction.Add(new WalletTransaction
-                            {
-                                FarmerId = detail.sellerid,
-                                Amount = detail.FarmerRevenue,
-                                Type = "OrderRevenue",
-                                ReferenceId = detail.orderdetailid,
-                                Description = $"Doanh thu từ đơn hàng {order.ordercode}",
-                                CreateDate = DateTime.SpecifyKind(DateTimeHelper.GetVietnamTime(), DateTimeKind.Unspecified)
-                            });
-                        }
-
                         await _context.SaveChangesAsync();
                         await transaction.CommitAsync();
-
                         _logger.LogInformation($"Order {orderId} paid successfully. Wallet & promotion updated.");
 
                         // GỬI EMAIL THẬT – AN TOÀN 100%, KHÔNG CÒN LỖI DISPOSED
