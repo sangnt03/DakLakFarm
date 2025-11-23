@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.HttpOverrides; 
 
 // Bắt buộc có dòng này để PostgreSQL chấp nhận kiểu DateTime cũ (tránh lỗi crash Service)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -212,6 +213,11 @@ builder.Services.AddLogging(logging =>
 });
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 // 6) Chỉ bật Developer Exception Page khi đang dev
 if (app.Environment.IsDevelopment())
