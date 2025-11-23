@@ -37,7 +37,6 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
         {
             var farmerId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
-            // Lấy detail để xác thực Farmer sở hữu đơn này
             var detail = await _db.orderdetails
                                   .AsNoTracking()
                                   .SingleOrDefaultAsync(d => d.orderdetailid == id);
@@ -51,29 +50,21 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             if (order == null)
                 return NotFound();
 
-            // --- LOGIC XỬ LÝ TRẠNG THÁI ĐA NGÔN NGỮ ---
-
-            // Nhóm 1: Cần duyệt (COD mới đặt hoặc Chờ duyệt)
-            string[] pendingStatuses = { "Chờ duyệt", "Pending" };
-
-            // Nhóm 2: Đã duyệt hoặc Đã thanh toán (Sẵn sàng giao hàng)
-            string[] readyToShipStatuses = { "Đã duyệt", "Approved", "Paid" };
-
-            if (pendingStatuses.Contains(order.status))
+            if (order.status == "Pending" || order.status == "Paid")
             {
-                // Chuyển từ Chờ duyệt -> Đã duyệt
-                order.status = "Đã duyệt";
-                TempData["Success"] = "Đơn hàng đã được duyệt thành công! Vui lòng chuẩn bị hàng.";
+                order.status = "Processing";
+                TempData["Success"] = "Đã xác nhận đơn hàng (Processing). Vui lòng chuẩn bị hàng.";
             }
-            else if (readyToShipStatuses.Contains(order.status))
+            // 2. Từ Processing -> Shipped
+            // -> Chuyển sang Shipped (Đã giao cho đơn vị vận chuyển)
+            else if (order.status == "Processing")
             {
-                // Chuyển từ Đã duyệt/Paid -> Đang vận chuyển
-                order.status = "Đang vận chuyển"; // Hoặc "Shipped"
-                TempData["Success"] = "Đơn hàng đã chuyển sang trạng thái đang vận chuyển.";
+                order.status = "Shipped";
+                TempData["Success"] = "Đơn hàng đã được giao cho vận chuyển (Shipped).";
             }
             else
             {
-                TempData["Error"] = $"Không thể thay đổi trạng thái. Trạng thái hiện tại: {order.status}";
+                TempData["Error"] = $"Không thể thay đổi trạng thái từ '{order.status}'.";
                 return RedirectToAction("Index");
             }
 

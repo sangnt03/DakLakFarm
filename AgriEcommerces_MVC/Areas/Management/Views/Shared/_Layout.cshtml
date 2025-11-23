@@ -371,12 +371,8 @@
 
         <ul class="sidebar-menu">
             <li class="sidebar-menu-item">
-                <a class="sidebar-menu-link"
-                   asp-area="Management"
-                   asp-controller="ManagerDashboard"
-                   asp-action="Index">
-                    <i class="fas fa-home sidebar-menu-icon"></i>
-                    <span>Dashboard</span>
+                <a class="sidebar-menu-link" asp-area="Management" asp-controller="Payout" asp-action="Report">
+                    <i class="fas fa-chart-line sidebar-menu-icon"></i> Dashboard
                 </a>
             </li>
             <li class="sidebar-menu-item">
@@ -430,11 +426,7 @@
                     <span class="badge bg-warning" id="pendingPayoutCount"></span>
                 </a>
             </li>
-            <li class="sidebar-menu-item">
-                <a class="sidebar-menu-link" asp-area="Management" asp-controller="Payout" asp-action="Report">
-                    <i class="fas fa-chart-line sidebar-menu-icon"></i> Báo cáo Tài chính
-                </a>
-            </li>
+            
         </ul>
     </aside>
 

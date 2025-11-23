@@ -93,27 +93,21 @@ namespace AgriEcommerces_MVC.Controllers
         }
 
         [HttpGet]
-        [Authorize] 
+        [Authorize]
         public async Task<IActionResult> Profile()
         {
-            // 1) Lấy userId từ Claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Challenge();
+            if (userIdClaim == null) return Challenge();
 
             int userId = int.Parse(userIdClaim.Value);
 
-            // 2) Lấy thông tin user từ DB
-            var user = await _db.users
-                                .AsNoTracking()
-                                .FirstOrDefaultAsync(u => u.userid == userId);
-            if (user == null)
-                return NotFound();
+            var user = await _db.users.AsNoTracking().FirstOrDefaultAsync(u => u.userid == userId);
+            if (user == null) return NotFound();
 
             return View(user);
         }
 
-        [Authorize]             
+        [Authorize]
         public async Task<IActionResult> MyOrders()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -131,7 +125,6 @@ namespace AgriEcommerces_MVC.Controllers
             return View(orders);
         }
 
-        // 2) Chi tiết một đơn
         [Authorize]
         public async Task<IActionResult> OrderDetails(int id)
         {
@@ -150,7 +143,6 @@ namespace AgriEcommerces_MVC.Controllers
             return View(order);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmReceived(int orderid)
@@ -166,7 +158,10 @@ namespace AgriEcommerces_MVC.Controllers
                 .FirstOrDefaultAsync(o => o.orderid == orderid && o.customerid == userId);
 
             if (order == null) return NotFound();
-            if (order.status != "Đang vận chuyển" && order.status != "Đã duyệt" && order.status != "Pending")
+
+            // --- CẬP NHẬT LOGIC TRẠNG THÁI SANG TIẾNG ANH ---
+            // Cho phép xác nhận khi đơn là "Shipped", "Processing", hoặc "Pending" (nếu cấu hình lỏng)
+            if (order.status != "Shipped" && order.status != "Processing" && order.status != "Pending")
             {
                 TempData["Error"] = "Trạng thái đơn hàng không hợp lệ để xác nhận.";
                 return RedirectToAction("MyOrders");
@@ -175,7 +170,9 @@ namespace AgriEcommerces_MVC.Controllers
             using var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
-                order.status = "Đã nhận hàng";
+                // Chuyển trạng thái thành "Delivered" (Đã nhận hàng)
+                order.status = "Delivered";
+
                 var codPayment = order.Payments?.FirstOrDefault(p => p.PaymentMethod == "COD" && p.Status == "Pending");
                 if (codPayment != null)
                 {
@@ -217,75 +214,55 @@ namespace AgriEcommerces_MVC.Controllers
             return RedirectToAction("MyOrders");
         }
 
-    [HttpGet]
+        [HttpGet]
         [Authorize]
         public async Task<IActionResult> EditProfile()
         {
-            // 1) Lấy userId từ claim
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Challenge(); // redirect đến login
+            if (userIdClaim == null) return Challenge();
 
             int userId = int.Parse(userIdClaim.Value);
 
-            // 2) Lấy thông tin user từ DB
             var user = await _db.users
                                 .AsNoTracking()
                                 .FirstOrDefaultAsync(u => u.userid == userId);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             return View(user);
         }
 
-        // POST: /Home/EditProfile
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProfile(int userid, string? fullname, string? phonenumber)
         {
-            // 1) Xác định user hiện tại
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                return Challenge();
+            if (userIdClaim == null) return Challenge();
 
             int currentUserId = int.Parse(userIdClaim.Value);
 
-            // 2) Ngăn không cho sửa user khác
-            if (currentUserId != userid)
-                return Forbid();
+            if (currentUserId != userid) return Forbid();
 
-            // 3) Lấy user từ DB
             var userInDb = await _db.users.FirstOrDefaultAsync(u => u.userid == userid);
-            if (userInDb == null)
-                return NotFound();
+            if (userInDb == null) return NotFound();
 
-            // 4) Cập nhật các trường được phép sửa
-            userInDb.fullname = string.IsNullOrWhiteSpace(fullname)
-                                ? null
-                                : fullname.Trim();
-            userInDb.phonenumber = string.IsNullOrWhiteSpace(phonenumber)
-                                   ? null
-                                   : phonenumber.Trim();
+            userInDb.fullname = string.IsNullOrWhiteSpace(fullname) ? null : fullname.Trim();
+            userInDb.phonenumber = string.IsNullOrWhiteSpace(phonenumber) ? null : phonenumber.Trim();
 
-            // 5) Validate dữ liệu
             if (string.IsNullOrWhiteSpace(userInDb.fullname))
             {
                 ModelState.AddModelError(nameof(fullname), "Họ và tên không được để trống.");
             }
-            if (!string.IsNullOrEmpty(userInDb.phonenumber)
-                && !userInDb.phonenumber.All(char.IsDigit))
+            if (!string.IsNullOrEmpty(userInDb.phonenumber) && !userInDb.phonenumber.All(char.IsDigit))
             {
                 ModelState.AddModelError(nameof(phonenumber), "Số điện thoại chỉ được chứa chữ số.");
             }
 
             if (!ModelState.IsValid)
             {
-                // Có lỗi validate, hiển thị lại view với các lỗi
                 return View(userInDb);
             }
 
-            // 6) Lưu vào DB
             try
             {
                 _db.users.Update(userInDb);
@@ -298,18 +275,14 @@ namespace AgriEcommerces_MVC.Controllers
                 TempData["ErrorEdit"] = "Đã xảy ra lỗi khi lưu thông tin. Vui lòng thử lại sau.";
             }
 
-            // 7) Redirect về GET EditProfile để hiển thị lại với message
             return RedirectToAction(nameof(EditProfile));
         }
 
-        // GET: /Home/ChangePassword
         [HttpGet]
         public IActionResult ChangePassword()
         {
             return View();
         }
-
-        
 
         public IActionResult GioiThieu()
         {

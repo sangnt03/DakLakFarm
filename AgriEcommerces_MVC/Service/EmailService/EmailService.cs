@@ -27,7 +27,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress(order.customername, customerEmail));
-            message.Subject = $"Xác nhận đơn hàng #{order.ordercode} - DakLakFarm";
+            message.Subject = $"Thông tin đơn hàng #{order.ordercode} - DakLakFarm";
 
             var bodyBuilder = new BodyBuilder
             {

@@ -1,232 +1,290 @@
 ﻿@model List<AgriEcommerces_MVC.Models.SellerRequest>
 @{
-    ViewData["Title"] = "Duyệt Seller Requests";
+    ViewData["Title"] = "Duyệt đăng ký bán hàng";
 }
 
 <style>
-    .coastal-simple-container {
-        background: linear-gradient(135deg, #f0f8ff 0%, #e1f5fe 100%);
-        min-height: 100vh;
-        padding: 20px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* --- THEME COLOR: ORANGE / AMBER --- */
+    :root {
+        --theme-primary: #ff9800; /* Cam chủ đạo */
+        --theme-primary-dark: #f57c00; /* Cam đậm */
+        --theme-light: #fff3e0; /* Cam rất nhạt (nền) */
+        --theme-white: #ffffff;
+        --theme-text: #424242;
+        --theme-gray: #f5f5f5;
     }
 
-    .coastal-simple-header {
-        background: rgba(255, 255, 255, 0.9);
-        padding: 20px;
+    .theme-container {
+        background-color: var(--theme-gray);
+        min-height: 85vh;
+        padding: 30px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .theme-header {
+        background: var(--theme-white);
+        padding: 25px;
         border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(3, 169, 244, 0.1);
-        border-left: 4px solid #03a9f4;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border-left: 5px solid var(--theme-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .coastal-simple-title {
-        color: #0277bd;
-        font-size: 24px;
-        font-weight: 600;
+    .theme-title {
+        color: var(--theme-text);
+        font-size: 22px;
+        font-weight: 700;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    .coastal-simple-table-wrapper {
-        background: rgba(255, 255, 255, 0.95);
+    .theme-table-wrapper {
+        background: var(--theme-white);
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(3, 169, 244, 0.1);
-        overflow-x: auto;
+        padding: 0; /* Padding 0 để header table tràn viền đẹp hơn */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        overflow: hidden; /* Bo tròn góc table */
     }
 
-    .coastal-simple-table {
+    .theme-table {
         width: 100%;
         border-collapse: collapse;
         margin: 0;
     }
 
-    .coastal-simple-table thead th {
-        background: #03a9f4;
-        color: white;
-        padding: 12px 15px;
-        text-align: left;
-        font-weight: 600;
-        border: none;
-        font-size: 14px;
-    }
+        .theme-table thead th {
+            background: var(--theme-primary);
+            color: white;
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-    .coastal-simple-table thead th:first-child {
-        border-radius: 8px 0 0 0;
-    }
+        .theme-table tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: all 0.2s ease;
+        }
 
-    .coastal-simple-table thead th:last-child {
-        border-radius: 0 8px 0 0;
-    }
+            .theme-table tbody tr:last-child {
+                border-bottom: none;
+            }
 
-    .coastal-simple-table tbody tr {
-        border-bottom: 1px solid #e3f2fd;
-        transition: background-color 0.3s ease;
-    }
+            .theme-table tbody tr:hover {
+                background-color: var(--theme-light);
+            }
 
-    .coastal-simple-table tbody tr:hover {
-        background-color: #f0f8ff;
-    }
+        .theme-table tbody td {
+            padding: 16px 20px;
+            color: #555;
+            font-size: 14px;
+            vertical-align: middle;
+        }
 
-    .coastal-simple-table tbody tr:nth-child(even) {
-        background-color: rgba(227, 242, 253, 0.3);
-    }
-
-    .coastal-simple-table tbody tr:nth-child(even):hover {
-        background-color: #e3f2fd;
-    }
-
-    .coastal-simple-table tbody td {
-        padding: 12px 15px;
-        color: #01579b;
-        font-size: 14px;
-        vertical-align: middle;
-    }
-
-    .coastal-user-id {
-        background: #e3f2fd;
-        color: #0277bd;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 12px;
-        display: inline-block;
-    }
-
-    .coastal-email {
-        color: #0288d1;
-        font-weight: 500;
-    }
-
-    .coastal-date {
+    /* User ID Badge */
+    .badge-user-id {
+        background: #eceff1;
         color: #546e7a;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 12px;
+        border: 1px solid #cfd8dc;
+    }
+
+    .text-email {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .text-date {
+        color: #757575;
         font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
 
-    .coastal-btn-approve {
-        background: #4caf50;
-        color: white;
+    /* Buttons */
+    .btn-action {
         border: none;
-        padding: 6px 12px;
+        padding: 8px 16px;
         border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        margin-right: 5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .coastal-btn-approve:hover {
-        background: #45a049;
-        transform: translateY(-1px);
-    }
-
-    .coastal-btn-reject {
-        background: #f44336;
+    .btn-approve {
+        background: #4caf50; /* Giữ màu xanh lá cho nút duyệt vì nó mang ý nghĩa tích cực */
         color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
     }
 
-    .coastal-btn-reject:hover {
-        background: #da190b;
-        transform: translateY(-1px);
+        .btn-approve:hover {
+            background: #43a047;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+    .btn-reject {
+        background: white;
+        color: #f44336;
+        border: 1px solid #f44336;
     }
 
-    .coastal-form-inline {
+        .btn-reject:hover {
+            background: #ffebee;
+            color: #d32f2f;
+            border-color: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+    .form-inline {
         display: inline-block;
-        margin-right: 5px;
+        margin-right: 8px;
     }
 
-    .coastal-empty-state {
+    .empty-state {
         text-align: center;
-        padding: 40px;
-        color: #0288d1;
-        font-size: 16px;
-        opacity: 0.7;
+        padding: 60px 20px;
+        color: #9e9e9e;
     }
 
+    .empty-icon {
+        font-size: 48px;
+        color: #e0e0e0;
+        margin-bottom: 15px;
+    }
+
+    /* Responsive */
     @@media (max-width: 768px) {
-        .coastal-simple-container {
-            padding: 10px;
-        }
-
-        .coastal-simple-title {
-            font-size: 20px;
-        }
-
-        .coastal-simple-table-wrapper {
+        .theme-container {
             padding: 15px;
         }
 
-        .coastal-simple-table thead th,
-        .coastal-simple-table tbody td {
-            padding: 8px 10px;
-            font-size: 12px;
+        .theme-header {
+            padding: 15px;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .coastal-btn-approve,
-        .coastal-btn-reject {
-            padding: 4px 8px;
-            font-size: 11px;
+        .theme-table thead {
+            display: none;
+        }
+
+        .theme-table tbody td {
+            display: block;
+            padding: 10px 15px;
+            border-bottom: none;
+        }
+
+        .theme-table tbody tr {
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: block;
+            padding: 10px;
+            background: white;
+        }
+
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .form-inline {
+            display: block;
+            margin: 0 0 5px 0;
         }
     }
 </style>
 
-<div class="coastal-simple-container">
-    <div class="coastal-simple-header">
-        <h3 class="coastal-simple-title">@ViewData["Title"]</h3>
+<div class="theme-container">
+    <div class="theme-header">
+        <h3 class="theme-title">
+            <i class="bi bi-person-check-fill text-warning"></i>
+            @ViewData["Title"]
+        </h3>
+        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+            @(Model?.Count() ?? 0) yêu cầu chờ xử lý
+        </span>
     </div>
 
-    <div class="coastal-simple-table-wrapper">
+    <div class="theme-table-wrapper">
         @if (Model != null && Model.Any())
         {
-            <table class="coastal-simple-table">
-                <thead>
-                    <tr>
-                        <th>UserId</th>
-                        <th>Email/Username</th>
-                        <th>Ngày yêu cầu</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var r in Model)
-                    {
+            <div class="table-responsive">
+                <table class="theme-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <span class="coastal-user-id">@r.UserId</span>
-                            </td>
-                            <td>
-                                <span class="coastal-email">@r.User.email</span>
-                            </td>
-                            <td>
-                                <span class="coastal-date">@r.RequestDate.ToString("dd/MM/yyyy HH:mm")</span>
-                            </td>
-                            <td>
-                                <form asp-action="Approve" method="post" class="coastal-form-inline">
-                                    <input type="hidden" name="requestId" value="@r.RequestId" />
-                                    <button class="coastal-btn-approve">Duyệt</button>
-                                </form>
-                                <form asp-action="Reject" method="post" class="coastal-form-inline">
-                                    <input type="hidden" name="requestId" value="@r.RequestId" />
-                                    <button class="coastal-btn-reject">Từ chối</button>
-                                </form>
-                            </td>
+                            <th style="width: 100px;">ID</th>
+                            <th>Thông tin Người dùng</th>
+                            <th>Ngày gửi yêu cầu</th>
+                            <th style="width: 250px; text-align: right;">Hành động</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge-user-id">#@r.UserId</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="text-email">@r.User.email</span>
+                                        @if (!string.IsNullOrEmpty(r.User.fullname))
+                                        {
+                                            <small class="text-muted">@r.User.fullname</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-date text-center">
+                                        <i class="bi bi-calendar3"></i>
+                                        @r.RequestDate.ToString("dd/MM/yyyy")
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <form asp-action="Approve" method="post" class="form-inline" onsubmit="return confirm('Xác nhận duyệt người dùng này trở thành Farmer?');">
+                                        <input type="hidden" name="requestId" value="@r.RequestId" />
+                                        <button class="btn-action btn-approve">
+                                            <i class="bi bi-check-lg"></i> Duyệt
+                                        </button>
+                                    </form>
+
+                                    <form asp-action="Reject" method="post" class="form-inline" onsubmit="return confirm('Xác nhận từ chối yêu cầu này?');">
+                                        <input type="hidden" name="requestId" value="@r.RequestId" />
+                                        <button class="btn-action btn-reject">
+                                            <i class="bi bi-x-lg"></i> Từ chối
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
         else
         {
-            <div class="coastal-empty-state">
-                Không có yêu cầu seller nào cần duyệt
+            <div class="empty-state">
+                <i class="bi bi-inbox empty-icon"></i>
+                <h5>Không có yêu cầu nào cần duyệt</h5>
+                <p class="small">Hiện tại chưa có user nào đăng ký trở thành người bán.</p>
             </div>
         }
     </div>

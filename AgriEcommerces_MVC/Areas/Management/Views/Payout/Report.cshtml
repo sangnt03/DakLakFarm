@@ -1,0 +1,271 @@
+﻿@using AgriEcommerces_MVC.Areas.Management.ViewModel 
+@{
+    ViewData["Title"] = "Báo cáo doanh thu Admin";
+
+    int currentYear = (int)ViewBag.Year;
+    int currentMonth = (int)ViewBag.Month;
+
+    // Dữ liệu tiền tệ
+    decimal totalGMV = (decimal)ViewBag.TotalGMV;             // Tổng tiền đơn hàng
+    decimal adminRevenue = (decimal)ViewBag.AdminNetRevenue;   // Tiền Admin
+    decimal farmerRevenue = (decimal)ViewBag.FarmerNetRevenue; // Tiền Farmer
+    decimal pendingPayouts = (decimal)ViewBag.PendingPayouts;  // Tiền chờ rút
+
+    var topFarmers = ViewBag.TopFarmers as IEnumerable<TopFarmerViewModel>;
+
+    // Dữ liệu biểu đồ JS
+    var farmerNames = topFarmers?.Select(f => f.FarmerName).ToArray() ?? new string[] { };
+    var farmerRevenues = topFarmers?.Select(f => f.TotalRevenue).ToArray() ?? new decimal[] { };
+}
+
+<style>
+    :root {
+        --theme-color: #ff9800;
+        --theme-dark: #f57c00;
+        --theme-gradient: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    }
+
+    .text-theme {
+        color: var(--theme-color) !important;
+    }
+
+    .bg-theme-gradient {
+        background: var(--theme-gradient);
+        color: white;
+    }
+
+   
+
+    .btn-theme {
+        background-color: var(--theme-color);
+        color: white;
+        border: none;
+    }
+
+        .btn-theme:hover {
+            background-color: var(--theme-dark);
+            color: white;
+        }
+
+    .btn-outline-theme {
+        color: var(--theme-color);
+        border: 1px solid var(--theme-color);
+        background: white;
+    }
+
+        .btn-outline-theme:hover {
+            background: var(--theme-color);
+            color: white;
+        }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <div>
+            <h2 class="fw-bold text-secondary"><i class="fas fa-chart-line text-theme me-2"></i>Báo cáo doanh thu</h2>
+            <p class="text-muted mb-0">Kỳ báo cáo: Tháng @currentMonth/@currentYear</p>
+        </div>
+
+        <form asp-action="Report" method="get" class="d-flex gap-2 align-items-center bg-white p-2 rounded shadow-sm">
+            <select name="month" class="form-select border-0 bg-light fw-bold" style="width: 120px;">
+                @for (int i = 1; i <= 12; i++)
+                {
+                    <option value="@i" selected="@(i == currentMonth)">Tháng @i</option>
+                }
+            </select>
+            <input type="number" name="year" class="form-control border-0 bg-light fw-bold" value="@currentYear" style="width: 100px;">
+            <button type="submit" class="btn btn-theme rounded-circle shadow-sm" style="width: 38px; height: 38px; padding: 0;">
+                <i class="fas fa-filter"></i>
+            </button>
+            <div class="vr mx-2"></div>
+            <a asp-action="ExportReport" asp-route-year="@currentYear" asp-route-month="@currentMonth" class="btn btn-outline-success btn-sm fw-bold">
+                <i class="fas fa-file-excel me-1"></i> Excel
+            </a>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card bg-theme-gradient shadow h-100 py-2 border-0">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-white-50 text-uppercase mb-1">
+                                <i class="fas fa-coins me-1"></i> Thực nhận (Admin)
+                            </div>
+                            <div class="h3 mb-0 fw-bold text-white">@adminRevenue.ToString("N0") đ</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wallet fa-3x text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-theme-start shadow h-100 py-2 border-0">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-theme text-uppercase mb-1">Tổng GMV (Toàn sàn)</div>
+                            <div class="h4 mb-0 fw-bold text-secondary">@totalGMV.ToString("N0") đ</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300 opacity-25 text-theme"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-theme-start shadow h-100 py-2 border-0">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-theme text-uppercase mb-1">Trả về Farmer</div>
+                            <div class="h4 mb-0 fw-bold text-secondary">@farmerRevenue.ToString("N0") đ</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-store fa-2x text-gray-300 opacity-25 text-theme"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-theme-start shadow h-100 py-2 border-0">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-theme text-uppercase mb-1">Đang chờ giải ngân</div>
+                            <div class="h4 mb-0 fw-bold text-secondary">@pendingPayouts.ToString("N0") đ</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300 opacity-25 text-theme"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card shadow mb-4 border-0">
+                <div class="card-header py-3 bg-white border-bottom-0 d-flex justify-content-between">
+                    <h6 class="m-0 fw-bold text-theme">Tỷ lệ phân chia doanh thu</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="revenueDistributionChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="me-3"><i class="fas fa-circle text-theme"></i> Admin</span>
+                        <span class="me-3"><i class="fas fa-circle text-secondary"></i> Farmer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow mb-4 border-0">
+                <div class="card-header py-3 bg-white border-bottom-0">
+                    <h6 class="m-0 fw-bold text-theme">Top 5 Farmer hiệu quả nhất</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="topFarmerChart" height="375"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // --- CẤU HÌNH MÀU SẮC ---
+        const colorTheme = '#ff9800'; // Cam (Admin)
+        const colorSecondary = '#858796'; // Xám (Farmer - tạo độ tương phản)
+
+        // 1. Biểu đồ Tròn (Pie Chart)
+        var ctxPie = document.getElementById("revenueDistributionChart");
+        var myPieChart = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ["Doanh thu Admin", "Doanh thu Farmer"],
+                datasets: [{
+                    data: [@adminRevenue, @farmerRevenue],
+                    // Admin màu Cam, Farmer màu Xám/Xanh nhạt
+                    backgroundColor: [colorTheme, '#e9ecef'],
+                    hoverBackgroundColor: ['#f57c00', '#dee2e6'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var value = context.raw;
+                                var total = context.chart._metasets[context.datasetIndex].total;
+                                var percentage = Math.round((value / total) * 100) + '%';
+                                return context.label + ': ' + value.toLocaleString('vi-VN') + ' đ (' + percentage + ')';
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                cutout: '75%',
+            },
+        });
+
+        // 2. Biểu đồ Cột (Bar Chart)
+        var farmerNames = @Html.Raw(Json.Serialize(farmerNames));
+        var farmerRevenues = @Html.Raw(Json.Serialize(farmerRevenues));
+
+        var ctxBar = document.getElementById("topFarmerChart");
+        var myBarChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: farmerNames,
+                datasets: [{
+                    label: "Doanh thu",
+                    // Cột màu Cam
+                    backgroundColor: colorTheme,
+                    hoverBackgroundColor: "#f57c00",
+                    borderColor: colorTheme,
+                    data: farmerRevenues,
+                    borderRadius: 5,
+                    barPercentage: 0.6,
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false, drawBorder: false } },
+                    y: {
+                        ticks: {
+                            callback: function(value) { return value.toLocaleString('vi-VN') + ' đ'; }
+                        },
+                        grid: { color: "rgb(234, 236, 244)", borderDash: [2], drawBorder: false }
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw.toLocaleString('vi-VN') + ' VNĐ';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
