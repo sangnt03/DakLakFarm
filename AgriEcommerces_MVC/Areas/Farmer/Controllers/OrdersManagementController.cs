@@ -55,8 +55,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 order.status = "Processing";
                 TempData["Success"] = "Đã xác nhận đơn hàng (Processing). Vui lòng chuẩn bị hàng.";
             }
-            // 2. Từ Processing -> Shipped
-            // -> Chuyển sang Shipped (Đã giao cho đơn vị vận chuyển)
+
             else if (order.status == "Processing")
             {
                 order.status = "Shipped";

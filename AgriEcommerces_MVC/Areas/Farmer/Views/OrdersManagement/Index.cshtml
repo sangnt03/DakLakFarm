@@ -95,12 +95,12 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="text-center" style="width: 150px;">Mã ĐH</th>
+                        <th class="text-center" style="width:190px;">Mã ĐH</th>
                         <th>Sản phẩm</th>
-                        <th style="width: 180px;">Khách hàng</th>
-                        <th style="min-width: 200px;">Địa chỉ</th>
-                        <th class="text-center" style="width: 130px;">Trạng thái</th>
-                        <th class="text-center" style="width: 150px;">Hành động</th>
+                        <th style="width:180px;">Khách hàng</th>
+                        <th style="min-width:200px;">Địa chỉ</th>
+                        <th class="text-center" style="width:130px;">Trạng thái</th>
+                        <th class="text-center" style="width:150px;">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -165,7 +165,7 @@
                                             badgeClass = "bg-warning text-dark";
                                             displayText = "Chờ duyệt";
                                         }
-                                        else if (status == "Đã duyệt" || status == "Approved")
+                                        else if (status == "Đã duyệt" || status == "Processing")
                                         {
                                             badgeClass = "bg-info text-dark";
                                             displayText = "Đã duyệt";
@@ -212,7 +212,7 @@
                                         </form>
                                     }
                                     @* Trường hợp 2: Cần Giao Hàng (Đã duyệt / Approved / Paid) *@
-                                    else if (status == "Đã duyệt" || status == "Approved" || status == "Paid")
+                                    else if (status == "Đã duyệt" || status == "Processing" || status == "Paid")
                                     {
                                         <form asp-area="Farmer" asp-controller="OrdersManagement" asp-action="Approve" method="post"
                                               asp-route-id="@firstDetail.orderdetailid"

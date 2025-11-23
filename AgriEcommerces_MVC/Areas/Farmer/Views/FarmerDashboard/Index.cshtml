@@ -2,471 +2,344 @@
 @model List<RevenusViewModel>
 
 @{
-    ViewData["Title"] = "Dashboard doanh thu ";
-    var labels = Model.Select(m => m.Period.ToString("MMM yyyy")).ToArray();
+    ViewData["Title"] = "Dashboard doanh thu";
+    bool isViewingMonth = ViewBag.Month != null;
+    var labels = Model.Select(m => isViewingMonth
+                    ? m.Period.ToString("dd/MM")
+                    : "Tháng " + m.Period.Month).ToArray();
+
     var values = Model.Select(m => m.TotalRevenue).ToArray();
 }
 
+<style>
+    /* --- THEME: GREEN / MINT --- */
+    :root {
+        --theme-primary: #10b981; /* Xanh lá (Emerald) */
+        --theme-primary-dark: #059669; /* Xanh đậm */
+        --theme-light: #d1fae5; /* Xanh rất nhạt */
+        --theme-gray: #f3f4f6;
+        --text-dark: #1f2937;
+    }
+
+    .dashboard-container {
+        background-color: var(--theme-gray);
+        min-height: 100vh;
+        padding: 30px;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Header */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-title {
+        color: var(--text-dark);
+        font-size: 24px;
+        font-weight: 800;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Filter Card */
+    .filter-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+        border-left: 4px solid var(--theme-primary);
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+
+    .form-select {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+        .form-select:focus {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+        }
+
+    .btn-filter {
+        background: var(--theme-primary);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: all 0.3s;
+    }
+
+        .btn-filter:hover {
+            background: var(--theme-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid transparent;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-bottom-color: var(--theme-primary);
+        }
+
+    .stat-content h6 {
+        font-size: 13px;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 5px;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    /* Icon Colors - Customized for Green Theme */
+    .icon-primary {
+        background: #ecfdf5;
+        color: #10b981;
+    }
+    /* Xanh lá */
+    .icon-warning {
+        background: #fffbeb;
+        color: #f59e0b;
+    }
+    /* Vàng */
+    .icon-info {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+    /* Xanh dương */
+
+    /* Text Colors */
+    .text-primary-custom {
+        color: #10b981 !important;
+    }
+
+    .text-warning-custom {
+        color: #f59e0b !important;
+    }
+
+    .text-info-custom {
+        color: #3b82f6 !important;
+    }
+
+    /* Chart Card */
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .chart-header {
+        margin-bottom: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 18px;
+        border-left: 4px solid var(--theme-primary);
+        padding-left: 10px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+
+    /* Alert Info */
+    .alert-custom {
+        background: #f0fdf4; /* Xanh lá rất nhạt */
+        color: #065f46;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid #a7f3d0;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .dashboard-container {
+            padding: 15px;
+        }
+
+        .stat-card {
+            margin-bottom: 15px;
+        }
+    }
+</style>
 
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h2 class="dashboard-title">
-            📊 @ViewData["Title"]
+            <i class="fas fa-leaf text-primary-custom me-2"></i> @ViewData["Title"]
         </h2>
     </div>
 
     <div class="filter-card">
         <form id="filterForm" method="get" class="filter-form">
-            <div class="filter-group">
-                <label class="filter-label">📅 Năm:</label>
-                <select name="year" class="form-control">
+            <div class="flex-grow-1">
+                <label class="form-label">Chọn Năm</label>
+                <select name="year" class="form-select">
                     @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
                     {
-                        if (y == (int)ViewBag.Year)
-                        {
-                            <option value="@y" selected>@y</option>
-                        }
-                        else
-                        {
-                            <option value="@y">@y</option>
-                        }
+                        <option value="@y" selected="@(y == (int)ViewBag.Year)">@y</option>
                     }
                 </select>
             </div>
 
-            <div class="filter-group">
-                <label class="filter-label">🗓️ Tháng:</label>
-                <select id="monthSelect" name="month" class="form-control">
-                    @* Phần "--Tất cả--" *@
-                    @if (ViewBag.Month == null)
-                    {
-                        <option value="" selected>--Tất cả--</option>
-                    }
-                    else
-                    {
-                        <option value="">--Tất cả--</option>
-                    }
-
-                    @* Các tháng 1–12 *@
+            <div class="flex-grow-1">
+                <label class="form-label">Chọn Tháng</label>
+                <select id="monthSelect" name="month" class="form-select">
+                    <option value="" selected="@(ViewBag.Month == null)">-- Tất cả --</option>
                     @for (int m = 1; m <= 12; m++)
                     {
-                        if (ViewBag.Month != null && ViewBag.Month == m)
-                        {
-                            <option value="@m" selected>Tháng @m</option>
-                        }
-                        else
-                        {
-                            <option value="@m">Tháng @m</option>
-                        }
+                        <option value="@m" selected="@(ViewBag.Month == m)">Tháng @m</option>
                     }
                 </select>
             </div>
 
-            <button type="submit" class="btn-filter">
-                🔍 Lọc dữ liệu
-            </button>
+            <div>
+                <button type="submit" class="btn-filter">
+                    <i class="fas fa-filter me-2"></i> Lọc
+                </button>
+            </div>
         </form>
     </div>
 
     @if (!Model.Any())
     {
-        <div class="alert-info">
-            <div style="font-size: 1.5rem;">ℹ️</div>
+        <div class="alert-custom">
+            <i class="fas fa-info-circle fa-2x"></i>
             <div>
                 <strong>Không có dữ liệu</strong><br>
-                Không có dữ liệu doanh thu cho năm @ViewBag.Year, tháng @(ViewBag.Month?.ToString() ?? "tất cả").
+                Chưa có phát sinh doanh thu cho kỳ báo cáo này.
             </div>
         </div>
     }
     else
     {
-        <div class="stats-overview">
-            <div class="stat-card">
-                <div class="stat-number">@Model.Count</div>
-                <div class="stat-label">Kỳ báo cáo</div>
+        <div class="row mb-4 g-3">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <h6>Kỳ báo cáo</h6>
+                        @if (ViewBag.Month != null)
+                        {
+                            <div class="stat-value">@Model.Count ngày</div>
+                        }
+                        else
+                        {
+                            <div class="stat-value">@Model.Count tháng</div>
+                        }
+                    </div>
+                    <div class="icon-box icon-info">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">@Model.Sum(x => x.TotalRevenue).ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</div>
-                <div class="stat-label">Tổng doanh thu</div>
+
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <h6 class="text-primary-custom">Tổng doanh thu</h6>
+                        <div class="stat-value text-primary-custom">
+                            @Model.Sum(x => x.TotalRevenue).ToString("N0") đ
+                        </div>
+                    </div>
+                    <div class="icon-box icon-primary">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">@(Model.Any() ? Model.Average(x => x.TotalRevenue).ToString("C0", new System.Globalization.CultureInfo("vi-VN")) : "0")</div>
-                <div class="stat-label">Trung bình/kỳ</div>
+
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        @if (ViewBag.Month != null)
+                        {
+                            <h6 class="text-warning-custom">Trung bình/ngày</h6>
+                        }
+                        else
+                        {
+                            <h6 class="text-warning-custom">Trung bình/tháng</h6>
+                        }
+
+                        <div class="stat-value text-warning-custom">
+                            @(Model.Any() ? Model.Average(x => x.TotalRevenue).ToString("N0") : "0") đ
+                        </div>
+                    </div>
+                    <div class="icon-box icon-warning">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="chart-card">
+            <h5 class="chart-header">Biểu đồ tăng trưởng doanh thu</h5>
             <div class="chart-container">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
     }
 </div>
-
-<style>
-    .dashboard-container {
-        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #fffbeb 100%);
-        min-height: 100vh;
-        padding: 30px 20px;
-        position: relative;
-    }
-    
-    .dashboard-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-            radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
-        pointer-events: none;
-    }
-    
-    .dashboard-header {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(20px);
-        border: 2px solid rgba(16, 185, 129, 0.2);
-        border-radius: 20px;
-        padding: 35px;
-        margin-bottom: 30px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
-    }
-    
-    .dashboard-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #10b981, #34d399, #fbbf24, #f59e0b);
-    }
-    
-    .dashboard-title {
-        color: #059669;
-        font-size: 2.4rem;
-        font-weight: 800;
-        margin: 0;
-        text-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        background: linear-gradient(135deg, #059669, #10b981, #f59e0b);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    .filter-card {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(15px);
-        border: 2px solid rgba(52, 211, 153, 0.2);
-        border-radius: 18px;
-        padding: 28px;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 35px rgba(16, 185, 129, 0.08);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .filter-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #34d399, #fbbf24);
-    }
-    
-    .filter-form {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 25px;
-    }
-    
-    .filter-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .filter-label {
-        color: #047857;
-        font-weight: 700;
-        font-size: 1rem;
-        white-space: nowrap;
-        text-shadow: 0 1px 3px rgba(4, 120, 87, 0.1);
-    }
-    
-    .form-control {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(52, 211, 153, 0.3);
-        border-radius: 12px;
-        color: #064e3b;
-        padding: 12px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        min-width: 130px;
-        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.05);
-    }
-    
-    .form-control:focus {
-        background: rgba(255, 255, 255, 1);
-        border-color: #10b981;
-        box-shadow: 0 0 0 0.3rem rgba(16, 185, 129, 0.15), 0 4px 15px rgba(16, 185, 129, 0.1);
-        color: #064e3b;
-        outline: none;
-        transform: translateY(-1px);
-    }
-    
-    .form-control option {
-        background: #f0fdf4;
-        color: #064e3b;
-        font-weight: 600;
-    }
-    
-    .btn-filter {
-        background: linear-gradient(135deg, #10b981 );
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 700;
-        padding: 12px 28px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-filter:hover {
-        background: linear-gradient(135deg, #f59e0b 100%);
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-    }
-    
-    .btn-filter:active {
-        transform: translateY(-1px);
-    }
-    
-    .chart-card {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(20px);
-        border: 2px solid rgba(52, 211, 153, 0.2);
-        border-radius: 20px;
-        padding: 35px;
-        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .chart-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #fbbf24);
-    }
-    
-    .chart-container {
-        position: relative;
-        height: 420px;
-        margin-top: 25px;
-    }
-    
-    .alert-info {
-        background: rgba(254, 252, 232, 0.9);
-        border: 2px solid rgba(251, 191, 36, 0.3);
-        border-radius: 16px;
-        color: #92400e;
-        padding: 25px;
-        border-left: 5px solid #f59e0b;
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        box-shadow: 0 8px 25px rgba(251, 191, 36, 0.1);
-        font-weight: 600;
-    }
-    
-    .stats-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
-        margin-bottom: 35px;
-    }
-    
-    .stat-card {
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid rgba(52, 211, 153, 0.2);
-        border-radius: 16px;
-        padding: 25px;
-        text-align: center;
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 6px 25px rgba(16, 185, 129, 0.08);
-    }
-    
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #34d399, #fbbf24);
-        transform: scaleX(0);
-        transition: transform 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15);
-        border-color: rgba(52, 211, 153, 0.4);
-    }
-    
-    .stat-card:hover::before {
-        transform: scaleX(1);
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #059669, #10b981, #f59e0b);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 8px;
-        text-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
-    }
-    
-    .stat-label {
-        color: #047857;
-        font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        font-weight: 700;
-    }
-    
-    @@keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(40px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @@keyframes slideInLeft {
-        from {
-            opacity: 0;
-            transform: translateX(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    .dashboard-header {
-        animation: fadeInUp 0.7s ease-out;
-    }
-    
-    .filter-card {
-        animation: slideInLeft 0.6s ease-out;
-        animation-delay: 0.1s;
-    }
-    
-    .stats-overview {
-        animation: fadeInUp 0.6s ease-out;
-        animation-delay: 0.2s;
-    }
-    
-    .chart-card {
-        animation: fadeInUp 0.7s ease-out;
-        animation-delay: 0.3s;
-    }
-    
-    @@media (max-width: 768px) {
-        .dashboard-container {
-            padding: 20px 15px;
-        }
-        
-        .dashboard-title {
-            font-size: 1.8rem;
-            flex-direction: column;
-            text-align: center;
-            gap: 10px;
-        }
-        
-        .filter-form {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 20px;
-        }
-        
-        .filter-group {
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .form-control {
-            min-width: auto;
-            flex: 1;
-        }
-        
-        .chart-container {
-            height: 320px;
-        }
-        
-        .stats-overview {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        .dashboard-header,
-        .filter-card,
-        .chart-card {
-            padding: 25px;
-        }
-    }
-    
-    @@media (max-width: 480px) {
-        .dashboard-container {
-            padding: 15px 10px;
-        }
-        
-        .dashboard-title {
-            font-size: 1.6rem;
-        }
-        
-        .chart-container {
-            height: 280px;
-        }
-        
-        .dashboard-header,
-        .filter-card,
-        .chart-card {
-            padding: 20px;
-        }
-        
-        .stat-number {
-            font-size: 1.6rem;
-        }
-    }
-</style>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -479,23 +352,28 @@
             }
         });
 
-        // Vẽ Chart.js với theme Mint & Lemon
+        // Vẽ Chart.js (Theme Xanh Lá)
         var ctx = document.getElementById('revenueChart')?.getContext('2d');
         if (ctx) {
             new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels)),
                     datasets: [{
-                        label: 'Doanh thu',
+                        label: 'Doanh thu (VNĐ)',
                         data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values)),
-                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                        borderColor: 'rgba(16, 185, 129, 1)',
-                        borderWidth: 2,
-                        borderRadius: 10,
-                        borderSkipped: false,
-                        hoverBackgroundColor: 'rgba(251, 191, 36, 0.8)',
-                        hoverBorderColor: 'rgba(245, 158, 11, 1)',
+                        // Màu Xanh Lá Chủ Đạo
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', // Nền nhạt dưới đường
+                        borderColor: '#10b981',                     // Đường màu xanh lá đậm
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#059669',
+                        pointHoverBackgroundColor: '#059669',
+                        pointHoverBorderColor: '#fff',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.3 // Đường cong mềm mại
                     }]
                 },
                 options: {
@@ -503,67 +381,41 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: {
-                                color: '#047857',
-                                font: {
-                                    size: 15,
-                                    weight: '700'
-                                }
-                            }
+                            display: false
                         },
                         tooltip: {
                             backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#059669',
-                            bodyColor: '#064e3b',
-                            borderColor: 'rgba(16, 185, 129, 0.5)',
-                            borderWidth: 2,
-                            cornerRadius: 12,
+                            titleColor: '#1f2937',
+                            bodyColor: '#059669', // Chữ tooltip màu xanh đậm
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 14, weight: 'bold' },
+                            borderColor: '#a7f3d0',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
                             callbacks: {
-                                label: ctx => 'Doanh thu: ' +
-                                    new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency', currency: 'VND'
-                                    }).format(ctx.parsed.y)
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('vi-VN') + ' VNĐ';
+                                }
                             }
                         }
                     },
                     scales: {
                         x: {
-                            ticks: {
-                                color: '#047857',
-                                autoSkip: false,
-                                maxRotation: 0,
-                                minRotation: 0,
-                                font: {
-                                    size: 13,
-                                    weight: '600'
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(52, 211, 153, 0.15)',
-                                drawBorder: false
-                            }
+                            grid: { display: false },
+                            ticks: { font: { size: 12, weight: '600' }, color: '#6b7280' }
                         },
                         y: {
                             beginAtZero: true,
+                            grid: { color: '#f3f4f6', borderDash: [5, 5] },
                             ticks: {
-                                color: '#047857',
-                                font: {
-                                    size: 13,
-                                    weight: '600'
-                                },
-                                callback: v => new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency', currency: 'VND', notation: 'compact'
-                                }).format(v)
-                            },
-                            grid: {
-                                color: 'rgba(52, 211, 153, 0.15)',
-                                drawBorder: false
+                                font: { size: 12 },
+                                color: '#6b7280',
+                                callback: function(value) {
+                                    return value.toLocaleString('vi-VN') + ' đ';
+                                }
                             }
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
                     }
                 }
             });

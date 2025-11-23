@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using AgriEcommerces_MVC.Helpers;
 
 [Authorize]
 public class ReviewController : Controller
@@ -30,7 +31,7 @@ public class ReviewController : Controller
             return RedirectToAction("Login", "Account");
 
         var hasDeliveredOrder = await _db.orders
-            .Where(o => o.customerid == userId && o.status == "Đã nhận hàng")
+            .Where(o => o.customerid == userId && o.status == "Đã nhận hàng" || o.status == "Delivered")
             .AnyAsync(o => o.orderdetails.Any(od => od.productid == productid));
 
         if (!hasDeliveredOrder)
@@ -72,7 +73,7 @@ public class ReviewController : Controller
 
         // 1. Kiểm tra xem user có phải đã nhận hàng hay chưa
         var hasDeliveredOrder = await _db.orders
-            .Where(o => o.customerid == userId && o.status == "Đã nhận hàng")
+            .Where(o => o.customerid == userId && o.status == "Đã nhận hàng" || o.status == "Delivered")
             .AnyAsync(o => o.orderdetails.Any(od => od.productid == review.productid));
 
         if (!hasDeliveredOrder)
@@ -105,7 +106,7 @@ public class ReviewController : Controller
 
         // 4. Lưu review vào DB
         review.customerid = userId;
-        review.createdat = DateTime.Now;
+        review.createdat = DateTimeHelper.GetVietnamTime();
         _db.reviews.Add(review);
         await _db.SaveChangesAsync();
 

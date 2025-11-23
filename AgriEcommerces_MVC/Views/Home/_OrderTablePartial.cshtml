@@ -61,13 +61,27 @@
                                     </button>
                                 </form>
                             }
-                            
+
+                            @using System.Security.Claims
                             @if (o.status == "Delivered")
                             {
-                                // Chỉ hiện nút đánh giá cho sản phẩm đầu tiên để demo, thực tế nên vào chi tiết để đánh giá từng món
-                                <a asp-controller="Review" asp-action="Create" asp-route-productid="@o.orderdetails.FirstOrDefault()?.productid" class="btn btn-sm btn-outline-warning" title="Đánh giá">
-                                    <i class="fas fa-star"></i>
-                                </a>
+                                @foreach (var detail in o.orderdetails)
+                                {
+                                    var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                                    var hasReviewed = detail.product.reviews != null
+                                    && detail.product.reviews.Any(r => r.customerid == currentUserId);
+
+                                    @if (!hasReviewed)
+                                    {
+                                        <a asp-controller="Review"
+                                           asp-action="Create"
+                                           asp-route-productid="@detail.productid"
+                                           class="btn btn-sm btn-outline-warning"
+                                           title="Đánh giá sản phẩm: @detail.product.productname">
+                                            <i class="fas fa-star"></i>
+                                        </a>
+                                    }
+                                }
                             }
                         </div>
 

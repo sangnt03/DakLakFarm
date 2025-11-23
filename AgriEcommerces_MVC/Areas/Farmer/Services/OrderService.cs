@@ -1,10 +1,8 @@
-﻿// Areas/Farmer/Services/OrderService.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
-using AgriEcommerces_MVC.Areas.Farmer.ViewModels;
 using AgriEcommerces_MVC.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,40 +19,53 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Services
             int? month = null
         )
         {
-            // Câu query cơ bản
             var baseQuery = _db.orderdetails
                 .Where(od =>
                     od.sellerid == farmerId &&
                     od.order.orderdate.HasValue &&
-                    od.order.orderdate.Value.Year == year
+                    od.order.orderdate.Value.Year == year &&
+                    od.order.status == "Delivered"
                 );
+                   
 
             if (month.HasValue)
             {
-                // CHỈ tháng được chọn: nhóm theo đúng tháng đó
-                var single = await baseQuery
-                    .Where(od => od.order.orderdate.Value.Month == month.Value)
-                    .GroupBy(od => od.order.orderdate.Value.Month)
-                    .Select(g => new { Month = g.Key, Total = g.Sum(x => x.quantity * x.unitprice) })
-                    .FirstOrDefaultAsync();
+                var dailyData = await baseQuery
+                .Where(od => od.order.orderdate.Value.Month == month.Value)
+                .GroupBy(od => od.order.orderdate.Value.Day)
+                .Select(g => new {
+                    Day = g.Key,
+                    Total = g.Sum(x => x.FarmerRevenue)
+                })
+                .ToListAsync();
 
-                return new List<RevenusViewModel>
-                {
-                    new RevenusViewModel {
-                        Period       = new DateTime(year, month.Value, 1),
-                        TotalRevenue = single?.Total ?? 0m
-                    }
-                };
+                int daysInMonth = DateTime.DaysInMonth(year, month.Value);
+
+                var result = Enumerable.Range(1, daysInMonth)
+                    .Select(day => {
+                        var found = dailyData.FirstOrDefault(x => x.Day == day);
+                        return new RevenusViewModel
+                        {
+                            // Period sẽ là ngày cụ thể: 01/11/2025, 02/11/2025...
+                            Period = new DateTime(year, month.Value, day),
+                            TotalRevenue = found?.Total ?? 0m
+                        };
+                    })
+                    .ToList();
+
+                return result;
             }
             else
             {
-                // TẤT CẢ: luôn phát sinh 12 tháng
                 var rawList = await baseQuery
                     .GroupBy(od => od.order.orderdate.Value.Month)
-                    .Select(g => new { Month = g.Key, Total = g.Sum(x => x.quantity * x.unitprice) })
+                    .Select(g => new {
+                        Month = g.Key,
+                        // 2. SỬA CÁCH TÍNH TỔNG TƯƠNG TỰ Ở ĐÂY
+                        Total = g.Sum(x => x.FarmerRevenue)
+                    })
                     .ToListAsync();
 
-                // Đảm bảo 12 tháng, tháng không có data = 0
                 var result = Enumerable.Range(1, 12)
                     .Select(m => {
                         var found = rawList.FirstOrDefault(r => r.Month == m);

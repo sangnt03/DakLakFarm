@@ -73,6 +73,13 @@ namespace AgriEcommerces_MVC.Controllers
                 .FirstOrDefaultAsync(p => p.productid == id);
 
             if (product == null) return NotFound();
+            var soldCount = await _db.orderdetails
+                .Include(od => od.order)
+                .Where(od => od.productid == id && od.order.status != "Cancelled")
+                .SumAsync(od => (int?)od.quantity) ?? 0; 
+
+            ViewBag.SoldCount = soldCount;
+
             return View("Details", product);
         }
     }

@@ -4,6 +4,7 @@ using AgriEcommerces_MVC.Service.EmailService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgriEcommerces_MVC.Controllers
 {
@@ -12,6 +13,9 @@ namespace AgriEcommerces_MVC.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _emailService;
         private readonly ILogger<ForgotPasswordController> _logger;
+
+        // Thêm ServiceScopeFactory để xử lý background task an toàn
+        private readonly IServiceScopeFactory _scopeFactory;
 
         // Múi giờ Việt Nam
         private static readonly TimeZoneInfo VietnamTimeZone = GetVietnamTimeZone();
@@ -31,21 +35,21 @@ namespace AgriEcommerces_MVC.Controllers
         public ForgotPasswordController(
             ApplicationDbContext db,
             IEmailService emailService,
-            ILogger<ForgotPasswordController> logger)
+            ILogger<ForgotPasswordController> logger,
+            IServiceScopeFactory scopeFactory) // Inject vào Constructor
         {
             _db = db;
             _emailService = emailService;
             _logger = logger;
+            _scopeFactory = scopeFactory;
         }
 
-        // [GET] /ForgotPassword/Index - Trang nhập email
         [HttpGet]
         public IActionResult Index()
         {
             return View();
         }
 
-        // [POST] /ForgotPassword/SendOtp - Gửi OTP qua email
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendOtp(string email)
@@ -56,50 +60,52 @@ namespace AgriEcommerces_MVC.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Kiểm tra email có tồn tại trong hệ thống không
             var user = await _db.users.FirstOrDefaultAsync(u => u.email.ToLower() == email.ToLower());
+
             if (user == null)
             {
-                // Không tiết lộ email có tồn tại hay không (bảo mật)
                 TempData["Success"] = "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi đến email của bạn.";
                 return RedirectToAction("VerifyOtp", new { email });
             }
 
             // Tạo mã OTP 6 chữ số
             string otpCode = GenerateOTP();
-
-            // Lưu OTP vào database
             var vnTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
             var passwordReset = new password_reset
             {
                 Email = email.ToLower(),
                 OtpCode = otpCode,
                 CreatedAt = DateTime.SpecifyKind(vnTime, DateTimeKind.Unspecified),
-                ExpiresAt = DateTime.SpecifyKind(vnTime.AddMinutes(10), DateTimeKind.Unspecified), // Hết hạn sau 10 phút
+                ExpiresAt = DateTime.SpecifyKind(vnTime.AddMinutes(10), DateTimeKind.Unspecified),
                 IsUsed = false
             };
 
             _db.password_reset.Add(passwordReset);
             await _db.SaveChangesAsync();
 
-            // Gửi email OTP
-            try
+            _ = Task.Run(async () =>
             {
-                await _emailService.SendPasswordResetOtpAsync(email, otpCode);
-                _logger.LogInformation("OTP đã được gửi đến email {Email}", email);
-                TempData["Success"] = "Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi gửi OTP đến email {Email}", email);
-                TempData["Error"] = "Có lỗi xảy ra khi gửi email. Vui lòng thử lại.";
-                return RedirectToAction("Index");
-            }
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var scopedEmailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                    var scopedLogger = scope.ServiceProvider.GetRequiredService<ILogger<ForgotPasswordController>>();
 
+                    try
+                    {
+                        await scopedEmailService.SendPasswordResetOtpAsync(email, otpCode);
+                        scopedLogger.LogInformation($"OTP sent successfully to {email} via background task.");
+                    }
+                    catch (Exception ex)
+                    {
+                        scopedLogger.LogError(ex, $"Failed to send OTP email to {email} in background.");
+                    }
+                }
+            });
+
+            TempData["Success"] = "Mã OTP đang được gửi đến email của bạn. Vui lòng kiểm tra hộp thư (có thể mất 1-2 phút).";
             return RedirectToAction("VerifyOtp", new { email });
         }
 
-        // [GET] /ForgotPassword/VerifyOtp - Trang nhập OTP
         [HttpGet]
         public IActionResult VerifyOtp(string email)
         {
@@ -112,7 +118,6 @@ namespace AgriEcommerces_MVC.Controllers
             return View();
         }
 
-        // [POST] /ForgotPassword/VerifyOtp - Xác thực OTP
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyOtp(string email, string otpCode)
@@ -190,25 +195,20 @@ namespace AgriEcommerces_MVC.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Cập nhật mật khẩu mới (hash nếu cần)
-            user.passwordhash = BCrypt.Net.BCrypt.HashPassword(newPassword); // Sử dụng BCrypt để hash
+            // Cập nhật mật khẩu mới (hash bằng BCrypt)
+            user.passwordhash = BCrypt.Net.BCrypt.HashPassword(newPassword);
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("User {Email} đã đặt lại mật khẩu thành công", email);
 
             TempData["Success"] = "Đặt lại mật khẩu thành công! Vui lòng đăng nhập.";
+
             if (user.role == "Farmer")
             {
-                // Nếu là 'Farmer', chuyển hướng về trang đăng nhập của Farmer
-                // URL: /Farmer/FarmerAccount/Login
-                // Lưu ý: Cần chỉ rõ 'Area' nếu Controller của bạn nằm trong Area
                 return RedirectToAction("Login", "FarmerAccount", new { Area = "Farmer" });
             }
             else
             {
-                // Mặc định (cho 'Customer', 'Admin' hoặc vai trò khác)
-                // Chuyển hướng về trang đăng nhập chính
-                // URL: /Account/Login
                 return RedirectToAction("Login", "Account");
             }
         }
@@ -221,7 +221,6 @@ namespace AgriEcommerces_MVC.Controllers
             return await SendOtp(email);
         }
 
-        // HÀM TẠO OTP 6 CHỮ SỐ NGẪU NHIÊN
         private string GenerateOTP()
         {
             using (var rng = RandomNumberGenerator.Create())

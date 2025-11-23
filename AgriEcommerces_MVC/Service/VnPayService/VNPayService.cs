@@ -16,10 +16,10 @@ namespace AgriEcommerces_MVC.Service.VnPayService
 
         public string CreatePaymentUrl(int orderId, decimal amount, string orderInfo, string ipAddress)
         {
-            string vnp_TmnCode = "QUUH0J2I";
-            string vnp_HashSecret = "S4D0C9BVC9OGBMWBPSEOAPYWFJWWSWV3";
-            string vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-            string vnp_ReturnUrl = "https://nonreadably-nontemporizing-gwendolyn.ngrok-free.dev/Payment/VNPayReturn";
+            string vnp_TmnCode = _configuration["VNPay:TmnCode"];
+            string vnp_HashSecret = _configuration["VNPay:HashSecret"];
+            string vnp_Url = _configuration["VNPay:Url"];
+            string vnp_ReturnUrl = _configuration["VNPay:ReturnUrl"];
 
             var vnTime = DateTime.UtcNow.AddHours(7);
             var createDate = vnTime.ToString("yyyyMMddHHmmss");

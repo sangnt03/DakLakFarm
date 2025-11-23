@@ -118,6 +118,9 @@ namespace AgriEcommerces_MVC.Controllers
                 .Where(o => o.customerid == userId)
                 .Include(o => o.orderdetails)
                     .ThenInclude(od => od.product)
+                        .ThenInclude(p => p.reviews)
+                .Include(o => o.orderdetails)
+                    .ThenInclude(od => od.product)
                         .ThenInclude(p => p.productimages)
                 .OrderByDescending(o => o.orderdate)
                 .ToListAsync();

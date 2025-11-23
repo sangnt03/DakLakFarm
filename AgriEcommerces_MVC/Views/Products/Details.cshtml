@@ -512,7 +512,7 @@
 
                         <div class="product-rating-wrapper">
                             <div class="rating-score">
-                                <span class="rating-number">@averageRating.ToString("0.0")</span>
+                                @averageRating.ToString("0.0")
                                 <div class="star-rating">
                                     @for (int i = 1; i <= 5; i++)
                                     {
@@ -535,7 +535,7 @@
                                 <strong>@reviewCount</strong> Đánh giá
                             </span>
                             <span class="sold-count">
-                                <strong>0</strong> Đã bán
+                                <strong>@ViewBag.SoldCount</strong> Đã bán
                             </span>
                         </div>
 

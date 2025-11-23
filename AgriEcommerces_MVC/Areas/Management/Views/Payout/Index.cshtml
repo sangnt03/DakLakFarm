@@ -3,32 +3,26 @@
 @{
     ViewData["Title"] = "Quản lý rút tiền";
     var currentStatus = ViewBag.CurrentStatus as string;
-
-    // Lấy số dư Admin từ ViewBag
     var adminBalance = (decimal)(ViewBag.AdminWalletBalance ?? 0);
 }
 
 <style>
-    /* Định nghĩa màu chủ đạo Vàng-Cam */
+    /* --- THEME CSS (Giữ nguyên theme Vàng-Cam) --- */
     :root {
-        --theme-color: #ff9800; /* Cam */
-        --theme-color-light: #ffc107; /* Vàng */
+        --theme-color: #ff9800;
         --theme-gradient: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
     }
 
-    /* Card tổng quỹ - Gradient Vàng Cam */
     .bg-theme-gradient {
         background: var(--theme-gradient);
         color: white;
         border: none;
     }
 
-    /* Màu chữ chủ đạo */
     .text-theme {
         color: var(--theme-color) !important;
     }
 
-    /* Nút báo cáo đồng bộ */
     .btn-theme {
         background-color: white;
         color: var(--theme-color);
@@ -41,23 +35,75 @@
             color: white;
         }
 
-    /* Custom Tabs để active màu cam thay vì xanh */
     .nav-tabs .nav-link {
-        color: #6c757d; /* Màu xám khi chưa active */
+        color: #6c757d;
     }
 
         .nav-tabs .nav-link.active {
             color: var(--theme-color) !important;
-            border-color: #dee2e6 #dee2e6 #fff;
-            font-weight: bold;
             border-top: 3px solid var(--theme-color) !important;
+            font-weight: bold;
         }
 
-    /* Badges */
-    .badge-theme {
-        background-color: var(--theme-color);
-        color: white;
+    /* CSS MỚI CHO CỘT THAO TÁC VỚI CHỮ */
+    .action-column {
+        min-width: 280px;
+        text-align: right;
     }
+
+    .btn-action-text {
+        padding: 8px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+        .btn-action-text i {
+            font-size: 14px;
+        }
+
+        .btn-action-text:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+    .btn-view {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+
+        .btn-view:hover {
+            background-color: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+
+    .btn-approve {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+        .btn-approve:hover {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+    .btn-reject {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+        .btn-reject:hover {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
 </style>
 
 <div class="container-fluid mt-4">
@@ -66,50 +112,19 @@
             <h2 class="fw-bold text-secondary">Xử lý yêu cầu rút tiền</h2>
             <p class="text-muted mb-0">Quản lý dòng tiền và thanh toán cho Farmer</p>
         </div>
+        <a asp-action="Report" class="btn btn-theme shadow-sm fw-bold"><i class="bi bi-bar-chart-fill me-1"></i> Báo cáo</a>
     </div>
 
     <div class="row mb-4">
         <div class="col-md-5 col-lg-4">
             <div class="card bg-theme-gradient shadow h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2 text-white-50 text-uppercase fw-bold" style="font-size: 0.85rem;">
-                                Tổng quỹ hiện tại (Tiền đang giữ)
-                            </h6>
-                            <h2 class="card-title mb-0 fw-bold display-6">
-                                @adminBalance.ToString("N0") đ
-                            </h2>
-                            <small class="text-white-50 mt-2 d-block">
-                                <i class="bi bi-check2-circle me-1"></i> Tiền thực tế trong tài khoản
-                            </small>
-                        </div>
-                        <i class="bi bi-wallet2" style="font-size: 3.5rem; opacity: 0.3;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-7 col-lg-8">
-            <div class="card h-100 border-0 bg-white shadow-sm">
-                <div class="card-body d-flex align-items-center">
+                <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-calculator me-2 text-theme"></i>Công thức tính dòng tiền:</h6>
-                        <ul class="mb-0 text-muted small ps-3 list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-plus-circle-fill text-success me-2"></i>
-                                <strong>Tiền vào:</strong> Tổng đơn hàng <strong>"Đã nhận hàng"</strong> & thanh toán thành công.
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-dash-circle-fill text-danger me-2"></i>
-                                <strong>Tiền ra:</strong> Tổng tiền đã duyệt chi (Completed) cho shop.
-                            </li>
-                            <li>
-                                <i class="bi bi-pause-circle-fill text-theme me-2"></i>
-                                <strong>Số dư:</strong> Số tiền còn lại (Hoa hồng Admin + Tiền shop chưa rút).
-                            </li>
-                        </ul>
+                        <h6 class="text-white-50 text-uppercase fw-bold small">Tổng quỹ hiện tại</h6>
+                        <h2 class="mb-0 fw-bold display-6">@adminBalance.ToString("N0") đ</h2>
+                        <small class="text-white-50 mt-1 d-block"><i class="bi bi-check2-circle me-1"></i> Tiền thực tế</small>
                     </div>
+                    <i class="bi bi-wallet2" style="font-size: 3.5rem; opacity: 0.3;"></i>
                 </div>
             </div>
         </div>
@@ -117,24 +132,16 @@
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 border-start border-success border-3">
-            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm"><i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     }
-
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 border-start border-danger border-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm"><i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     }
 
     <ul class="nav nav-tabs mb-3 border-bottom-0">
         <li class="nav-item">
-            <a class="nav-link @(currentStatus == "Pending" ? "active" : "")"
-               asp-action="Index" asp-route-status="Pending">
+            <a class="nav-link @(currentStatus == "Pending" ? "active" : "")" asp-action="Index" asp-route-status="Pending">
                 <i class="bi bi-hourglass-split me-1"></i> Chờ xử lý
                 @if (ViewBag.PendingCount > 0)
                 {
@@ -142,32 +149,15 @@
                 }
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link @(currentStatus == "Completed" ? "active" : "")"
-               asp-action="Index" asp-route-status="Completed">
-                <i class="bi bi-check-all me-1"></i> Đã hoàn thành
-                <span class="badge bg-secondary rounded-pill ms-1">@ViewBag.CompletedCount</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(currentStatus == "Rejected" ? "active" : "")"
-               asp-action="Index" asp-route-status="Rejected">
-                <i class="bi bi-x-circle me-1"></i> Đã từ chối
-                <span class="badge bg-secondary rounded-pill ms-1">@ViewBag.RejectedCount</span>
-            </a>
-        </li>
+        <li class="nav-item"><a class="nav-link @(currentStatus == "Completed" ? "active" : "")" asp-action="Index" asp-route-status="Completed"><i class="bi bi-check-all me-1"></i> Đã hoàn thành <span class="badge bg-secondary rounded-pill ms-1">@ViewBag.CompletedCount</span></a></li>
+        <li class="nav-item"><a class="nav-link @(currentStatus == "Rejected" ? "active" : "")" asp-action="Index" asp-route-status="Rejected"><i class="bi bi-x-circle me-1"></i> Đã từ chối <span class="badge bg-secondary rounded-pill ms-1">@ViewBag.RejectedCount</span></a></li>
     </ul>
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             @if (!Model.Any())
             {
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="bi bi-inbox text-secondary opacity-25" style="font-size: 4rem;"></i>
-                    </div>
-                    <h5 class="text-muted">Không có yêu cầu nào ở trạng thái này</h5>
-                </div>
+                <div class="text-center py-5"><i class="bi bi-inbox text-secondary opacity-25 display-1"></i><h5 class="text-muted mt-3">Không có yêu cầu nào</h5></div>
             }
             else
             {
@@ -178,9 +168,9 @@
                                 <th class="ps-4 py-3">ID</th>
                                 <th class="py-3">Farmer</th>
                                 <th class="py-3">Số tiền</th>
-                                <th class="py-3">Ngày yêu cầu</th>
+                                <th class="py-3">Ngày tạo</th>
                                 <th class="py-3">Trạng thái</th>
-                                <th class="py-3 text-end pe-4">Thao tác</th>
+                                <th class="py-3 text-end pe-4 action-column">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -190,8 +180,7 @@
                                     <td class="ps-4 fw-bold text-theme">#@request.PayoutRequestId</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-2 text-theme fw-bold border"
-                                                 style="width: 40px; height: 40px;">
+                                            <div class="bg-light rounded-circle d-flex justify-content-center align-items-center me-2 text-theme fw-bold border" style="width: 40px; height: 40px;">
                                                 @(request.Farmer.fullname?.Substring(0, 1).ToUpper() ?? "F")
                                             </div>
                                             <div>
@@ -200,9 +189,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <span class="text-success fw-bold fs-5">@request.Amount.ToString("N0") đ</span>
-                                    </td>
+                                    <td><span class="text-success fw-bold fs-5">@request.Amount.ToString("N0") đ</span></td>
                                     <td>
                                         <div class="d-flex flex-column">
                                             <span>@request.RequestDate.ToString("dd/MM/yyyy")</span>
@@ -223,11 +210,12 @@
                                                 break;
                                         }
                                     </td>
+
                                     <td class="text-end pe-4">
-                                        <div class="btn-group shadow-sm">
+                                        <div class="d-flex justify-content-end gap-2">
                                             <a asp-action="Details" asp-route-id="@request.PayoutRequestId"
-                                               class="btn btn-outline-secondary btn-sm" title="Xem chi tiết">
-                                                <i class="bi bi-eye"></i>
+                                               class="btn btn-view btn-action-text">
+                                                <i class="bi bi-eye me-1"></i> Xem
                                             </a>
 
                                             @if (request.Status == "Pending")
@@ -235,15 +223,14 @@
                                                 <form asp-action="Approve" method="post" class="d-inline"
                                                       onsubmit="return confirm('Xác nhận duyệt yêu cầu này? Tiền sẽ được trừ khỏi ví.')">
                                                     <input type="hidden" name="id" value="@request.PayoutRequestId" />
-                                                    <button type="submit" class="btn btn-success btn-sm ms-1" title="Duyệt">
-                                                        <i class="bi bi-check-lg"></i>
+                                                    <button type="submit" class="btn btn-approve btn-action-text">
+                                                        <i class="bi bi-check-lg me-1"></i> Duyệt
                                                     </button>
                                                 </form>
 
-                                                <button type="button" class="btn btn-danger btn-sm ms-1" title="Từ chối"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#rejectModal@(request.PayoutRequestId)">
-                                                    <i class="bi bi-x-lg"></i>
+                                                <button type="button" class="btn btn-reject btn-action-text"
+                                                        data-bs-toggle="modal" data-bs-target="#rejectModal@(request.PayoutRequestId)">
+                                                    <i class="bi bi-x-lg me-1"></i> Từ chối
                                                 </button>
                                             }
                                         </div>
@@ -262,12 +249,12 @@
                                                                 <input type="hidden" name="id" value="@request.PayoutRequestId" />
                                                                 <div class="mb-3">
                                                                     <label class="form-label fw-bold">Lý do từ chối <span class="text-danger">*</span></label>
-                                                                    <textarea name="reason" class="form-control" rows="3" required></textarea>
+                                                                    <textarea name="reason" class="form-control" rows="3" required placeholder="Nhập lý do..."></textarea>
                                                                 </div>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                                <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                                                                <button type="submit" class="btn btn-danger">Xác nhận</button>
                                                             </div>
                                                         </form>
                                                     </div>
