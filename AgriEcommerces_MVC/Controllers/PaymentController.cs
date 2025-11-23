@@ -2,6 +2,7 @@
 using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Service.EmailService;
+using AgriEcommerces_MVC.Service.MoMoService;
 using AgriEcommerces_MVC.Service.VnPayService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,14 @@ namespace AgriEcommerces_MVC.Controllers
         private readonly ILogger<PaymentController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly MoMoService _moMoService;
         public PaymentController(
             ApplicationDbContext context,
             VNPayService vnPayService,
             ILogger<PaymentController> logger,
             IConfiguration configuration,
-            IEmailService emailService)
+            IEmailService emailService,
+            MoMoService moMoService)
 
         {
             _context = context;
@@ -31,6 +34,7 @@ namespace AgriEcommerces_MVC.Controllers
             _logger = logger;
             _configuration = configuration;
             _emailService = emailService;
+            _moMoService = moMoService;
         }
 
         [HttpGet]
@@ -209,6 +213,82 @@ namespace AgriEcommerces_MVC.Controllers
                 _logger.LogError(ex, "Error processing VNPay return");
                 TempData["Error"] = "Có lỗi xảy ra khi xử lý kết quả thanh toán.";
                 return RedirectToAction("Index", "Home");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateMoMoPayment(int orderId)
+        {
+            var order = await _context.orders.FindAsync(orderId);
+            if (order == null || order.status != "Pending") return NotFound();
+
+            // 1. Tạo hoặc cập nhật Payment Record (như logic VNPay cũ)
+            var existingPayment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId && p.Status == "Pending");
+            if (existingPayment == null)
+            {
+                _context.Payments.Add(new Payment
+                {
+                    OrderId = orderId,
+                    PaymentMethod = "MoMo", // Lưu ý method là MoMo
+                    Amount = order.FinalAmount,
+                    Status = "Pending",
+                    CreateDate = DateTimeHelper.GetVietnamTime()
+                });
+            }
+            else
+            {
+                existingPayment.PaymentMethod = "MoMo";
+                _context.Payments.Update(existingPayment);
+            }
+            await _context.SaveChangesAsync();
+
+            // 2. Gọi Service lấy URL thanh toán
+            string payUrl = await _moMoService.CreatePaymentRequest(order.orderid, order.FinalAmount, $"Thanh toan don hang #{order.ordercode}", "Khach hang");
+
+            if (!string.IsNullOrEmpty(payUrl))
+                return Redirect(payUrl);
+
+            TempData["Error"] = "Lỗi tạo giao dịch MoMo";
+            return RedirectToAction("OrderConfirmation", "Order", new { orderId });
+        }
+
+        [HttpGet("Payment/MoMoReturn")]
+        [AllowAnonymous]
+        public async Task<IActionResult> MoMoReturn()
+        {
+            // Validate chữ ký
+            string signature = Request.Query["signature"];
+            if (!_moMoService.ValidateSignature(Request.Query, signature))
+            {
+                TempData["Error"] = "Chữ ký không hợp lệ!";
+                return RedirectToAction("Index", "Home");
+            }
+
+            string resultCode = Request.Query["resultCode"];
+            int orderId = int.Parse(Request.Query["orderId"]);
+
+            if (resultCode == "0") // 0 là thành công
+            {
+                // Logic update DB giống hệt VNPayReturn
+                // Bạn có thể tách hàm update DB ra dùng chung để đỡ lặp code
+                var order = await _context.orders.FindAsync(orderId);
+                var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
+
+                if (order != null) order.status = "Paid";
+                if (payment != null)
+                {
+                    payment.Status = "Success";
+                    payment.GatewayTransactionCode = Request.Query["transId"];
+                }
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Thanh toán MoMo thành công!";
+                return RedirectToAction("OrderConfirmation", "Order", new { orderId });
+            }
+            else
+            {
+                TempData["Error"] = "Giao dịch thất bại hoặc bị hủy.";
+                return RedirectToAction("OrderConfirmation", "Order", new { orderId });
             }
         }
 

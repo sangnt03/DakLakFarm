@@ -4,6 +4,7 @@ using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Service.EmailService;
 using AgriEcommerces_MVC.Service.VnPayService;
 using AgriEcommerces_MVC.Service.WalletService;
+using AgriEcommerces_MVC.Service.MoMoService;
 using AgriEcommerces_MVC.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
@@ -34,6 +35,8 @@ builder.Services.AddScoped<VNPayService>();
 builder.Services.AddScoped<WalletService>();
 // Đăng ký UnpaidOrderCleanupService chạy nền tự động xóa đơn hàng chưa thanh toán sau 5 phút với phương thức VNPAY,...
 builder.Services.AddHostedService<UnpaidOrderCleanupService>();
+// Đăng ký MoMoService
+builder.Services.AddScoped<MoMoService>();
 
 
 // 2) MVC + Razor Runtime Compilation
@@ -48,21 +51,19 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Bắt buộc dùng HTTPS
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 // Thêm HttpClient (cần cho Cloudflare và các dịch vụ API khác)
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
-// 1. Đọc Google Keys từ secrets.json (đặt lên trước khi dùng)
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 
-// 4) Authentication (Cookies) - Chỉ một khối duy nhất
+// 4) Authentication (Cookies)
 builder.Services.AddAuthentication(options =>
 {
-    // Giữ nguyên DynamicScheme của bạn
     options.DefaultScheme = "DynamicScheme";
     options.DefaultChallengeScheme = "DynamicScheme";
 
@@ -70,22 +71,18 @@ builder.Services.AddAuthentication(options =>
 })
 .AddPolicyScheme("DynamicScheme", "Dynamic authentication scheme", options =>
 {
-    // Giữ nguyên logic chọn scheme theo URL prefix của bạn
     options.ForwardDefaultSelector = context =>
     {
-        // nếu URL bắt đầu bằng /Farmer thì xài FarmerAuth
         if (context.Request.Path.StartsWithSegments("/Farmer", StringComparison.OrdinalIgnoreCase))
             return "FarmerAuth";
-        // nếu URL bắt đầu bằng /Management thì xài manager
         if (context.Request.Path.StartsWithSegments("/Management", StringComparison.OrdinalIgnoreCase))
             return "ManagerAuth";
 
-        // mặc định dùng Customer cho tất cả URL khác
         return "Customer";
     };
 })
 
-// 2) Scheme "Customer" (Giữ nguyên bản CÓ AJAX của bạn)
+// 2) Scheme "Customer"
 .AddCookie("Customer", opts =>
 {
     opts.Cookie.Name = ".AgriEcomCustomerAuth";

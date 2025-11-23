@@ -23,7 +23,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"],
+                emailSettings["SenderName"] ?? "DakLakFarm", // Fallback nếu config null
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress(order.customername, customerEmail));
@@ -44,7 +44,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"],
+                emailSettings["SenderName"] ?? "DakLakFarm",
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress("Người bán", farmerEmail));
@@ -59,18 +59,17 @@ namespace AgriEcommerces_MVC.Service.EmailService
             await SendEmailAsync(message, emailSettings);
         }
 
-        // MỚI: Phương thức gửi OTP đặt lại mật khẩu
         public async Task SendPasswordResetOtpAsync(string email, string otpCode)
         {
             var emailSettings = _configuration.GetSection("EmailSettings");
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"],
+                emailSettings["SenderName"] ?? "DakLakFarm",
                 emailSettings["SenderEmail"]
             ));
             message.To.Add(new MailboxAddress(email, email));
-            message.Subject = "Mã OTP đặt lại mật khẩu - DakLakFarm"; // Đã cập nhật thương hiệu
+            message.Subject = "Mã OTP đặt lại mật khẩu - DakLakFarm";
 
             var bodyBuilder = new BodyBuilder
             {
@@ -81,36 +80,51 @@ namespace AgriEcommerces_MVC.Service.EmailService
             await SendEmailAsync(message, emailSettings);
         }
 
-
         private async Task SendEmailAsync(MimeMessage message, IConfigurationSection emailSettings)
         {
             using var client = new SmtpClient();
             try
             {
-                await client.ConnectAsync(
-                    emailSettings["SmtpServer"],
-                    int.Parse(emailSettings["SmtpPort"]),
-                    SecureSocketOptions.StartTls
-                );
+                // 1. QUAN TRỌNG: Bỏ qua kiểm tra thu hồi chứng chỉ
+                // Trên Linux/Docker, bước này thường bị treo dẫn đến Timeout.
+                client.CheckCertificateRevocation = false;
 
+                // Lấy thông tin Server & Port từ cấu hình
+                string smtpServer = emailSettings["SmtpServer"] ?? "smtp.gmail.com";
+                if (!int.TryParse(emailSettings["SmtpPort"], out int smtpPort))
+                {
+                    smtpPort = 587; // Port mặc định cho STARTTLS nếu config lỗi
+                }
+
+                // 2. Kết nối với Server (Port 587 + StartTls là chuẩn nhất cho Gmail)
+                await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+
+                // 3. Xác thực (Dùng App Password)
                 await client.AuthenticateAsync(
-                    emailSettings["Username"],
-                    emailSettings["Password"]
+                    emailSettings["Username"], // Email đầy đủ
+                    emailSettings["Password"]  // Mật khẩu ứng dụng 16 ký tự
                 );
 
+                // 4. Gửi mail
                 await client.SendAsync(message);
             }
             catch (Exception ex)
             {
-                // Log lỗi (có thể dùng ILogger)
+                // Ghi log lỗi ra console của Render để debug nếu cần
+                Console.WriteLine($"[Email Error]: {ex.Message}");
                 throw new Exception($"Không thể gửi email: {ex.Message}");
             }
             finally
             {
-                await client.DisconnectAsync(true);
+                // 5. Ngắt kết nối sạch sẽ
+                if (client.IsConnected)
+                {
+                    await client.DisconnectAsync(true);
+                }
             }
         }
 
+        // --- CÁC HÀM GENERATE HTML GIỮ NGUYÊN ---
         private string GenerateOrderConfirmationHtml(order order)
         {
             var sb = new StringBuilder();
@@ -203,7 +217,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 <ul style='margin: 10px 0;'>
                     <li>Đơn hàng sẽ được xử lý trong vòng 1-2 ngày làm việc</li>
                     <li>Bạn có thể theo dõi trạng thái đơn hàng trong tài khoản của mình</li>
-                    <li>Nếu có thắc mắc, vui lòng liên hệ hotline: 1900-xxxx</li>
+                    <li>Nếu có thắc mắc, vui lòng liên hệ hotline: 0999999999</li>
                 </ul>
             </div>
 
@@ -317,7 +331,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
             return sb.ToString();
         }
 
-        // MỚI: Phương thức tạo HTML cho OTP
         private string GeneratePasswordResetOtpHtml(string email, string otpCode)
         {
             var sb = new StringBuilder();
