@@ -374,7 +374,7 @@ public class OrderController : Controller
         }
 
         // LẤY THÔNG TIN HỦY ĐƠN NẾU CÓ
-        if (order.status == "Đã hủy")
+        if (order.status == "Cancelled")
         {
             ViewBag.Cancellation = await _db.order_cancellations
                 .Include(c => c.CancelledByUser)
@@ -417,7 +417,7 @@ public class OrderController : Controller
         }
 
         // Cập nhật trạng thái
-        order.status = "Đã hủy";
+        order.status = "Cancelled";
         var vnTime = GetVietnamTime();
 
         // LƯU LỊCH SỬ HỦY ĐƠN
