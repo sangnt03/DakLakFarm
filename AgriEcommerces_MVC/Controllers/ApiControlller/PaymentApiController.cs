@@ -186,5 +186,81 @@ namespace AgriEcommerces_MVC.Controllers.ApiController
                 return Ok(new { RspCode = "99", Message = "Unknown error" });
             }
         }
+        [HttpPost("MoMoIPN")]
+        public async Task<IActionResult> MoMoIPN()
+        {
+            try
+            {
+                // Đọc body JSON từ MoMo gửi sang
+                using var reader = new StreamReader(Request.Body);
+                var body = await reader.ReadToEndAsync();
+                dynamic json = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
+
+                // Bạn có thể check signature ở đây nếu muốn bảo mật chặt chẽ (giống VNPay)
+                // Nhưng với môi trường Test đồ án, ta check resultCode là đủ
+
+                string resultCode = json.resultCode;
+                string orderIdStr = json.orderId;
+                string transId = json.transId;
+
+                int orderId = int.Parse(orderIdStr);
+
+                var order = await _context.orders.FindAsync(orderId);
+                if (order == null) return Ok(new { message = "Order not found" });
+
+                if (resultCode == "0") // Thành công
+                {
+                    if (order.status != "Paid")
+                    {
+                        order.status = "Paid";
+                        var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
+                        if (payment != null)
+                        {
+                            payment.Status = "Success";
+                            payment.GatewayTransactionCode = transId;
+                        }
+                        await _context.SaveChangesAsync();
+
+                        // Gửi email
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                // Gửi cho khách hàng
+                                if (!string.IsNullOrEmpty(order.customer?.email))
+                                {
+                                    await _emailService.SendOrderConfirmationEmailAsync(order, order.customer.email);
+                                    _logger.LogInformation($"Email xác nhận đã gửi tới khách hàng: {order.customer.email}");
+                                }
+
+                                // Gửi cho từng Farmer
+                                var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
+                                foreach (var group in farmerGroups)
+                                {
+                                    var farmer = await _context.users
+                                        .FirstOrDefaultAsync(u => u.userid == group.Key && u.role == "Farmer");
+
+                                    if (farmer != null && !string.IsNullOrEmpty(farmer.email))
+                                    {
+                                        await _emailService.SendOrderNotificationToFarmerAsync(order, farmer.email, group.ToList());
+                                        _logger.LogInformation($"Email thông báo đã gửi tới Farmer: {farmer.email}");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, $"Lỗi gửi email cho đơn hàng {orderId}");
+                            }
+                        });
+                    }
+                }
+                return StatusCode(204);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MoMo IPN Error");
+                return StatusCode(500);
+            }
+        }
     }
 }

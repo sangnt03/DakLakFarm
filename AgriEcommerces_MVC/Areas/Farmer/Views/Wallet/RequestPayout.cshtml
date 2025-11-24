@@ -1,83 +1,88 @@
-﻿@{
+﻿@model dynamic
+@{
     ViewData["Title"] = "Yêu cầu rút tiền";
-    var balance = (decimal)ViewBag.Balance;
 }
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4>Yêu cầu rút tiền</h4>
-                </div>
-                <div class="card-body">
-                    <!-- Hiển thị số dư -->
-                    <div class="alert alert-info">
-                        <strong>Số dư khả dụng:</strong> @balance.ToString("N0") đ
-                    </div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Yêu cầu rút tiền</h5>
+    </div>
+    <div class="card-body">
 
-                    @if (TempData["Error"] != null)
-                    {
-                        <div class="alert alert-danger">@TempData["Error"]</div>
-                    }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
 
-                    <form asp-action="RequestPayout" method="post">
-                        <!-- Số tiền rút -->
-                        <div class="mb-3">
-                            <label for="amount" class="form-label">Số tiền muốn rút <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="amount" name="amount"
-                                   min="100000" max="@balance" step="10000" required>
-                            <small class="form-text text-muted">Số tiền tối thiểu: 100.000đ</small>
-                        </div>
-
-                        <!-- Thông tin ngân hàng -->
-                        <div class="mb-3">
-                            <label for="bankName" class="form-label">Tên ngân hàng <span class="text-danger">*</span></label>
-                            <select class="form-select" id="bankName" name="bankName" required>
-                                <option value="">-- Chọn ngân hàng --</option>
-                                <option value="Vietcombank">Vietcombank</option>
-                                <option value="VietinBank">VietinBank</option>
-                                <option value="BIDV">BIDV</option>
-                                <option value="Agribank">Agribank</option>
-                                <option value="Techcombank">Techcombank</option>
-                                <option value="MB Bank">MB Bank</option>
-                                <option value="ACB">ACB</option>
-                                <option value="Sacombank">Sacombank</option>
-                                <option value="VPBank">VPBank</option>
-                                <option value="TPBank">TPBank</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="accountNumber" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="accountNumber" name="accountNumber"
-                                   pattern="[0-9]+" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="accountName" class="form-label">Tên chủ tài khoản <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="accountName" name="accountName"
-                                   style="text-transform: uppercase;" required>
-                            <small class="form-text text-muted">Nhập chính xác như trên tài khoản ngân hàng</small>
-                        </div>
-
-                        <!-- Lưu ý -->
-                        <div class="alert alert-warning">
-                            <strong>Lưu ý:</strong>
-                            <ul class="mb-0">
-                                <li>Yêu cầu rút tiền sẽ được Admin xét duyệt trong vòng 1-3 ngày làm việc</li>
-                                <li>Vui lòng kiểm tra kỹ thông tin ngân hàng trước khi gửi</li>
-                                <li>Bạn chỉ có thể tạo 1 yêu cầu rút tiền tại một thời điểm</li>
-                            </ul>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
-                            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div class="alert alert-info">
+            Số dư khả dụng: <strong>@ViewBag.Balance.ToString("N0") VNĐ</strong>
         </div>
+
+        <form asp-action="RequestPayout" method="post" id="payout-form">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Số tiền muốn rút (VNĐ)</label>
+                <input type="number" name="amount" class="form-control" min="100000" step="10000" required placeholder="Tối thiểu 100.000">
+            </div>
+
+            <hr />
+            <h6>Thông tin tài khoản nhận tiền (VietQR)</h6>
+
+            <div class="mb-3">
+                <label class="form-label">Ngân hàng</label>
+                <select id="bank-select" class="form-select" required>
+                    <option value="">-- Đang tải danh sách ngân hàng... --</option>
+                </select>
+                <input type="hidden" name="bankCode" id="hidden_bankCode" /> <input type="hidden" name="bankName" id="hidden_bankName" /> <input type="hidden" name="bankBin" id="hidden_bankBin" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Số tài khoản</label>
+                <input type="text" name="accountNumber" class="form-control" required placeholder="Nhập số tài khoản">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tên chủ tài khoản (Viết hoa không dấu)</label>
+                <input type="text" name="accountName" class="form-control" required placeholder="NGUYEN VAN A" style="text-transform: uppercase;">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100"><i class="fas fa-paper-plane"></i> Gửi yêu cầu</button>
+        </form>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Gọi API lấy danh sách ngân hàng Việt Nam (Miễn phí từ VietQR)
+            $.getJSON("https://api.vietqr.io/v2/banks", function (response) {
+                if (response.code == "00") {
+                    var options = '<option value="">-- Chọn ngân hàng --</option>';
+                    $.each(response.data, function (index, bank) {
+                        // shortName: VCB, MB, TCB...
+                        // bin: 970436...
+                        options += `<option value="${bank.shortName}" data-bin="${bank.bin}" data-name="${bank.shortName} - ${bank.name}">${bank.shortName} - ${bank.name}</option>`;
+                    });
+                    $('#bank-select').html(options);
+                }
+            });
+
+            // Khi chọn ngân hàng, cập nhật vào các input ẩn
+            $('#bank-select').change(function () {
+                var selectedOption = $(this).find('option:selected');
+                var shortName = $(this).val(); // VD: VCB
+                var bin = selectedOption.data('bin'); // VD: 970436
+                var fullName = selectedOption.data('name');
+
+                $('#hidden_bankCode').val(shortName);
+                $('#hidden_bankBin').val(bin);
+                $('#hidden_bankName').val(fullName);
+            });
+        });
+    </script>
+}

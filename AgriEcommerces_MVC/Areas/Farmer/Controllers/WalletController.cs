@@ -68,7 +68,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestPayout(decimal amount, string bankName, string accountNumber, string accountName)
+        public async Task<IActionResult> RequestPayout(decimal amount, string bankCode, string bankBin, string accountNumber, string accountName, string bankName) // 1. Thêm bankName vào đây
         {
             try
             {
@@ -82,7 +82,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                 }
 
                 // Validate thông tin ngân hàng
-                if (string.IsNullOrWhiteSpace(bankName) ||
+                if (string.IsNullOrWhiteSpace(bankCode) ||
                     string.IsNullOrWhiteSpace(accountNumber) ||
                     string.IsNullOrWhiteSpace(accountName))
                 {
@@ -90,16 +90,22 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
                     return RedirectToAction("RequestPayout");
                 }
 
-                // Tạo JSON cho thông tin ngân hàng
-                var bankDetails = JsonConvert.SerializeObject(new
+                // Tạo Object chứa thông tin
+                var bankInfoObj = new
                 {
-                    bankName = bankName.Trim(),
-                    accountNumber = accountNumber.Trim(),
-                    accountName = accountName.Trim().ToUpper()
-                });
+                    BankCode = bankCode,      // VD: VCB (Dùng để tạo QR)
+                    BankBin = bankBin,        // VD: 970436 (Dự phòng)
+                    BankName = bankName,      // VD: Vietcombank (Để Admin dễ đọc)
+                    AccountNumber = accountNumber,
+                    AccountName = accountName.ToUpper()
+                };
+
+                // 2. Chuyển đổi Object sang chuỗi JSON string
+                string bankDetailsJson = JsonConvert.SerializeObject(bankInfoObj);
 
                 // Tạo yêu cầu rút tiền
-                var success = await _walletService.CreatePayoutRequest(farmerId, amount, bankDetails);
+                // 3. Truyền chuỗi JSON vào Service
+                var success = await _walletService.CreatePayoutRequest(farmerId, amount, bankDetailsJson);
 
                 if (success)
                 {

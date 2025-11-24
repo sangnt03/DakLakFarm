@@ -1,10 +1,13 @@
 ﻿@model List<AgriEcommerces_MVC.Models.order>
+@{
+    var tabName = ViewData["TabName"] as string ?? "default";
+}
 
 <div class="table-responsive bg-white shadow-sm rounded">
     <table class="table table-hover align-middle mb-0">
-        <thead class="bg-light text-secondary">
+        <thead class="bg-primary text-white">
             <tr>
-                <th class="ps-4 py-3">Mã đơn</th>
+                <th class="ps-4 py-2">Mã đơn</th>
                 <th class="text-center">Ngày đặt</th>
                 <th class="text-center">Trạng thái</th>
                 <th class="text-end">Tổng tiền</th>
@@ -25,13 +28,13 @@
                             var badgeClass = "";
                             switch (o.status)
                             {
-                                case "Pending": statusText = "Chờ xác nhận"; badgeClass = "bg-warning text-dark"; break;
-                                case "Paid": statusText = "Đã thanh toán"; badgeClass = "bg-info text-white"; break;
-                                case "Processing": statusText = "Đang đóng gói"; badgeClass = "bg-primary"; break;
-                                case "Shipped": statusText = "Đang giao hàng"; badgeClass = "bg-info text-dark"; break;
-                                case "Delivered": statusText = "Giao thành công"; badgeClass = "bg-success"; break;
-                                case "Cancelled": statusText = "Đã hủy"; badgeClass = "bg-danger"; break;
-                                default: statusText = o.status; badgeClass = "bg-secondary"; break;
+                                case "Pending": statusText = "Chờ xác nhận"; badgeClass = "bg-warning text-black"; break;
+                                case "Paid": statusText = "Đã thanh toán"; badgeClass = "bg-info text-black"; break;
+                                case "Processing": statusText = "Đang đóng gói"; badgeClass = "bg-primary text-black"; break;
+                                case "Shipped": statusText = "Đang giao hàng"; badgeClass = "bg-info text-black"; break;
+                                case "Delivered": statusText = "Giao thành công"; badgeClass = "bg-success text-black"; break;
+                                case "Cancelled": statusText = "Đã hủy"; badgeClass = "bg-danger text-black"; break;
+                                default: statusText = o.status; badgeClass = "bg-secondary text-black"; break;
                             }
                         }
                         <span class="badge @badgeClass rounded-pill px-3">@statusText</span>

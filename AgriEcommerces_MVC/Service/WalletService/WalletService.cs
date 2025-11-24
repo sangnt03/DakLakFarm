@@ -14,10 +14,10 @@ namespace AgriEcommerces_MVC.Service.WalletService
             _context = context;
         }
 
-        // 1. Lấy số dư khả dụng
+        // 1. TÍNH SỐ DƯ (Chuẩn xác nhất: Cộng tổng lịch sử)
         public async Task<decimal> GetAvailableBalance(int farmerId)
         {
-            // - Field: FarmerId, Amount
+            // Cộng tất cả dòng tiền (Dương là thu nhập, Âm là rút tiền)
             var balance = await _context.WalletTransaction
                 .Where(t => t.FarmerId == farmerId)
                 .SumAsync(t => (decimal?)t.Amount) ?? 0;
@@ -34,15 +34,16 @@ namespace AgriEcommerces_MVC.Service.WalletService
                 .ToListAsync();
         }
 
-        // 3. Farmer tạo yêu cầu rút tiền
+        // 3. Tạo yêu cầu rút tiền
         public async Task<bool> CreatePayoutRequest(int farmerId, decimal amount, string bankDetails)
         {
-            // Kiểm tra số dư
+            // Gọi hàm tính số dư thay vì lấy từ User
             var balance = await GetAvailableBalance(farmerId);
+
+            // Check: Tiền thực có < Tiền muốn rút
             if (balance < amount) return false;
 
-            // Kiểm tra yêu cầu Pending cũ
-            // - Field: Status, FarmerId
+            // Check: Đang có đơn pending
             var hasPending = await _context.PayoutRequests
                 .AnyAsync(p => p.FarmerId == farmerId && p.Status == "Pending");
 
@@ -53,7 +54,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
                 FarmerId = farmerId,
                 Amount = amount,
                 Status = "Pending",
-                BankDetails = bankDetails, // Lưu chuỗi JSON vào cột jsonb
+                BankDetails = bankDetails,
                 RequestDate = DateTimeHelper.GetVietnamTime()
             };
 
@@ -62,41 +63,52 @@ namespace AgriEcommerces_MVC.Service.WalletService
             return true;
         }
 
-        // 4. Admin DUYỆT yêu cầu -> Trừ tiền ví
-        public async Task<bool> ApprovePayoutRequest(int payoutRequestId, int adminId)
+        // 4. Admin DUYỆT yêu cầu (Đã sửa: Bỏ code trừ cột Balance)
+        public async Task<(bool Success, string Message)> ApprovePayoutRequest(int payoutRequestId, int adminId, string transactionProof)
         {
-            var request = await _context.PayoutRequests.FindAsync(payoutRequestId);
-            if (request == null || request.Status != "Pending") return false;
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // A. Update trạng thái PayoutRequest
+                var request = await _context.PayoutRequests
+                    .FirstOrDefaultAsync(p => p.PayoutRequestId == payoutRequestId);
+
+                if (request == null) return (false, "Không tìm thấy yêu cầu.");
+                if (request.Status != "Pending") return (false, "Yêu cầu không ở trạng thái chờ duyệt.");
+
+                // Check số dư lại lần cuối (quan trọng)
+                var currentBalance = await GetAvailableBalance(request.FarmerId);
+                if (currentBalance < request.Amount)
+                {
+                    return (false, $"Số dư hiện tại ({currentBalance:N0}đ) không đủ để duyệt khoản rút {request.Amount:N0}đ.");
+                }
+
+                // Cập nhật trạng thái
                 request.Status = "Completed";
                 request.CompletedDate = DateTimeHelper.GetVietnamTime();
+                _context.PayoutRequests.Update(request);
 
-                // B. Tạo giao dịch trừ tiền (WalletTransaction)
-                //
+                // --- QUAN TRỌNG: TẠO GIAO DỊCH ÂM ĐỂ TRỪ TIỀN ---
+                // (Không cần update bảng User nữa)
                 var walletTx = new WalletTransaction
                 {
                     FarmerId = request.FarmerId,
-                    Amount = -request.Amount, // Số âm để trừ tiền
+                    Amount = -request.Amount, // Số ÂM
                     Type = "Payout",
-                    ReferenceId = request.PayoutRequestId, // Link tới ID yêu cầu rút
-                    Description = $"Rút tiền thành công (Yêu cầu #{request.PayoutRequestId})",
-                    CreateDate = DateTimeHelper.GetVietnamTime()
+                    CreateDate = DateTimeHelper.GetVietnamTime(),
+                    Description = $"Rút tiền thành công. Mã GD Admin: {transactionProof}",
+                    ReferenceId = request.PayoutRequestId
                 };
-
                 _context.WalletTransaction.Add(walletTx);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                return true;
+
+                return (true, "Duyệt thành công");
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return false;
+                return (false, "Lỗi hệ thống: " + ex.Message);
             }
         }
 
@@ -109,20 +121,62 @@ namespace AgriEcommerces_MVC.Service.WalletService
             request.Status = "Rejected";
             request.CompletedDate = DateTimeHelper.GetVietnamTime();
 
-            // Có thể lưu lý do từ chối vào một chỗ khác hoặc gửi email thông báo cho Farmer
-            // Hiện tại Model PayoutRequest chưa có cột 'Reason', bạn có thể bổ sung sau nếu cần.
-
             await _context.SaveChangesAsync();
             return true;
         }
 
-        // 6. Lấy danh sách yêu cầu rút tiền của 1 Farmer
+        // 6. Lấy danh sách yêu cầu
         public async Task<List<PayoutRequest>> GetPayoutRequestsByFarmer(int farmerId)
         {
             return await _context.PayoutRequests
                 .Where(p => p.FarmerId == farmerId)
                 .OrderByDescending(p => p.RequestDate)
                 .ToListAsync();
+        }
+
+        // 7. Cộng tiền doanh thu (Đã sửa: Bỏ code cộng cột Balance)
+        public async Task ProcessOrderRevenue(int orderId)
+        {
+            var order = await _context.orders
+                .Include(o => o.orderdetails)
+                .FirstOrDefaultAsync(o => o.orderid == orderId);
+
+            if (order == null) return;
+
+            var farmerGroups = order.orderdetails
+                .GroupBy(od => od.sellerid)
+                .Select(g => new
+                {
+                    FarmerId = g.Key,
+                    TotalRevenue = g.Sum(od => od.FarmerRevenue)
+                })
+                .ToList();
+
+            foreach (var item in farmerGroups)
+            {
+                bool alreadyProcessed = await _context.WalletTransaction
+                    .AnyAsync(t => t.ReferenceId == order.orderid
+                                   && t.FarmerId == item.FarmerId
+                                   && t.Type == "OrderRevenue");
+
+                if (!alreadyProcessed)
+                {
+                    // Chỉ cần thêm log giao dịch là đủ
+                    var walletTx = new WalletTransaction
+                    {
+                        FarmerId = item.FarmerId,
+                        Amount = item.TotalRevenue, // Số DƯƠNG
+                        Type = "OrderRevenue",
+                        ReferenceId = order.orderid,
+                        Description = $"Thu nhập từ đơn hàng #{order.ordercode}",
+                        CreateDate = DateTimeHelper.GetVietnamTime()
+                    };
+                    _context.WalletTransaction.Add(walletTx);
+
+                    // Đã XÓA đoạn: farmer.balance += ...
+                }
+            }
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -211,10 +211,14 @@ builder.Services.AddLogging(logging =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeaderOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+};
+// Xóa giới hạn IP để chấp nhận Proxy của Render (vì IP Render thay đổi liên tục)
+forwardedHeaderOptions.KnownNetworks.Clear();
+forwardedHeaderOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeaderOptions);
 
 // 6) Chỉ bật Developer Exception Page khi đang dev
 if (app.Environment.IsDevelopment())

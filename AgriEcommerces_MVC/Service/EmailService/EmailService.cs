@@ -85,18 +85,17 @@ namespace AgriEcommerces_MVC.Service.EmailService
             using var client = new SmtpClient();
             try
             {
-                // 1. QUAN TRỌNG: Bỏ qua kiểm tra thu hồi chứng chỉ
-                // Trên Linux/Docker, bước này thường bị treo dẫn đến Timeout.
+                client.Timeout = 15000;
+
                 client.CheckCertificateRevocation = false;
 
                 // Lấy thông tin Server & Port từ cấu hình
                 string smtpServer = emailSettings["SmtpServer"] ?? "smtp.gmail.com";
                 if (!int.TryParse(emailSettings["SmtpPort"], out int smtpPort))
                 {
-                    smtpPort = 587; // Port mặc định cho STARTTLS nếu config lỗi
+                    smtpPort = 465;
                 }
-
-                // 2. Kết nối với Server (Port 587 + StartTls là chuẩn nhất cho Gmail)
+                var socketOptions = smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
                 await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
 
                 // 3. Xác thực (Dùng App Password)
@@ -124,7 +123,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
             }
         }
 
-        // --- CÁC HÀM GENERATE HTML GIỮ NGUYÊN ---
         private string GenerateOrderConfirmationHtml(order order)
         {
             var sb = new StringBuilder();
