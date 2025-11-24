@@ -85,23 +85,26 @@ namespace AgriEcommerces_MVC.Service.EmailService
             using var client = new SmtpClient();
             try
             {
-                client.Timeout = 15000;
+                client.Timeout = 30000;
 
                 client.CheckCertificateRevocation = false;
 
-                // Lấy thông tin Server & Port từ cấu hình
                 string smtpServer = emailSettings["SmtpServer"] ?? "smtp.gmail.com";
                 if (!int.TryParse(emailSettings["SmtpPort"], out int smtpPort))
                 {
-                    smtpPort = 465;
+                    smtpPort = 465; // Mặc định về 465 nếu config lỗi
                 }
+
+                // Logic chọn giao thức: 465 thì SSL, 587 thì StartTLS
                 var socketOptions = smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
-                await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+
+                // 2. SỬA LỖI Ở ĐÂY: Dùng biến socketOptions đã tính toán ở trên
+                await client.ConnectAsync(smtpServer, smtpPort, socketOptions);
 
                 // 3. Xác thực (Dùng App Password)
                 await client.AuthenticateAsync(
-                    emailSettings["Username"], // Email đầy đủ
-                    emailSettings["Password"]  // Mật khẩu ứng dụng 16 ký tự
+                    emailSettings["Username"],
+                    emailSettings["Password"]
                 );
 
                 // 4. Gửi mail
@@ -109,13 +112,11 @@ namespace AgriEcommerces_MVC.Service.EmailService
             }
             catch (Exception ex)
             {
-                // Ghi log lỗi ra console của Render để debug nếu cần
                 Console.WriteLine($"[Email Error]: {ex.Message}");
                 throw new Exception($"Không thể gửi email: {ex.Message}");
             }
             finally
             {
-                // 5. Ngắt kết nối sạch sẽ
                 if (client.IsConnected)
                 {
                     await client.DisconnectAsync(true);
