@@ -117,8 +117,8 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             }
         }
 
-        /// Duyệt yêu cầu rút tiền
-        /// POST: /Manager/Payout/Approve
+        // File: Areas/Management/Controllers/PayoutController.cs
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id, string transactionCode)
@@ -127,16 +127,19 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
             {
                 var adminId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
 
-                var success = await _walletService.ApprovePayoutRequest(id, adminId, transactionCode);
+                // GỌI HÀM KIỂU MỚI (Deconstruct Tuple)
+                // Hứng 2 giá trị: success (bool) và message (string)
+                var (success, message) = await _walletService.ApprovePayoutRequest(id, adminId, transactionCode);
 
                 if (success)
                 {
                     _logger.LogInformation($"Admin {adminId} approved payout request {id}");
-                    TempData["Success"] = "Đã duyệt yêu cầu rút tiền thành công. Vui lòng thực hiện chuyển khoản cho Farmer.";
+                    TempData["Success"] = "Đã duyệt yêu cầu rút tiền thành công.";
                 }
                 else
                 {
-                    TempData["Error"] = "Không thể duyệt yêu cầu này. Vui lòng kiểm tra lại trạng thái.";
+                    // Hiển thị lỗi cụ thể từ Service trả về
+                    TempData["Error"] = message;
                 }
             }
             catch (Exception ex)
@@ -149,7 +152,6 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
         }
 
         /// Từ chối yêu cầu rút tiền
-        /// POST: /Manager/Payout/Reject
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(int id, string reason)
@@ -266,7 +268,7 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
                 }
             }
 
-    public async Task<IActionResult> ExportReport(int year, int month)
+        public async Task<IActionResult> ExportReport(int year, int month)
         {
             try
             {
