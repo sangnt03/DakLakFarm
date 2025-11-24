@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Transactions;
 
 namespace AgriEcommerces_MVC.Areas.Management.Controllers
 {
@@ -120,13 +121,13 @@ namespace AgriEcommerces_MVC.Areas.Management.Controllers
         /// POST: /Manager/Payout/Approve
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id)
+        public async Task<IActionResult> Approve(int id, string transactionCode)
         {
             try
             {
                 var adminId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
 
-                var success = await _walletService.ApprovePayoutRequest(id, adminId);
+                var success = await _walletService.ApprovePayoutRequest(id, adminId, transactionCode);
 
                 if (success)
                 {

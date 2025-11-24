@@ -1,290 +1,146 @@
 ﻿@model AgriEcommerces_MVC.Models.PayoutRequest
-
 @{
     ViewData["Title"] = "Chi tiết yêu cầu rút tiền";
-    var bankDetails = ViewBag.BankDetails;
-    var farmerBalance = (decimal)ViewBag.FarmerBalance;
-    var recentTransactions = (List<AgriEcommerces_MVC.Models.WalletTransaction>)ViewBag.RecentTransactions;
+
+    // Parse JSON bankDetails
+    dynamic bankInfo = null;
+    if (!string.IsNullOrEmpty(Model.BankDetails))
+    {
+        bankInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(Model.BankDetails);
+    }
 }
 
-<div class="container-fluid mt-4">
-    <!-- Breadcrumb -->
+<div class="container-fluid">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-area="Manager" asp-controller="Home" asp-action="Index">Dashboard</a></li>
-            <li class="breadcrumb-item"><a asp-action="Index">Quản lý rút tiền</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Chi tiết #@Model.PayoutRequestId</li>
+            <li class="breadcrumb-item"><a asp-area="Management" asp-controller="Payout" asp-action="Index">Quản lý rút tiền</a></li>
+            <li class="breadcrumb-item active" aria-current="page">chi tiết</li>
         </ol>
     </nav>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <i class="bi bi-file-earmark-text"></i>
-            Chi tiết yêu cầu rút tiền #@Model.PayoutRequestId
-        </h2>
-        <a asp-action="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại
-        </a>
-    </div>
-
     <div class="row">
-        <!-- Thông tin chính -->
-        <div class="col-lg-8">
-            <!-- Thông tin yêu cầu -->
-            <div class="card mb-3">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông tin yêu cầu</h5>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header badge bg-warning">  
+                    <h4>Thông tin yêu cầu #@Model.PayoutRequestId</h4>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Mã yêu cầu</label>
-                            <div class="fw-bold">#@Model.PayoutRequestId</div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Số tiền yêu cầu</label>
-                            <div class="fw-bold text-primary fs-4">@Model.Amount.ToString("N0") đ</div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Ngày yêu cầu</label>
-                            <div>@Model.RequestDate.ToString("dd/MM/yyyy HH:mm")</div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="text-muted small">Trạng thái</label>
-                            <div>
-                                @switch (Model.Status)
-                                {
-                                    case "Pending":
-                                        <span class="badge bg-warning text-dark fs-6">
-                                            <i class="bi bi-hourglass-split"></i> Chờ xử lý
-                                        </span>
-                                        break;
-                                    case "Completed":
-                                        <span class="badge bg-success fs-6">
-                                            <i class="bi bi-check-circle"></i> Đã hoàn thành
-                                        </span>
-                                        break;
-                                    case "Rejected":
-                                        <span class="badge bg-danger fs-6">
-                                            <i class="bi bi-x-circle"></i> Đã từ chối
-                                        </span>
-                                        break;
-                                }
-                            </div>
-                        </div>
-                        @if (Model.CompletedDate.HasValue)
+                    <p><strong>Tên shop:</strong> @Model.Farmer?.fullname</p>
+                    <p><strong>Số tiền:</strong> <span class="fw-bold fs-4" style="-webkit-text-fill-color:orange">@Model.Amount.ToString("N0") VNĐ</span></p>
+                    <p><strong>Ngày tạo:</strong> @Model.RequestDate</p>
+                    <p>
+                        <strong>Trạng thái:</strong>
+                        @if (Model.Status == "Pending")
                         {
-                            <div class="col-md-6 mb-3">
-                                <label class="text-muted small">Ngày hoàn thành</label>
-                                <div>@Model.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")</div>
-                            </div>
+                            <span class="badge bg-warning text-black">Chờ duyệt</span>
                         }
-                    </div>
+                        else if (Model.Status == "Completed")
+                        {
+
+                            <span class="badge bg-success text-black">Đã chuyển</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge bg-danger text-black">Đã từ chối</span>
+                        }
+                    </p>
+
+                    <hr />
+                    <h5>Thông tin ngân hàng người bán:</h5>
+                    <ul>
+                        <li>Ngân hàng: <strong>@bankInfo?.BankCode</strong></li>
+                        <li>Số tài khoản: <strong>@bankInfo?.AccountNumber</strong></li>
+                        <li>Chủ tài khoản: <strong>@bankInfo?.AccountName</strong></li>
+                    </ul>
                 </div>
             </div>
-
-            <!-- Thông tin ngân hàng -->
-            <div class="card mb-3">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-bank"></i> Thông tin ngân hàng</h5>
+            <br />
+            <div class="alert alert-warning text-start" role="alert">
+                <h6 class="alert-heading fw-bold"><i class="fas fa-exclamation-triangle"></i> LƯU Ý QUAN TRỌNG:</h6>
+                <p class="mb-0 small">
+                    Trước khi bấm chuyển tiền trên điện thoại, vui lòng kiểm tra tên người nhận trên App ngân hàng có khớp với tên dưới đây không:
+                </p>
+                
+                <hr>
+                <div class="text-center">
+                    <span class="text-muted">Tên người bán khai báo:</span><br />
+                    <span class="fs-5 fw-bold text-uppercase text-primary">@bankInfo.AccountName</span>
                 </div>
-                <div class="card-body">
-                    @if (bankDetails != null)
-                    {
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="text-muted small">Ngân hàng</label>
-                                <div class="fw-bold">@bankDetails.bankName</div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="text-muted small">Số tài khoản</label>
-                                <div class="fw-bold font-monospace">@bankDetails.accountNumber</div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="text-muted small">Chủ tài khoản</label>
-                                <div class="fw-bold text-uppercase">@bankDetails.accountName</div>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info mt-3">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Lưu ý:</strong> Vui lòng kiểm tra kỹ thông tin ngân hàng trước khi chuyển khoản.
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-danger">Không thể hiển thị thông tin ngân hàng</p>
-                    }
-                </div>
-            </div>
-
-            <!-- Giao dịch gần đây của Farmer -->
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Giao dịch gần đây</h5>
-                </div>
-                <div class="card-body">
-                    @if (recentTransactions != null && recentTransactions.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Ngày</th>
-                                        <th>Loại</th>
-                                        <th>Mô tả</th>
-                                        <th class="text-end">Số tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var tx in recentTransactions)
-                                    {
-                                        <tr>
-                                            <td><small>@tx.CreateDate.ToString("dd/MM/yyyy")</small></td>
-                                            <td>
-                                                <small>
-                                                    @switch (tx.Type)
-                                                    {
-                                                        case "OrderRevenue":
-                                                            <span class="badge bg-success">Doanh thu</span>
-                                                            break;
-                                                        case "Payout":
-                                                            <span class="badge bg-warning text-dark">Rút tiền</span>
-                                                            break;
-                                                        default:
-                                                            <span class="badge bg-secondary">@tx.Type</span>
-                                                            break;
-                                                    }
-                                                </small>
-                                            </td>
-                                            <td><small>@tx.Description</small></td>
-                                            <td class="text-end">
-                                                <small class="@(tx.Amount >= 0 ? "text-success" : "text-danger")">
-                                                    @(tx.Amount >= 0 ? "+" : "")@tx.Amount.ToString("N0") đ
-                                                </small>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted text-center">Không có giao dịch gần đây</p>
-                    }
-                </div>
+                <p class="mb-0 small">
+                    <strong>Nếu KHÔNG KHỚP TÊN, VUI LÒNG KHÔNG CHUYỂN TIỀN!</strong> <br />Hãy bấm nút
+                    <strong>"SAI TÊN / TỪ CHỐI"</strong> để từ chối yêu cầu rút tiền này.
+                </p>
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Thông tin Farmer -->
-            <div class="card mb-3">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> Thông tin Farmer</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="text-muted small">Tên Farmer</label>
-                        <div class="fw-bold">@Model.Farmer.fullname</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="text-muted small">Email</label>
-                        <div>@Model.Farmer.email</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="text-muted small">Số điện thoại</label>
-                        <div>@(Model.Farmer.phonenumber ?? "Chưa cập nhật")</div>
-                    </div>
-                    <hr>
-                    <div class="mb-0">
-                        <label class="text-muted small">Số dư ví hiện tại</label>
-                        <div class="fw-bold text-success fs-5">@farmerBalance.ToString("N0") đ</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Thao tác -->
+        <div class="col-md-6">
             @if (Model.Status == "Pending")
             {
-                <div class="card border-warning mb-3">
-                    <div class="card-header bg-warning">
-                        <h5 class="mb-0"><i class="bi bi-gear"></i> Thao tác</h5>
+                <div class="card shadow border-primary">
+                    <div class="card-header bg-info text-white text-center">
+                        <h5 class="mb-0"><i class="fas fa-qrcode"></i> QUÉT MÃ ĐỂ CHUYỂN TIỀN</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <!-- Duyệt -->
-                            <form asp-action="Approve" method="post" onsubmit="return confirm('Xác nhận duyệt yêu cầu này?\n\nSau khi duyệt, vui lòng thực hiện chuyển khoản cho Farmer theo thông tin đã cung cấp.')">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@Model.PayoutRequestId" />
-                                <button type="submit" class="btn btn-success w-100">
-                                    <i class="bi bi-check-circle"></i> Duyệt yêu cầu
-                                </button>
-                            </form>
-
-                            <!-- Từ chối -->
-                            <button type="button" class="btn btn-danger"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#rejectModal">
-                                <i class="bi bi-x-circle"></i> Từ chối yêu cầu
-                            </button>
-                        </div>
-
-                        <div class="alert alert-warning mt-3 mb-0">
-                            <small>
-                                <i class="bi bi-exclamation-triangle"></i>
-                                <strong>Lưu ý:</strong> Sau khi duyệt, bạn cần thực hiện chuyển khoản thực tế cho Farmer.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="card">
                     <div class="card-body text-center">
-                        <i class="bi bi-check-circle text-muted fs-1"></i>
-                        <p class="text-muted mt-2">Yêu cầu đã được xử lý</p>
+                        @if (bankInfo != null)
+                        {
+                                string qrUrl = $"https://img.vietqr.io/image/{bankInfo.BankCode}-{bankInfo.AccountNumber}-compact2.png";
+                                qrUrl += $"?amount={Model.Amount}";
+                                qrUrl += $"&addInfo=Thanh toan rut tien Farmer {Model.FarmerId}";
+                                qrUrl += $"&accountName={bankInfo.AccountName}";
+                            
+                            <img src="@qrUrl" class="img-fluid mb-3" style="max-width: 300px; border: 2px solid #0d6efd; border-radius: 8px;" alt="VietQR Code" />
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger">Dữ liệu ngân hàng bị lỗi.</div>
+                        }
+
+                        <hr />
+                        <form asp-action="Approve" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.PayoutRequestId" />
+                    
+                            <div class="mb-3 text-start">
+                                <label class="form-label fw-bold">Nhập mã giao dịch (FT...):</label>
+                                <input type="text" name="transactionCode" class="form-control" required placeholder="Nhập mã sau khi chuyển thành công">
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success ">
+                                    <i class="fas fa-check-circle"></i> ĐÃ CHUYỂN ĐÚNG & DUYỆT
+                                </button>
+                        
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                    <i class="fas fa-times-circle"></i> SAI TÊN / TỪ CHỐI
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             }
         </div>
-    </div>
-</div>
 
-<!-- Modal từ chối -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-action="Reject" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Từ chối yêu cầu rút tiền</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal fade" id="rejectModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form asp-action="Reject" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.PayoutRequestId" />
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Từ chối yêu cầu</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <label class="form-label">Lý do từ chối:</label>
+                            <textarea name="reason" class="form-control" rows="3" required>Thông tin ngân hàng không chính xác (Sai tên chủ tài khoản).</textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-danger">Xác nhận Từ chối</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" name="id" value="@Model.PayoutRequestId" />
-
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        Bạn có chắc muốn từ chối yêu cầu này?
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
-                        <textarea name="reason" class="form-control" rows="4" required
-                                  placeholder="Nhập lý do từ chối (Farmer sẽ thấy thông tin này)"></textarea>
-                        <small class="text-muted">Vui lòng nêu rõ lý do để Farmer hiểu và khắc phục</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-x-circle"></i> Xác nhận từ chối
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

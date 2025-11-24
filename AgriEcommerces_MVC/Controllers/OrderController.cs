@@ -275,16 +275,11 @@ public class OrderController : Controller
         switch (model.PaymentMethod)
         {
             case "VNPay":
-                // -> Chuyển sang PaymentController để xử lý VNPay
                 return RedirectToAction("CreatePayment", "Payment", new { orderId = order.orderid });
 
             case "MoMo":
-                // -> Sau này bạn làm thêm Action CreateMoMoPayment
-                // return RedirectToAction("CreateMoMoPayment", "Payment", new { orderId = order.orderid });
-                TempData["Error"] = "Phương thức MoMo chưa được hỗ trợ.";
-                return RedirectToAction("OrderConfirmation", new { orderId = order.orderid });
+                return RedirectToAction("CreateMoMoPayment", "Payment", new { orderId = order.orderid });
 
-            // [OrderController.cs] - Bên trong Action CreateOrder
             case "COD":
             default:
                 // 1. Tạo Payment Pending
@@ -311,9 +306,8 @@ public class OrderController : Controller
 
                         try
                         {
-                            // Query lại dữ liệu từ DB để đảm bảo chính xác và kết nối còn sống
                             var orderInScope = await context.orders
-                                .AsNoTracking() // Quan trọng: Đọc nhanh, không chiếm dụng bộ nhớ theo dõi
+                                .AsNoTracking()
                                 .Include(o => o.customer)
                                 .Include(o => o.orderdetails).ThenInclude(od => od.product)
                                 .FirstOrDefaultAsync(o => o.orderid == orderIdForMail);
@@ -360,7 +354,7 @@ public class OrderController : Controller
         var order = await _db.orders
             .Include(o => o.orderdetails)
             .ThenInclude(od => od.product)
-            .Include(o => o.Payments) // ← MỚI: Include thông tin thanh toán
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.orderid == orderId && o.customerid == userId);
 
         if (order == null)
@@ -409,14 +403,12 @@ public class OrderController : Controller
             return RedirectBasedOnReturnUrl(returnUrl, orderId);
         }
 
-        // Kiểm tra trạng thái - chỉ cho phép hủy khi đang "Pending" hoặc "Chờ duyệt"
         if (order.status != "Pending" && order.status != "Chờ duyệt")
         {
             TempData["Error"] = $"Không thể hủy đơn hàng ở trạng thái '{order.status}'.";
             return RedirectBasedOnReturnUrl(returnUrl, orderId);
         }
 
-        // Kiểm tra nếu đơn đã thanh toán thành công thì KHÔNG cho hủy
         var successfulPayment = order.Payments?.FirstOrDefault(p => p.Status == "Success");
         if (successfulPayment != null)
         {

@@ -63,37 +63,51 @@ namespace AgriEcommerces_MVC.Service.WalletService
         }
 
         // 4. Admin DUYỆT yêu cầu -> Trừ tiền ví
-        public async Task<bool> ApprovePayoutRequest(int payoutRequestId, int adminId)
+        public async Task<bool> ApprovePayoutRequest(int payoutRequestId, int adminId, string transactionProof)
         {
-            var request = await _context.PayoutRequests.FindAsync(payoutRequestId);
-            if (request == null || request.Status != "Pending") return false;
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // A. Update trạng thái PayoutRequest
+                // 1. Lấy yêu cầu rút tiền
+                var request = await _context.PayoutRequests
+                    .FirstOrDefaultAsync(p => p.PayoutRequestId == payoutRequestId);
+
+                // Check trạng thái (chỉ duyệt đơn Pending)
+                if (request == null || request.Status != "Pending") return false;
+
+                // 2. Lấy thông tin Farmer để check số dư lần cuối
+                var farmer = await _context.users.FindAsync(request.FarmerId);
+                if (farmer == null || farmer.balance < request.Amount) return false;
+
+                // 3. Cập nhật trạng thái PayoutRequest (Theo bảng của bạn)
                 request.Status = "Completed";
                 request.CompletedDate = DateTimeHelper.GetVietnamTime();
 
-                // B. Tạo giao dịch trừ tiền (WalletTransaction)
-                //
+                _context.PayoutRequests.Update(request);
+
+                // 4. Trừ tiền Farmer
+                farmer.balance -= request.Amount;
+                _context.users.Update(farmer);
+
+                // 5. Ghi lịch sử biến động số dư (WalletTransaction)
                 var walletTx = new WalletTransaction
                 {
                     FarmerId = request.FarmerId,
-                    Amount = -request.Amount, // Số âm để trừ tiền
+                    Amount = -request.Amount, // Số âm
                     Type = "Payout",
-                    ReferenceId = request.PayoutRequestId, // Link tới ID yêu cầu rút
-                    Description = $"Rút tiền thành công (Yêu cầu #{request.PayoutRequestId})",
-                    CreateDate = DateTimeHelper.GetVietnamTime()
+                    CreateDate = DateTimeHelper.GetVietnamTime(),
+                    Description = $"Rút tiền thành công. Mã GD MoMo: {transactionProof}",
+                    ReferenceId = request.PayoutRequestId // Link ngược lại bảng request
                 };
-
                 _context.WalletTransaction.Add(walletTx);
 
+                // 6. Lưu tất cả và Commit
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
                 return true;
             }
-            catch
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return false;
@@ -108,9 +122,6 @@ namespace AgriEcommerces_MVC.Service.WalletService
 
             request.Status = "Rejected";
             request.CompletedDate = DateTimeHelper.GetVietnamTime();
-
-            // Có thể lưu lý do từ chối vào một chỗ khác hoặc gửi email thông báo cho Farmer
-            // Hiện tại Model PayoutRequest chưa có cột 'Reason', bạn có thể bổ sung sau nếu cần.
 
             await _context.SaveChangesAsync();
             return true;

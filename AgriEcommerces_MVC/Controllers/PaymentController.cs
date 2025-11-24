@@ -256,52 +256,91 @@ namespace AgriEcommerces_MVC.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> MoMoReturn()
         {
-            // Validate chữ ký
             string signature = Request.Query["signature"];
             if (!_moMoService.ValidateSignature(Request.Query, signature))
             {
-                TempData["Error"] = "Chữ ký không hợp lệ!";
+                TempData["Error"] = "Lỗi bảo mật: Chữ ký thanh toán MoMo không hợp lệ!";
                 return RedirectToAction("Index", "Home");
             }
 
+            // 2. Lấy các tham số từ URL
             string resultCode = Request.Query["resultCode"];
-            int orderId = int.Parse(Request.Query["orderId"]);
+            string rawOrderId = Request.Query["orderId"];
+            string transId = Request.Query["transId"];
+            string message = Request.Query["message"];
 
-            if (resultCode == "0") // 0 là thành công
+            int orderId = 0;
+            try
             {
-                // Logic update DB giống hệt VNPayReturn
-                // Bạn có thể tách hàm update DB ra dùng chung để đỡ lặp code
-                var order = await _context.orders.FindAsync(orderId);
-                var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
+                if (rawOrderId.Contains("_"))
+                {
+                    orderId = int.Parse(rawOrderId.Split('_')[0]);
+                }
+                else
+                {
+                    orderId = int.Parse(rawOrderId);
+                }
+            }
+            catch (Exception)
+            {
+                // Trường hợp mã đơn hàng bị lỗi format lạ
+                TempData["Error"] = "Lỗi xử lý mã đơn hàng từ cổng thanh toán.";
+                return RedirectToAction("Index", "Home");
+            }
 
-                if (order != null) order.status = "Paid";
+            // 4. Tìm đơn hàng và bản ghi Payment trong Database
+            var order = await _context.orders.FindAsync(orderId);
+            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
+
+            if (resultCode == "0")
+            {
+                if (order != null)
+                {
+                    order.status = "Paid";
+                    _context.orders.Update(order);
+                }
+
                 if (payment != null)
                 {
                     payment.Status = "Success";
-                    payment.GatewayTransactionCode = Request.Query["transId"];
+                    payment.GatewayTransactionCode = transId;
+                    _context.Payments.Update(payment);
                 }
-                await _context.SaveChangesAsync();
 
+                await _context.SaveChangesAsync();
                 TempData["Success"] = "Thanh toán MoMo thành công!";
-                return RedirectToAction("OrderConfirmation", "Order", new { orderId });
             }
             else
             {
-                TempData["Error"] = "Giao dịch thất bại hoặc bị hủy.";
-                return RedirectToAction("OrderConfirmation", "Order", new { orderId });
+                if (payment != null)
+                {
+                    payment.Status = "Failed";
+                    _context.Payments.Update(payment);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (resultCode == "1006")
+                {
+                    TempData["Error"] = "Bạn đã hủy giao dịch thanh toán MoMo.";
+                }
+                else
+                {
+                    TempData["Error"] = $"Thanh toán thất bại: {message} (Mã lỗi: {resultCode})";
+                }
             }
+            return RedirectToAction("OrderConfirmation", "Order", new { orderId = orderId });
         }
 
-        public async Task<IActionResult> PaymentFailed(int orderId, string error)
-        {
-            var order = await _context.orders.FindAsync(orderId);
-            if (order == null) return NotFound();
+        //public async Task<IActionResult> PaymentFailed(int orderId, string error)
+        //{
+        //    var order = await _context.orders.FindAsync(orderId);
+        //    if (order == null) return NotFound();
 
-            ViewBag.OrderCode = order.ordercode;
-            ViewBag.Error = error;
-            ViewBag.OrderId = orderId;
+        //    ViewBag.OrderCode = order.ordercode;
+        //    ViewBag.Error = error;
+        //    ViewBag.OrderId = orderId;
 
-            return View();
-        }
+        //    return View();
+        //}
     }
 }

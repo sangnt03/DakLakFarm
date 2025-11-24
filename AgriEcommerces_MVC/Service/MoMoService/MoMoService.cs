@@ -25,21 +25,24 @@ namespace AgriEcommerces_MVC.Service.MoMoService
 
             // requestId bắt buộc là duy nhất cho mỗi request
             string requestId = Guid.NewGuid().ToString();
-            string orderIdStr = orderId.ToString();
-            string amountStr = ((long)amount).ToString(); // MoMo yêu cầu số nguyên (VND)
-            string extraData = ""; // Có thể encode base64 thông tin thêm nếu cần
+            string orderIdStr = orderId.ToString() + "_" + DateTime.Now.Ticks.ToString();
+            // Mẹo: Nối thêm thời gian vào OrderId để luôn duy nhất mỗi lần bấm
+            // -------------------------------------------------------------------------
+
+            string amountStr = ((long)amount).ToString(); // Đảm bảo không có số thập phân
+            string extraData = "";
+            string requestType = "captureWallet";
 
             // Tạo chữ ký HMAC SHA256 (Đúng thứ tự alphabet các tham số)
             // format: accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
-            string rawHash = $"accessKey={accessKey}&amount={amountStr}&extraData={extraData}&ipnUrl={notifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={returnUrl}&requestId={requestId}&requestType=captureWallet";
+            string rawHash = $"accessKey={accessKey}&amount={amountStr}&extraData={extraData}&ipnUrl={notifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={returnUrl}&requestId={requestId}&requestType={requestType}";
 
             string signature = ComputeHmacSha256(rawHash, secretKey);
 
-            // Tạo JSON body
             var message = new
             {
                 partnerCode = partnerCode,
-                partnerName = "AgriEcommerce",
+                partnerName = "AgriStore",
                 storeId = "AgriStore",
                 requestId = requestId,
                 amount = amountStr,
@@ -49,7 +52,7 @@ namespace AgriEcommerces_MVC.Service.MoMoService
                 ipnUrl = notifyUrl,
                 lang = "vi",
                 extraData = extraData,
-                requestType = "captureWallet",
+                requestType = requestType,
                 signature = signature
             };
 
@@ -57,9 +60,20 @@ namespace AgriEcommerces_MVC.Service.MoMoService
             {
                 var response = await client.PostAsync(endpoint, new StringContent(JsonConvert.SerializeObject(message), Encoding.UTF8, "application/json"));
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var jsonResponse = JObject.Parse(responseContent);
 
-                // Trả về Link thanh toán (payUrl)
+                // --- DEBUG LOGGING (Xem lỗi ở đây) ---
+                var jsonResponse = JObject.Parse(responseContent);
+                Console.WriteLine("--- MOMO RESPONSE ---");
+                Console.WriteLine(responseContent);
+                // -------------------------------------
+
+                if (jsonResponse["resultCode"]?.ToString() != "0")
+                {
+                    // Nếu lỗi, throw exception để hiện ra trình duyệt cho dễ sửa
+                    string errorMsg = jsonResponse["message"]?.ToString() ?? "Lỗi không xác định từ MoMo";
+                    throw new Exception($"MoMo Error: {errorMsg} (LocalMessage: {jsonResponse["localMessage"]})");
+                }
+
                 return jsonResponse["payUrl"]?.ToString();
             }
         }
