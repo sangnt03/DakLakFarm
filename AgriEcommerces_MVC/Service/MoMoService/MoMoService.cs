@@ -25,11 +25,10 @@ namespace AgriEcommerces_MVC.Service.MoMoService
 
             string requestId = Guid.NewGuid().ToString();
             string orderIdStr = orderId.ToString();
-            string amountStr = ((long)amount).ToString(); // MoMo yêu cầu số nguyên (VND)
-            string extraData = ""; // Có thể encode base64 thông tin thêm nếu cần
+            string amountStr = ((long)amount).ToString();
+            string extraData = "";
 
-            // Tạo chữ ký HMAC SHA256 (Đúng thứ tự alphabet các tham số)
-            // format: accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
+            string requestType = "captureWallet";
             string rawHash = $"accessKey={accessKey}&amount={amountStr}&extraData={extraData}&ipnUrl={notifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={returnUrl}&requestId={requestId}&requestType=captureWallet";
 
             string signature = ComputeHmacSha256(rawHash, secretKey);
