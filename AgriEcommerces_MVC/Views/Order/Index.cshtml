@@ -25,6 +25,7 @@
     <form asp-action="CreateOrder" method="post" id="checkout-form">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="SellerId" />
+        <input type="hidden" asp-for="IsBuyNow" />
         <input type="hidden" asp-for="PromotionCode" id="applied-promo-code" />
 
         <div class="row">
@@ -430,6 +431,8 @@
             $('#apply-promo-btn').click(function () {
                 var code = $('#promo-code-input').val().trim();
                 var sellerId = $('input[name="SellerId"]').val();
+                var rawIsBuyNow = $('input[name="IsBuyNow"]').val();
+                var isBuyNowBool = (rawIsBuyNow && rawIsBuyNow.toLowerCase() === 'true');
                 var $msg = $('#promo-message');
                 var $btn = $(this);
 
@@ -446,7 +449,8 @@
                     type: 'POST',
                     data: {
                         code: code,
-                        sellerId: sellerId
+                        sellerId: sellerId,
+                        isBuyNow: isBuyNowBool
                     },
                     success: function (response) {
                         if (response.success) {

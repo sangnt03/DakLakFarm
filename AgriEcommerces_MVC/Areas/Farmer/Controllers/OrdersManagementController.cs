@@ -50,16 +50,16 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             if (order == null)
                 return NotFound();
 
-            if (order.status == "Pending" || order.status == "Paid")
+            if (order.status == "Pending" )
             {
                 order.status = "Processing";
-                TempData["Success"] = "Đã xác nhận đơn hàng (Processing). Vui lòng chuẩn bị hàng.";
+                TempData["Success"] = "Đã xác nhận đơn hàng. Vui lòng chuẩn bị hàng.";
             }
 
-            else if (order.status == "Processing")
+            else if (order.status == "Processing"|| order.status == "Paid")
             {
                 order.status = "Shipped";
-                TempData["Success"] = "Đơn hàng đã được giao cho vận chuyển (Shipped).";
+                TempData["Success"] = "Đơn hàng đã được giao cho vận chuyển.";
             }
             else
             {

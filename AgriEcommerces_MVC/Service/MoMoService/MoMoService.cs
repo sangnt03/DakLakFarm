@@ -24,9 +24,9 @@ namespace AgriEcommerces_MVC.Service.MoMoService
             string notifyUrl = _configuration["MoMo:NotifyUrl"];
 
             string requestId = Guid.NewGuid().ToString();
-            string orderIdStr = orderId.ToString();
+            string orderIdStr = orderId.ToString() + "_" + DateTime.Now.Ticks.ToString();
             string amountStr = ((long)amount).ToString();
-            string extraData = "";
+            string extraData = "";  
 
             string requestType = "captureWallet";
             string rawHash = $"accessKey={accessKey}&amount={amountStr}&extraData={extraData}&ipnUrl={notifyUrl}&orderId={orderIdStr}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={returnUrl}&requestId={requestId}&requestType=captureWallet";

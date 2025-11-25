@@ -28,7 +28,7 @@
         <div class="text-center py-5 bg-light rounded-3">
             <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
             <h5 class="text-muted">Bạn chưa có đơn hàng nào</h5>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3 px-4">
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3 px-4">
                 <i class="fas fa-shopping-cart me-2"></i> Mua sắm ngay
             </a>
         </div>
@@ -45,13 +45,13 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
                     Chờ xử lý
-                    <span class="badge bg-warning text-dark ms-1">@Model.Count(o => o.status == "Pending" || o.status=="Paid")</span>
+                    <span class="badge bg-warning text-dark ms-1">@Model.Count(o => o.status == "Pending" || o.status=="Paid" || o.status == "Processing")</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button" role="tab">
                     Đang vận chuyển
-                    <span class="badge bg-info text-dark ms-1">@Model.Count(o => o.status == "Shipped" || o.status == "Processing")</span>
+                    <span class="badge bg-info text-dark ms-1">@Model.Count(o => o.status == "Shipped")</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -76,7 +76,7 @@
 
             <div class="tab-pane fade" id="pending" role="tabpanel">
                 @{
-                    var pendingOrders = Model.Where(o => o.status == "Pending" || o.status == "Paid").ToList();
+                    var pendingOrders = Model.Where(o => o.status == "Pending" || o.status == "Paid" || o.status == "Processing").ToList();
                 }
                 @if (pendingOrders.Any())
                 {
@@ -90,7 +90,7 @@
 
             <div class="tab-pane fade" id="shipping" role="tabpanel">
                 @{
-                    var shippingOrders = Model.Where(o => o.status == "Processing" || o.status == "Shipped").ToList();
+                    var shippingOrders = Model.Where(o =>o.status == "Shipped").ToList();
                 }
                 @if (shippingOrders.Any())
                 {

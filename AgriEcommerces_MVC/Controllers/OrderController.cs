@@ -17,6 +17,7 @@ public class OrderController : Controller
     private readonly IEmailService _emailService;
     private readonly ILogger<OrderController> _logger;
     private const string CART_KEY = "Cart";
+    private const string BUYNOW_KEY = "Cart_BuyNow";
     private const decimal COMMISSION_RATE = 0.10m; // 10% hoa hồng Admin
     private readonly IServiceScopeFactory _scopeFactory;
 
@@ -44,16 +45,19 @@ public class OrderController : Controller
     }
 
     // [GET] /Order/Index
-    public async Task<IActionResult> Index(int? sellerId)
+    public async Task<IActionResult> Index(int? sellerId, bool isBuyNow = false)
     {
+
+        string sessionKey = isBuyNow ? BUYNOW_KEY : CART_KEY;
         // 1. Lấy giỏ hàng
-        var cartAll = HttpContext.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
+        var cartAll = HttpContext.Session.GetObject<CartViewModel>(sessionKey) ?? new CartViewModel();
         CartViewModel cartForPayment = sellerId.HasValue
             ? new CartViewModel { Items = cartAll.Items.Where(i => i.SellerId == sellerId.Value).ToList() }
             : cartAll;
 
         if (!cartForPayment.Items.Any())
         {
+            if (isBuyNow) return RedirectToAction("Index", "Home");
             TempData["Error"] = "Giỏ hàng trống.";
             return RedirectToAction("Index", "Cart");
         }
@@ -67,14 +71,6 @@ public class OrderController : Controller
                                       .OrderByDescending(a => a.is_default)
                                       .ToListAsync();
 
-        // 4. KIỂM TRA QUAN TRỌNG: Nếu không có địa chỉ, không cho thanh toán
-        //if (!savedAddresses.Any())
-        //{
-        //    TempData["Error"] = "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước khi thanh toán.";
-        //    return RedirectToAction("Index", "CustomerAddress", new { returnUrl = Url.Action("Index", "Order", new { sellerId }) });
-        //}
-
-        // 5. Tạo CheckoutViewModel
         var model = new CheckoutViewModel
         {
             Cart = cartForPayment,
@@ -82,7 +78,8 @@ public class OrderController : Controller
             SavedAddresses = savedAddresses,
             FinalAmount = cartForPayment.GrandTotal,
             SelectedAddressId = savedAddresses.FirstOrDefault(a => a.is_default)?.id
-                            ?? savedAddresses.FirstOrDefault()?.id
+                            ?? savedAddresses.FirstOrDefault()?.id,
+            IsBuyNow = isBuyNow
         };
 
         return View(model);
@@ -90,9 +87,10 @@ public class OrderController : Controller
 
     // [POST] /Order/ApplyPromotion (Dùng cho AJAX)
     [HttpPost]
-    public async Task<IActionResult> ApplyPromotion(string code, int? sellerId)
+    public async Task<IActionResult> ApplyPromotion(string code, int? sellerId,bool isBuyNow = false)
     {
-        var cartAll = HttpContext.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
+        string sessionKey = isBuyNow ? BUYNOW_KEY : CART_KEY;
+        var cartAll = HttpContext.Session.GetObject<CartViewModel>(sessionKey) ?? new CartViewModel();
         CartViewModel cartForPayment = sellerId.HasValue
             ? new CartViewModel { Items = cartAll.Items.Where(i => i.SellerId == sellerId.Value).ToList() }
             : cartAll;
@@ -127,7 +125,7 @@ public class OrderController : Controller
         });
     }
 
-    // [POST] /Order/CreateOrder - UPDATED: Tạo đơn với trạng thái Pending
+    // [POST] /Order/CreateOrder
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
@@ -137,7 +135,8 @@ public class OrderController : Controller
         // 1. Lấy giỏ hàng và thông tin user
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var user = await _db.users.FindAsync(userId);
-        var cartAll = HttpContext.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
+        string sessionKey = model.IsBuyNow ? BUYNOW_KEY : CART_KEY;
+        var cartAll = HttpContext.Session.GetObject<CartViewModel>(sessionKey) ?? new CartViewModel();
 
         model.Cart = model.SellerId.HasValue
             ? new CartViewModel { Items = cartAll.Items.Where(i => i.SellerId == model.SellerId.Value).ToList() }
@@ -145,7 +144,7 @@ public class OrderController : Controller
 
         if (!model.Cart.Items.Any())
         {
-            ModelState.AddModelError("", "Giỏ hàng của bạn đã bị rỗng.");
+            ModelState.AddModelError("", "Giỏ hàng của bạn đã bị rỗng hoặc phiên làm việc đã hết hạn.");
         }
 
         // 2. Xử lý địa chỉ
@@ -243,9 +242,6 @@ public class OrderController : Controller
             });
         }
 
-        // 7. Tạm thời CHƯA cập nhật promotion (chỉ cập nhật sau khi thanh toán thành công)
-        // Sẽ được xử lý trong IPN Callback
-
         // 8. Lưu vào CSDL
         _db.orders.Add(order);
         await _db.SaveChangesAsync();
@@ -258,17 +254,26 @@ public class OrderController : Controller
         _logger.LogInformation($"Order {order.ordercode} created with status Pending, waiting for payment");
 
         // 9. Cập nhật lại Session Cart
-        var remainingItems = cartAll.Items
-                                    .Where(i => !model.SellerId.HasValue || i.SellerId != model.SellerId.Value)
-                                    .ToList();
-        if (remainingItems.Any())
+        if (model.IsBuyNow)
         {
-            cartAll.Items = remainingItems;
-            HttpContext.Session.SetObject(CART_KEY, cartAll);
+            // Nếu là Mua Ngay -> Xóa luôn session Mua Ngay (vì mỗi lần chỉ mua 1 loại)
+            HttpContext.Session.Remove(BUYNOW_KEY);
         }
         else
         {
-            HttpContext.Session.Remove(CART_KEY);
+            // Nếu là Giỏ hàng thường -> Chỉ xóa những món đã thanh toán (theo SellerId)
+            var remainingItems = cartAll.Items
+                                        .Where(i => !model.SellerId.HasValue || i.SellerId != model.SellerId.Value)
+                                        .ToList();
+            if (remainingItems.Any())
+            {
+                cartAll.Items = remainingItems;
+                HttpContext.Session.SetObject(CART_KEY, cartAll);
+            }
+            else
+            {
+                HttpContext.Session.Remove(CART_KEY);
+            }
         }
 
         // 10. CHUYỂN HƯỚNG ĐẾN TRANG THANH TOÁN

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 public class CartController : Controller
 {
     private const string CART_KEY = "Cart";
+    private const string BUYNOW_KEY = "Cart_BuyNow";
     private readonly ApplicationDbContext _db;
     private readonly ILogger<CartController> _logger;
 
@@ -135,5 +136,47 @@ public class CartController : Controller
 
         HttpContext.Session.SetObject(CART_KEY, cart);
         return PartialView("_CartBody", cart);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> BuyNowAjax(int id, int qty = 1)
+    {
+        // 1. Tạo một giỏ hàng hoàn toàn mới (Chỉ dùng cho Mua ngay)
+        var buyNowCart = new CartViewModel();
+
+        // 2. Lấy thông tin sản phẩm
+        var p = await _db.products
+                         .Include(x => x.productimages)
+                         .FirstOrDefaultAsync(x => x.productid == id);
+
+        if (p == null) return NotFound("Sản phẩm không tồn tại.");
+
+        // 3. Kiểm tra tồn kho
+        if (qty > p.quantityavailable)
+        {
+            return BadRequest($"Kho chỉ còn {p.quantityavailable} sản phẩm.");
+        }
+
+        // 4. Thêm sản phẩm vào giỏ Mua Ngay
+        var imageUrl = p.productimages.FirstOrDefault()?.imageurl;
+        if (!string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("~/"))
+            imageUrl = $"~{imageUrl}";
+
+        buyNowCart.Items.Add(new CartItem
+        {
+            ProductId = p.productid,
+            ProductName = p.productname,
+            UnitPrice = p.price,
+            Quantity = qty, // Số lượng chính xác người dùng chọn lúc đó
+            ImageUrl = imageUrl,
+            SellerId = p.userid
+        });
+
+        // 5. Lưu vào Session KHÁC với giỏ hàng chính (Dùng key "Cart_BuyNow")
+        HttpContext.Session.SetObject(BUYNOW_KEY, buyNowCart);
+
+        // Trả về OK để báo hiệu thành công (không cần trả về PartialView)
+        return Ok();
     }
 }

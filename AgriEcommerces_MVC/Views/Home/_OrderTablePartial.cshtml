@@ -30,7 +30,7 @@
                             {
                                 case "Pending": statusText = "Chờ xác nhận"; badgeClass = "bg-warning text-black"; break;
                                 case "Paid": statusText = "Đã thanh toán"; badgeClass = "bg-info text-black"; break;
-                                case "Processing": statusText = "Đang đóng gói"; badgeClass = "bg-primary text-black"; break;
+                                case "Processing": statusText = "Đã duyệt"; badgeClass = "bg-primary text-black"; break;
                                 case "Shipped": statusText = "Đang giao hàng"; badgeClass = "bg-info text-black"; break;
                                 case "Delivered": statusText = "Giao thành công"; badgeClass = "bg-success text-black"; break;
                                 case "Cancelled": statusText = "Đã hủy"; badgeClass = "bg-danger text-black"; break;
@@ -50,12 +50,12 @@
 
                             @if (o.status == "Pending")
                             {
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal@(o.orderid)" title="Hủy đơn">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal@(o.orderid)_@tabName" title="Hủy đơn">
                                     <i class="fas fa-times"></i>
                                 </button>
                             }
 
-                            @if (o.status == "Shipped" || o.status == "Processing")
+                            @if (o.status == "Shipped")
                             {
                                 <form asp-action="ConfirmReceived" asp-route-orderid="@o.orderid" method="post" onsubmit="return confirm('Xác nhận đã nhận được hàng?');">
                                     @Html.AntiForgeryToken()
@@ -90,7 +90,7 @@
 
                         @if (o.status == "Pending")
                         {
-                            <div class="modal fade text-start" id="cancelModal@(o.orderid)" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade text-start" id="cancelModal@(o.orderid)_@tabName" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <form asp-controller="Order" asp-action="CancelOrder" method="post">

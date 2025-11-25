@@ -33,11 +33,16 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
-            background-color: #f5f5f5;
+            background-color: #ffffff; /* ĐỔI TỪ #f5f5f5 THÀNH #ffffff */
         }
 
         .container {
             max-width: 1200px;
+        }
+
+        header, footer {
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Tùy chọn: Thêm bóng nhẹ để tách biệt với nền xám */
         }
 
         /* === Panel chung cho Ảnh và Thông tin === */
@@ -45,7 +50,9 @@
             background: #fff;
             padding: 20px;
             border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            /* THÊM VIỀN ĐỂ TÁCH BIỆT KHỎI NỀN TRẮNG */
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Bóng đổ nhẹ hơn */
         }
 
         /* === PRODUCT GALLERY (Đã xóa nền) === */
@@ -317,7 +324,9 @@
             background: #fff;
             padding: 25px;
             border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            /* THÊM VIỀN */
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .panel-header {
@@ -361,7 +370,9 @@
             background: #fff;
             padding: 25px;
             border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            /* THÊM VIỀN */
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .reviews-header {
@@ -834,8 +845,37 @@
                     }
                     return;
                 }
+                // 5) Nút MUA NGAY (của trang Details)
+                const buyNowBtn = e.target.closest('.btn-buy-now');
+                if (buyNowBtn) {
+                    e.preventDefault();
 
-            }); // Hết document.body.addEventListener
-        }); // Hết DOMContentLoaded
+                    const wrapper = document.querySelector('.quantity-wrapper');
+                    if (!wrapper) return;
+
+                    const input = wrapper.querySelector('input.input-number');
+                    const qty = parseInt(input.value) || 1;
+                    const id = '@Model.productid';
+                    const sellerId = '@Model.userid';
+
+                    const originalContent = buyNowBtn.innerHTML;
+                    buyNowBtn.disabled = true;
+                    buyNowBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+                    const url = '@Url.Action("BuyNowAjax", "Cart")';
+
+                    const response = await fetchWithAuth(`${url}?id=${id}&qty=${qty}`);
+
+                    if (response !== null) {
+                        window.location.href = `@Url.Action("Index", "Order")?sellerId=${sellerId}&isBuyNow=true`;
+                    } else {
+                        buyNowBtn.disabled = false;
+                        buyNowBtn.innerHTML = originalContent;
+                    }
+                    return;
+                }
+
+            });
+        }); 
     </script>
 }

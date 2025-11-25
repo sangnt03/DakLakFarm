@@ -219,17 +219,23 @@ namespace AgriEcommerces_MVC.Controllers
         [HttpGet]
         public async Task<IActionResult> CreateMoMoPayment(int orderId)
         {
+            // 1. Kiểm tra đơn hàng
             var order = await _context.orders.FindAsync(orderId);
-            if (order == null || order.status != "Pending") return NotFound();
+            if (order == null || order.status != "Pending")
+            {
+                return NotFound();
+            }
 
-            // 1. Tạo hoặc cập nhật Payment Record (như logic VNPay cũ)
-            var existingPayment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId && p.Status == "Pending");
+            // 2. Tạo hoặc cập nhật Payment Record trong Database
+            var existingPayment = await _context.Payments
+                .FirstOrDefaultAsync(p => p.OrderId == orderId && p.Status == "Pending");
+
             if (existingPayment == null)
             {
                 _context.Payments.Add(new Payment
                 {
                     OrderId = orderId,
-                    PaymentMethod = "MoMo", // Lưu ý method là MoMo
+                    PaymentMethod = "MoMo",
                     Amount = order.FinalAmount,
                     Status = "Pending",
                     CreateDate = DateTimeHelper.GetVietnamTime()
@@ -238,17 +244,37 @@ namespace AgriEcommerces_MVC.Controllers
             else
             {
                 existingPayment.PaymentMethod = "MoMo";
+                existingPayment.Amount = order.FinalAmount;
                 _context.Payments.Update(existingPayment);
             }
+
             await _context.SaveChangesAsync();
 
-            // 2. Gọi Service lấy URL thanh toán
-            string payUrl = await _moMoService.CreatePaymentRequest(order.orderid, order.FinalAmount, $"Thanh toan don hang #{order.ordercode}", "Khach hang");
+            try
+            {
+                string payUrl = await _moMoService.CreatePaymentRequest(
+                    order.orderid,
+                    order.FinalAmount,
+                    $"Thanh toan don hang #{order.ordercode}",
+                    "Khach hang"
+                );
 
-            if (!string.IsNullOrEmpty(payUrl))
-                return Redirect(payUrl);
+                if (!string.IsNullOrEmpty(payUrl))
+                {
+                    return Redirect(payUrl); // Chuyển hướng sang trang MoMo
+                }
+                else
+                {
+                    TempData["Error"] = "Không nhận được link thanh toán từ MoMo.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("MOMO CREATE ERROR: " + ex.Message);
+                TempData["Error"] = "Lỗi tạo giao dịch: " + ex.Message;
+            }
 
-            TempData["Error"] = "Lỗi tạo giao dịch MoMo";
+            // Nếu lỗi thì quay về trang xác nhận đơn hàng
             return RedirectToAction("OrderConfirmation", "Order", new { orderId });
         }
 
@@ -263,12 +289,13 @@ namespace AgriEcommerces_MVC.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // 2. Lấy các tham số từ URL
+            // 2. Lấy các tham số quan trọng
             string resultCode = Request.Query["resultCode"];
             string rawOrderId = Request.Query["orderId"];
             string transId = Request.Query["transId"];
             string message = Request.Query["message"];
 
+            // 3. Tách chuỗi để lấy OrderId gốc
             int orderId = 0;
             try
             {
@@ -281,14 +308,13 @@ namespace AgriEcommerces_MVC.Controllers
                     orderId = int.Parse(rawOrderId);
                 }
             }
-            catch (Exception)
+            catch
             {
-                // Trường hợp mã đơn hàng bị lỗi format lạ
-                TempData["Error"] = "Lỗi xử lý mã đơn hàng từ cổng thanh toán.";
+                TempData["Error"] = "Lỗi xử lý mã đơn hàng (Format không hợp lệ).";
                 return RedirectToAction("Index", "Home");
             }
 
-            // 4. Tìm đơn hàng và bản ghi Payment trong Database
+            // 4. Xử lý Database
             var order = await _context.orders.FindAsync(orderId);
             var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
 
@@ -325,22 +351,11 @@ namespace AgriEcommerces_MVC.Controllers
                 }
                 else
                 {
-                    TempData["Error"] = $"Thanh toán thất bại: {message} (Mã lỗi: {resultCode})";
+                    TempData["Error"] = $"Thanh toán thất bại: {message}";
                 }
             }
+
             return RedirectToAction("OrderConfirmation", "Order", new { orderId = orderId });
         }
-
-        //public async Task<IActionResult> PaymentFailed(int orderId, string error)
-        //{
-        //    var order = await _context.orders.FindAsync(orderId);
-        //    if (order == null) return NotFound();
-
-        //    ViewBag.OrderCode = order.ordercode;
-        //    ViewBag.Error = error;
-        //    ViewBag.OrderId = orderId;
-
-        //    return View();
-        //}
     }
 }
