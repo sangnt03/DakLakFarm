@@ -1,143 +1,111 @@
 ﻿using AgriEcommerces_MVC.Models;
-using AgriEcommerces_MVC.Service.EmailService;
-using MailKit.Net.Smtp;
-using MailKit.Security;
 using Microsoft.Extensions.Configuration;
-using MimeKit;
 using System.Text;
+using System.Text.Json; // Thư viện xử lý JSON có sẵn của .NET
 
 namespace AgriEcommerces_MVC.Service.EmailService
 {
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public EmailService(IConfiguration configuration)
+        // Inject thêm IHttpClientFactory
+        public EmailService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task SendOrderConfirmationEmailAsync(order order, string customerEmail)
         {
-            var emailSettings = _configuration.GetSection("EmailSettings");
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"] ?? "DakLakFarm", // Fallback nếu config null
-                emailSettings["SenderEmail"]
-            ));
-            message.To.Add(new MailboxAddress(order.customername, customerEmail));
-            message.Subject = $"Thông tin đơn hàng #{order.ordercode} - DakLakFarm";
-
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = GenerateOrderConfirmationHtml(order)
-            };
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendEmailAsync(message, emailSettings);
+            string subject = $"Thông tin đơn hàng #{order.ordercode} - DakLakFarm";
+            string htmlContent = GenerateOrderConfirmationHtml(order);
+            await SendEmailViaBrevoApi(customerEmail, order.customername, subject, htmlContent);
         }
 
         public async Task SendOrderNotificationToFarmerAsync(order order, string farmerEmail, List<orderdetail> farmerProducts)
         {
-            var emailSettings = _configuration.GetSection("EmailSettings");
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"] ?? "DakLakFarm",
-                emailSettings["SenderEmail"]
-            ));
-            message.To.Add(new MailboxAddress("Người bán", farmerEmail));
-            message.Subject = $"Thông báo đơn hàng mới #{order.ordercode}";
-
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = GenerateFarmerNotificationHtml(order, farmerProducts)
-            };
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendEmailAsync(message, emailSettings);
+            string subject = $"Thông báo đơn hàng mới #{order.ordercode}";
+            string htmlContent = GenerateFarmerNotificationHtml(order, farmerProducts);
+            await SendEmailViaBrevoApi(farmerEmail, "Người bán", subject, htmlContent);
         }
 
         public async Task SendPasswordResetOtpAsync(string email, string otpCode)
         {
-            var emailSettings = _configuration.GetSection("EmailSettings");
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(
-                emailSettings["SenderName"] ?? "DakLakFarm",
-                emailSettings["SenderEmail"]
-            ));
-            message.To.Add(new MailboxAddress(email, email));
-            message.Subject = "Mã OTP đặt lại mật khẩu - DakLakFarm";
-
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = GeneratePasswordResetOtpHtml(email, otpCode)
-            };
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendEmailAsync(message, emailSettings);
+            string subject = "Mã OTP đặt lại mật khẩu - DakLakFarm";
+            string htmlContent = GeneratePasswordResetOtpHtml(email, otpCode);
+            await SendEmailViaBrevoApi(email, email, subject, htmlContent);
         }
 
-        private async Task SendEmailAsync(MimeMessage message, IConfigurationSection emailSettings)
+        // ==============================================================================
+        // CORE: HÀM GỬI MAIL QUA API (KHÔNG DÙNG SMTP) - CHẠY 100% TRÊN RENDER FREE
+        // ==============================================================================
+        private async Task SendEmailViaBrevoApi(string toEmail, string toName, string subject, string htmlContent)
         {
-            using var client = new SmtpClient();
+            var emailSettings = _configuration.GetSection("EmailSettings");
+            var apiKey = emailSettings["BrevoApiKey"];
+            var senderEmail = emailSettings["SenderEmail"] ?? "no-reply@daklakfarm.com";
+            var senderName = emailSettings["SenderName"] ?? "DakLakFarm";
+
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                throw new Exception("Chưa cấu hình BrevoApiKey trong Environment Variables");
+            }
+
+            // 1. Tạo Payload JSON theo chuẩn của Brevo API
+            var payload = new
+            {
+                sender = new { email = senderEmail, name = senderName },
+                to = new[]
+                {
+                    new { email = toEmail, name = toName }
+                },
+                subject = subject,
+                htmlContent = htmlContent
+            };
+
+            // 2. Chuẩn bị Request HTTP
+            var client = _httpClientFactory.CreateClient();
+            var jsonContent = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            // Thêm Header API Key
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("api-key", apiKey);
+
             try
             {
-                client.Timeout = 60000;
+                Console.WriteLine($"[Email API] Đang gửi mail tới {toEmail} qua Brevo...");
 
-                client.CheckCertificateRevocation = false;
+                // 3. Gọi API (Cổng 443 - Không bao giờ bị chặn)
+                var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", jsonContent);
 
-                string smtpServer = emailSettings["SmtpServer"] ?? "smtp.gmail.com";
-                string username = emailSettings["Username"];
-                string password = emailSettings["Password"];
-                if (!int.TryParse(emailSettings["SmtpPort"], out int smtpPort))
+                if (response.IsSuccessStatusCode)
                 {
-                    smtpPort = 587; // Mặc định về 465 nếu config lỗi
+                    Console.WriteLine("[Email API] Gửi thành công!");
                 }
-
-                // Logic chọn giao thức: 465 thì SSL, 587 thì StartTLS
-                Console.WriteLine($"[Email] Server: {smtpServer}:{smtpPort}");
-                Console.WriteLine($"[Email] Username: {username}");
-                Console.WriteLine($"[Email] Has Password: {!string.IsNullOrEmpty(password)}");
-
-                // ✅ Luôn dùng StartTls trên Render Free
-                var socketOptions = SecureSocketOptions.StartTls;
-
-                // ✅ Thêm retry logic
-                int maxRetries = 3;
-                for (int i = 0; i < maxRetries; i++)
+                else
                 {
-                    try
-                    {
-                        await client.ConnectAsync(smtpServer, smtpPort, socketOptions);
-                        await client.AuthenticateAsync(username, password);
-                        await client.SendAsync(message);
-                        Console.WriteLine("[Email] Sent successfully!");
-                        break;
-                    }
-                    catch (Exception ex) when (i < maxRetries - 1)
-                    {
-                        Console.WriteLine($"[Email] Retry {i + 1}/{maxRetries}: {ex.Message}");
-                        await Task.Delay(2000); // Đợi 2 giây trước khi retry
-                    }
+                    // Đọc lỗi trả về nếu thất bại
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[Email API Error]: {response.StatusCode} - {error}");
+                    throw new Exception($"Lỗi gửi mail API: {error}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Email Error]: {ex.Message}");
-                Console.WriteLine($"[Email Stack]: {ex.StackTrace}");
-                throw new Exception($"Không thể gửi email: {ex.Message}");
-            }
-            finally
-            {
-                if (client.IsConnected)
-                {
-                    await client.DisconnectAsync(true);
-                }
+                Console.WriteLine($"[Email Exception]: {ex.Message}");
+                throw;
             }
         }
+
+
+
+
 
         private string GenerateOrderConfirmationHtml(order order)
         {
