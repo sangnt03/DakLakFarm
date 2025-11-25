@@ -85,34 +85,49 @@ namespace AgriEcommerces_MVC.Service.EmailService
             using var client = new SmtpClient();
             try
             {
-                client.Timeout = 30000;
+                client.Timeout = 60000;
 
                 client.CheckCertificateRevocation = false;
 
                 string smtpServer = emailSettings["SmtpServer"] ?? "smtp.gmail.com";
+                string username = emailSettings["Username"];
+                string password = emailSettings["Password"];
                 if (!int.TryParse(emailSettings["SmtpPort"], out int smtpPort))
                 {
-                    smtpPort = 465; // Mặc định về 465 nếu config lỗi
+                    smtpPort = 587; // Mặc định về 465 nếu config lỗi
                 }
 
                 // Logic chọn giao thức: 465 thì SSL, 587 thì StartTLS
-                var socketOptions = smtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+                Console.WriteLine($"[Email] Server: {smtpServer}:{smtpPort}");
+                Console.WriteLine($"[Email] Username: {username}");
+                Console.WriteLine($"[Email] Has Password: {!string.IsNullOrEmpty(password)}");
 
-                // 2. SỬA LỖI Ở ĐÂY: Dùng biến socketOptions đã tính toán ở trên
-                await client.ConnectAsync(smtpServer, smtpPort, socketOptions);
+                // ✅ Luôn dùng StartTls trên Render Free
+                var socketOptions = SecureSocketOptions.StartTls;
 
-                // 3. Xác thực (Dùng App Password)
-                await client.AuthenticateAsync(
-                    emailSettings["Username"],
-                    emailSettings["Password"]
-                );
-
-                // 4. Gửi mail
-                await client.SendAsync(message);
+                // ✅ Thêm retry logic
+                int maxRetries = 3;
+                for (int i = 0; i < maxRetries; i++)
+                {
+                    try
+                    {
+                        await client.ConnectAsync(smtpServer, smtpPort, socketOptions);
+                        await client.AuthenticateAsync(username, password);
+                        await client.SendAsync(message);
+                        Console.WriteLine("[Email] Sent successfully!");
+                        break;
+                    }
+                    catch (Exception ex) when (i < maxRetries - 1)
+                    {
+                        Console.WriteLine($"[Email] Retry {i + 1}/{maxRetries}: {ex.Message}");
+                        await Task.Delay(2000); // Đợi 2 giây trước khi retry
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[Email Error]: {ex.Message}");
+                Console.WriteLine($"[Email Stack]: {ex.StackTrace}");
                 throw new Exception($"Không thể gửi email: {ex.Message}");
             }
             finally
