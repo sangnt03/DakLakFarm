@@ -186,80 +186,147 @@ namespace AgriEcommerces_MVC.Controllers.ApiController
                 return Ok(new { RspCode = "99", Message = "Unknown error" });
             }
         }
+
         [HttpPost("MoMoIPN")]
         public async Task<IActionResult> MoMoIPN()
         {
             try
             {
-                // Đọc body JSON từ MoMo gửi sang
+                // 1. Đọc dữ liệu từ MoMo gửi về
                 using var reader = new StreamReader(Request.Body);
                 var body = await reader.ReadToEndAsync();
                 dynamic json = Newtonsoft.Json.JsonConvert.DeserializeObject(body);
 
-                // Bạn có thể check signature ở đây nếu muốn bảo mật chặt chẽ (giống VNPay)
-                // Nhưng với môi trường Test đồ án, ta check resultCode là đủ
-
                 string resultCode = json.resultCode;
-                string orderIdStr = json.orderId;
-                string transId = json.transId;
+                string orderIdRaw = json.orderId; // Chuỗi dạng "94_6389..."
+                string transId = json.transId;    // Mã giao dịch MoMo
 
-                int orderId = int.Parse(orderIdStr);
+                int orderId;
+                if (orderIdRaw.Contains("_"))
+                {
+                    string[] parts = orderIdRaw.Split('_');
+                    if (!int.TryParse(parts[0], out orderId))
+                    {
+                        _logger.LogError($"Lỗi format OrderId MoMo: {orderIdRaw}");
+                        return StatusCode(400); // Bad Request
+                    }
+                }
+                else
+                {
+                    // Trường hợp dự phòng nếu MoMo gửi đúng số
+                    if (!int.TryParse(orderIdRaw, out orderId))
+                    {
+                        return StatusCode(400);
+                    }
+                }
 
-                var order = await _context.orders.FindAsync(orderId);
-                if (order == null) return Ok(new { message = "Order not found" });
+                var order = await _context.orders
+                    .Include(o => o.customer)      // Lấy thông tin khách hàng
+                    .Include(o => o.orderdetails)  // Lấy chi tiết đơn để gửi mail cho Farmer
+                    .FirstOrDefaultAsync(o => o.orderid == orderId);
 
-                if (resultCode == "0") // Thành công
+                if (order == null)
+                {
+                    _logger.LogWarning($"Không tìm thấy Order {orderId} từ IPN MoMo");
+                    return Ok(new { message = "Order not found" });
+                }
+
+                // 2. Xử lý kết quả giao dịch
+                if (resultCode == "0") // Thành công (0 là mã chuẩn của MoMo)
                 {
                     if (order.status != "Paid")
                     {
+                        // Cập nhật trạng thái đơn hàng
                         order.status = "Paid";
+
+                        // Cập nhật bảng Payment
                         var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
                         if (payment != null)
                         {
                             payment.Status = "Success";
                             payment.GatewayTransactionCode = transId;
                         }
-                        await _context.SaveChangesAsync();
 
-                        // Gửi email
+                        // --- [BỔ SUNG] Logic cập nhật Promotion (Giống VNPay) ---
+                        if (order.promotionid.HasValue)
+                        {
+                            var promotion = await _context.promotions.FindAsync(order.promotionid.Value);
+                            if (promotion != null)
+                            {
+                                promotion.CurrentUsageCount++;
+                                _context.promotion_usagehistories.Add(new promotion_usagehistory
+                                {
+                                    PromotionId = order.promotionid.Value,
+                                    UserId = order.customerid,
+                                    OrderId = orderId,
+                                    UsedAt = DateTime.SpecifyKind(DateTimeHelper.GetVietnamTime(), DateTimeKind.Unspecified),
+                                    DiscountAmount = order.discountamount
+                                });
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation($"Thanh toán MoMo thành công cho Order {orderId}");
+
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                // Gửi cho khách hàng
-                                if (!string.IsNullOrEmpty(order.customer?.email))
+                                if (order.customer != null && !string.IsNullOrEmpty(order.customer.email))
                                 {
                                     await _emailService.SendOrderConfirmationEmailAsync(order, order.customer.email);
                                     _logger.LogInformation($"Email xác nhận đã gửi tới khách hàng: {order.customer.email}");
                                 }
 
-                                // Gửi cho từng Farmer
-                                var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
-                                foreach (var group in farmerGroups)
+                                if (order.orderdetails != null)
                                 {
-                                    var farmer = await _context.users
-                                        .FirstOrDefaultAsync(u => u.userid == group.Key && u.role == "Farmer");
-
-                                    if (farmer != null && !string.IsNullOrEmpty(farmer.email))
+                                    var farmerGroups = order.orderdetails.GroupBy(od => od.sellerid);
+                                    foreach (var group in farmerGroups)
                                     {
-                                        await _emailService.SendOrderNotificationToFarmerAsync(order, farmer.email, group.ToList());
-                                        _logger.LogInformation($"Email thông báo đã gửi tới Farmer: {farmer.email}");
+                                        try
+                                        {
+                                            var farmer = await _context.users
+                                                .FirstOrDefaultAsync(u => u.userid == group.Key && u.role == "Farmer");
+
+                                            if (farmer != null && !string.IsNullOrEmpty(farmer.email))
+                                            {
+                                                await _emailService.SendOrderNotificationToFarmerAsync(order, farmer.email, group.ToList());
+                                            }
+                                        }
+                                        catch (Exception exInner)
+                                        {
+                                            _logger.LogError($"Lỗi lấy info Farmer trong Task: {exInner.Message}");
+                                        }
                                     }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, $"Lỗi gửi email cho đơn hàng {orderId}");
+                                _logger.LogError(ex, $"Lỗi tổng quá trình gửi email background cho đơn {orderId}");
                             }
                         });
                     }
                 }
+                else
+                {
+                    // Giao dịch thất bại
+                    var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == orderId);
+                    if (payment != null)
+                    {
+                        payment.Status = "Failed";
+                        payment.GatewayTransactionCode = transId;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation($"Thanh toán MoMo thất bại/hủy bỏ cho Order {orderId}");
+                }
+
                 return StatusCode(204);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "MoMo IPN Error");
-                return StatusCode(500);
+                _logger.LogError(ex, "MoMo IPN Error System");
+                return StatusCode(204);
             }
         }
     }
