@@ -2,6 +2,7 @@
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ApiModels;
 using AgriEcommerces_MVC.Models.ViewModel;
+using AgriEcommerces_MVC.Service.ShipService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,16 @@ namespace AgriEcommerces_MVC.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IShippingService _shippingService;
 
-        public CustomerAddressController(ApplicationDbContext db, IHttpClientFactory httpClientFactory)
+        public CustomerAddressController(
+            ApplicationDbContext db,
+            IHttpClientFactory httpClientFactory,
+            IShippingService shippingService)
         {
             _db = db;
             _httpClientFactory = httpClientFactory;
+            _shippingService = shippingService;
         }
 
         // Lấy ID người dùng hiện tại
@@ -31,7 +37,7 @@ namespace AgriEcommerces_MVC.Controllers
             {
                 return userId;
             }
-            return -1; // Bị chặn bởi [Authorize]
+            return -1;
         }
 
         // Xóa tất cả địa chỉ mặc định cũ
@@ -45,8 +51,6 @@ namespace AgriEcommerces_MVC.Controllers
         private async Task<List<ProvinceApiModel>> GetProvincesListAsync()
         {
             var httpClient = _httpClientFactory.CreateClient();
-
-            // QUAN TRỌNG: Thiết lập BaseAddress
             httpClient.BaseAddress = new Uri($"{Request.Scheme}://{Request.Host}");
 
             try
@@ -70,6 +74,25 @@ namespace AgriEcommerces_MVC.Controllers
                 Console.WriteLine($"Lỗi gọi API tỉnh thành: {ex.Message}");
                 return new List<ProvinceApiModel>();
             }
+        }
+
+        // API: Tính phí ship theo tỉnh/thành
+        [HttpPost]
+        public IActionResult CalculateShipping([FromBody] ShippingCalculateRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.ProvinceCity))
+            {
+                return Json(new { success = false, message = "Vui lòng chọn Tỉnh/Thành phố" });
+            }
+
+            decimal shippingFee = _shippingService.CalculateShippingFee(request.ProvinceCity);
+
+            return Json(new
+            {
+                success = true,
+                shippingFee = shippingFee,
+                formattedFee = shippingFee.ToString("N0") + "đ"
+            });
         }
 
         // GET: /CustomerAddress
@@ -127,9 +150,13 @@ namespace AgriEcommerces_MVC.Controllers
             _db.customer_addresses.Add(newAddress);
             await _db.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Thêm địa chỉ mới thành công!";
+            // Tính phí ship cho địa chỉ vừa thêm
+            decimal shippingFee = _shippingService.CalculateShippingFee(vm.ProvinceCity);
+
+            TempData["SuccessMessage"] = $"Thêm địa chỉ mới thành công! Phí ship ước tính: {shippingFee:N0}đ";
             return RedirectToAction(nameof(Index));
         }
+
         // POST: /CustomerAddress/CreateAjax
         [HttpPost]
         public async Task<IActionResult> CreateAjax([FromBody] AddressViewModel vm)
@@ -137,13 +164,11 @@ namespace AgriEcommerces_MVC.Controllers
             int userId = GetCurrentUserId();
             if (userId == -1) return Unauthorized();
 
-            // Validate dữ liệu cơ bản
             if (string.IsNullOrEmpty(vm.RecipientName) || string.IsNullOrEmpty(vm.PhoneNumber) || string.IsNullOrEmpty(vm.FullAddress))
             {
                 return Json(new { success = false, message = "Vui lòng nhập đầy đủ thông tin." });
             }
 
-            // Nếu chọn là mặc định, xóa các mặc định cũ
             if (vm.IsDefault)
             {
                 await ClearAllDefaults(userId);
@@ -166,7 +191,16 @@ namespace AgriEcommerces_MVC.Controllers
             _db.customer_addresses.Add(newAddress);
             await _db.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Thêm địa chỉ thành công!" });
+            // Tính phí ship
+            decimal shippingFee = _shippingService.CalculateShippingFee(vm.ProvinceCity);
+
+            return Json(new
+            {
+                success = true,
+                message = "Thêm địa chỉ thành công!",
+                shippingFee = shippingFee,
+                addressId = newAddress.id
+            });
         }
 
         // GET: /CustomerAddress/Edit/5
@@ -239,7 +273,10 @@ namespace AgriEcommerces_MVC.Controllers
             _db.customer_addresses.Update(addressInDb);
             await _db.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Cập nhật địa chỉ thành công!";
+            // Tính phí ship mới
+            decimal shippingFee = _shippingService.CalculateShippingFee(vm.ProvinceCity);
+
+            TempData["SuccessMessage"] = $"Cập nhật địa chỉ thành công! Phí ship ước tính: {shippingFee:N0}đ";
             return RedirectToAction(nameof(Index));
         }
 
@@ -324,5 +361,11 @@ namespace AgriEcommerces_MVC.Controllers
             TempData["SuccessMessage"] = "Xóa địa chỉ thành công.";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    // Request model cho API tính phí ship
+    public class ShippingCalculateRequest
+    {
+        public string ProvinceCity { get; set; }
     }
 }

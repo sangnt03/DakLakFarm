@@ -22,8 +22,7 @@
                 <th>Tên Sản phẩm</th>
                 <th>Số lượng</th>
                 <th>Đơn giá</th>
-                <th>Tạm tính</th>
-                <th>Giảm giá</th>
+                <th>Tạm tính</th>     
             </tr>
         </thead>
         <tbody>
@@ -46,14 +45,24 @@
                     <td>@d.product.productname</td>
                     <td>@d.quantity</td>
                     <td>@string.Format("{0:N0}", d.unitprice) VNĐ</td>
-                    <td>@string.Format("{0:N0}", Model.totalamount) VNĐ</td>
-                    <td>@string.Format("{0:N0}", Model.discountamount) VNĐ</td>
+                    <td>@string.Format("{0:N0}", d.quantity * d.unitprice) VNĐ</td>
                 </tr>
             }
         </tbody>
         <tfoot>
+            <tr class="text-black">
+                <th colspan="4" class="text-end">Tổng tạm tính:</th>
+                <th>@string.Format("{0:N0}", Model.totalamount) VNĐ</th>
+            </tr>
+            <tr class="text-success">
+                <th colspan="4" class="text-end">Giảm giá:</th>
+                <th>@string.Format("{0:N0}", Model.discountamount) VNĐ</th>
+            </tr>
+            <tr style="-webkit-text-fill-color:dodgerblue">
+                <th colspan="4" class="text-end">Phí vận chuyển:</th>
+                <th>@string.Format("{0:N0}", Model.ShippingFee) VNĐ</th>
             <tr style="-webkit-text-fill-color:orange">
-                <th colspan="5" class="text-end">Tổng cộng:</th>
+                <th colspan="4" class="text-end">Tổng cộng:</th>
                 <th>@string.Format("{0:N0}", Model.FinalAmount) VNĐ</th>
             </tr>
         </tfoot>

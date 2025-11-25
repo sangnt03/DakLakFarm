@@ -52,6 +52,23 @@
     <span asp-validation-for="FullAddress" class="text-danger"></span>
 </div>
 
+<!-- Hiển thị phí ship ước tính -->
+<div class="mb-3" id="shipping-fee-container" style="display: none;">
+    <div class="alert alert-info mb-0">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-truck me-2"></i>
+            <div>
+                <strong>Phí ship ước tính:</strong>
+                <span id="shipping-fee-amount" class="fs-5 text-primary fw-bold">0đ</span>
+                <br>
+                <small class="text-muted">
+                    Từ Đắk Lắk đến <span id="destination-province" class="fw-semibold"></span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="mb-3 form-check">
     <input asp-for="IsDefault" type="checkbox" class="form-check-input" />
     <label asp-for="IsDefault" class="form-check-label"></label>
@@ -64,6 +81,9 @@
         const provinceSelect = document.getElementById('province-select');
         const districtSelect = document.getElementById('district-select');
         const wardSelect = document.getElementById('ward-select');
+        const shippingFeeContainer = document.getElementById('shipping-fee-container');
+        const shippingFeeAmount = document.getElementById('shipping-fee-amount');
+        const destinationProvince = document.getElementById('destination-province');
 
         // Lấy giá trị đã lưu từ Model (dùng cho chế độ Edit)
         const selectedProvinceName = @Html.Raw(Json.Serialize(Model.ProvinceCity ?? ""));
@@ -143,6 +163,49 @@
             }
         }
 
+        // Hàm tính phí ship
+        async function calculateShippingFee(provinceName) {
+            if (!provinceName) {
+                shippingFeeContainer.style.display = 'none';
+                return;
+            }
+
+            console.log('Calculating shipping fee for:', provinceName);
+
+            try {
+                const response = await fetch('/CustomerAddress/CalculateShipping', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ provinceCity: provinceName })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tính phí ship');
+                }
+
+                const result = await response.json();
+                console.log('Shipping fee result:', result);
+
+                if (result.success) {
+                    shippingFeeAmount.textContent = result.formattedFee;
+                    destinationProvince.textContent = provinceName;
+                    shippingFeeContainer.style.display = 'block';
+
+                    // Thêm hiệu ứng fade in
+                    shippingFeeContainer.classList.add('fade-in');
+                } else {
+                    console.warn('Không tính được phí ship:', result.message);
+                    shippingFeeContainer.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('Lỗi khi tính phí ship:', error);
+                shippingFeeContainer.style.display = 'none';
+            }
+        }
+
         // Xử lý khi chọn Tỉnh/Thành phố
         provinceSelect.addEventListener('change', async function() {
             console.log('Province changed:', this.value);
@@ -153,6 +216,14 @@
 
             const selectedOption = this.options[this.selectedIndex];
             const provinceCode = selectedOption.getAttribute('data-code');
+            const provinceName = this.value;
+
+            // Tính phí ship ngay khi chọn tỉnh
+            if (provinceName) {
+                await calculateShippingFee(provinceName);
+            } else {
+                shippingFeeContainer.style.display = 'none';
+            }
 
             if (!provinceCode) {
                 console.log('Không có mã tỉnh');
@@ -204,6 +275,9 @@
             const provinceCode = provinceOption.getAttribute('data-code');
             console.log('Province code:', provinceCode);
 
+            // Tính phí ship cho địa chỉ đang edit
+            await calculateShippingFee(selectedProvinceName);
+
             // Load Quận/Huyện
             const districtsLoaded = await fetchData(
                 `/api/Provinces/GetDistricts?provinceCode=${provinceCode}`,
@@ -246,3 +320,32 @@
 
     })();
 </script>
+
+<style>
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    #shipping-fee-container .alert {
+        border-left: 4px solid #0d6efd;
+    }
+
+    #shipping-fee-amount {
+        color: #0d6efd !important;
+    }
+</style>

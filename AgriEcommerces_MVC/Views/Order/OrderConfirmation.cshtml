@@ -55,7 +55,7 @@
                         </div>
                     }
                 }
-                else if (Model.status == "Đã hủy")
+                else if (Model.status == "Đã hủy" || Model.status == "Cancelled")
                 {
                     <div class="alert alert-danger text-center">
                         <i class="fas fa-times-circle fa-3x mb-3"></i>
@@ -135,20 +135,38 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="3" class="text-end">Tạm tính:</td>
-                                    <td class="text-end">@Model.totalamount.ToString("N0")</td>
+                                    <td class="text-end">@Model.totalamount.ToString("N0") VNĐ</td>
                                 </tr>
+
+                                <tr style="-webkit-text-fill-color:dodgerblue">
+                                    <td colspan="3" class="text-end">Phí vận chuyển:</td>
+                                    <td class="text-end">
+                                        @if (Model.ShippingFee > 0)
+                                        {
+                                            <span>@Model.ShippingFee.ToString("N0") VNĐ</span>
+                                        }
+                                        else
+                                        {
+                                            <span>0 VNĐ</span>
+                                        }
+                                    </td>
+                                </tr>
+
                                 @if (Model.discountamount > 0)
                                 {
                                     <tr>
-                                        <td colspan="3" class="text-end">
+                                        <td colspan="3" class="text-end text-success">
                                             Giảm giá @(!string.IsNullOrEmpty(Model.PromotionCode) ? $"({Model.PromotionCode})" : ""):
                                         </td>
-                                        <td class="text-end">-@Model.discountamount.ToString("N0")</td>
+                                        <td class="text-end text-success">-@Model.discountamount.ToString("N0") VNĐ</td>
                                     </tr>
                                 }
+
                                 <tr>
-                                    <td colspan="3" class="text-end fw-bold">TỔNG THANH TOÁN:</td>
-                                    <td class="text-end fw-bold" style="-webkit-text-fill-color:orange">@Model.FinalAmount.ToString("N0") VNĐ</td>
+                                    <td colspan="3" class="text-end fw-bold fs-5">TỔNG THANH TOÁN:</td>
+                                    <td class="text-end fw-bold fs-5" style="color: #fd7e14;">
+                                        @Model.FinalAmount.ToString("N0") VNĐ
+                                    </td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -176,23 +194,8 @@
                             <div class="col-12 mb-1">
                                 <strong>Thời gian:</strong>
                                 @{
-                                    // // Lấy giờ gốc từ dữ liệu (đang bị hiểu là UTC: 14:37)
-                                    DateTime rawTime = payment.CreateDate;
-
-                                    // // Chuyển đổi sang giờ Việt Nam (Cộng 7 tiếng)
-                                    // // Cách 1: Cộng thủ công (Nhanh, hiệu quả nếu server cố định)
-                                    DateTime vnTime = rawTime.AddHours(7);
-
-                                    // // Cách 2 (Chuẩn hơn): Dùng TimeZoneInfo (nếu bạn muốn code chặt chẽ)
-                                    // /*
-                                    try {
-                                    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Windows
-                                    vnTime = TimeZoneInfo.ConvertTimeFromUtc(rawTime, timeZone);
-                                    } catch {
-                                    // Fallback cho Linux/Docker nếu không tìm thấy ID trên
-                                    vnTime = rawTime.AddHours(7);
-                                    }
-                                    
+                                    // Xử lý múi giờ
+                                    DateTime vnTime = payment.CreateDate.AddHours(7);
                                 }
                                 @vnTime.ToString("dd/MM/yyyy HH:mm:ss")
                             </div>
@@ -202,8 +205,7 @@
             }
 
             <div class="d-none d-print-block text-center mt-4">
-                <p class="mb-0">Cảm ơn quý khách đã mua hàng!</p>
-              
+                <p class="mb-0 fst-italic">Cảm ơn quý khách đã mua hàng tại DakLakFarm!</p>
             </div>
         </div>
     </div>
@@ -215,7 +217,6 @@
                     <i class="fas fa-arrow-left"></i> Tiếp tục mua sắm
                 </a>
 
-                @* Chỉ hiện nút Thanh toán ngay nếu là Pending VÀ KHÔNG PHẢI COD *@
                 @if (Model.status == "Pending" && (payment == null || payment.PaymentMethod != "COD"))
                 {
                     <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
@@ -224,12 +225,10 @@
                     </a>
                 }
 
-                @* Nút In *@
                 <button onclick="window.print()" class="btn btn-outline-info">
                     <i class="fas fa-print"></i> In hóa đơn
                 </button>
 
-                @* Nút Hủy *@
                 @if (Model.status == "Pending" || Model.status == "Chờ duyệt")
                 {
                     <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
@@ -277,92 +276,67 @@
 
 @section Styles {
     <style>
-        /* --- CSS DÀNH RIÊNG CHO CHẾ ĐỘ IN (PRINT) --- */
+        /* CSS IN ẤN */
         @@media print {
             @@page {
                 size: A4;
-                margin-left: 30mm; /* Căn lề giấy 10mm đều các bên */
+                margin: 10mm;
             }
 
-            /* 1. Ẩn toàn bộ web */
             body * {
                 visibility: hidden;
             }
-            
-            /* 2. Ẩn các thành phần thừa */
+            /* Ẩn các thành phần không cần thiết */
             header, footer, nav, .no-print, .modal, .alert {
                 display: none !important;
             }
-
-            /* 3. Hiện vùng in */
+            /* Hiển thị vùng in */
             #order-container, #printable-area, #printable-area * {
                 visibility: visible;
             }
 
-            /* 4. Định vị lại vùng in về góc trang */
             #order-container {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 100%; /* Chiếm toàn bộ chiều ngang */
+                width: 100%;
                 margin: 0;
                 padding: 0;
             }
-
-            /* --- [SỬA LỖI CĂN GIỮA TẠI ĐÂY] --- */
-            /* Reset cột col-lg-8 của Bootstrap để nó bung full trang giấy */
+            /* Căn chỉnh lại layout cho trang in */
             #printable-area {
                 width: 100% !important;
                 max-width: 100% !important;
                 flex: 0 0 100% !important;
-                margin: 0 !important; /* Margin đã được xử lý bởi
-            }
-            
-            /* Tắt flexbox của dòng (row) để tránh xung đột căn chỉnh */
-            .row {
-                display: block !important; 
                 margin: 0 !important;
             }
-            /* ---------------------------------- */
 
-            /* 5. Thu nhỏ nội dung để vừa vặn đẹp hơn */
-            #printable-area {
-                font-size: 12pt; 
+            .row {
+                display: block !important;
+                margin: 0 !important;
             }
-
-            /* 6. Tinh chỉnh Card (Khung viền) */
+            /* Style cho bảng và text */
             .card {
                 border: 1px solid #000 !important;
                 margin-bottom: 15px !important;
-                width: 100% !important; /* Đảm bảo khung viền rộng 100% */
-            }
-            
-            .card-header, .card-body {
-                padding: 8px 15px !important;
+                box-shadow: none !important;
             }
 
-            /* 7. Màu sắc khi in */
-            .bg-success, .bg-primary, .bg-info, .bg-danger, .badge {
+            .bg-success, .bg-primary, .bg-info, .bg-danger {
+                background-color: #f0f0f0 !important;
+                color: #000 !important;
+                border-bottom: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                color: black !important;
-                background-color: #f0f0f0 !important;
             }
-            
-            /* 8. Font chữ */
-            body {
-                font-family: "Times New Roman", Times, serif;
-                color: #000;
+
+            .text-success, .text-danger, .text-warning {
+                color: #000 !important;
             }
-            
+
             a {
                 text-decoration: none !important;
                 color: #000 !important;
-            }
-            
-            /* Ẩn link URL hiển thị ở chân trang (nếu trình duyệt hỗ trợ) */
-            a[href]:after {
-                content: none !important;
             }
         }
     </style>

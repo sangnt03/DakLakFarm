@@ -1,16 +1,17 @@
 ﻿using AgriEcommerces_MVC.Areas.Farmer.Services;
 using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
 using AgriEcommerces_MVC.Data;
+using AgriEcommerces_MVC.Service;
 using AgriEcommerces_MVC.Service.EmailService;
+using AgriEcommerces_MVC.Service.MoMoService;
+using AgriEcommerces_MVC.Service.ShipService;
 using AgriEcommerces_MVC.Service.VnPayService;
 using AgriEcommerces_MVC.Service.WalletService;
-using AgriEcommerces_MVC.Service.MoMoService;
-using AgriEcommerces_MVC.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides; 
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.HttpOverrides; 
 
 // Bắt buộc có dòng này để PostgreSQL chấp nhận kiểu DateTime cũ (tránh lỗi crash Service)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -37,6 +38,8 @@ builder.Services.AddScoped<WalletService>();
 builder.Services.AddHostedService<UnpaidOrderCleanupService>();
 // Đăng ký MoMoService
 builder.Services.AddScoped<MoMoService>();
+// Đăng ký ShippingService
+builder.Services.AddScoped<IShippingService, ShippingService>();
 
 
 // 2) MVC + Razor Runtime Compilation

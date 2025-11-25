@@ -3,11 +3,12 @@ using AgriEcommerces_MVC.Helpers;
 using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
 using AgriEcommerces_MVC.Service.EmailService;
+using AgriEcommerces_MVC.Service.ShipService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
 
 [Authorize]
 public class OrderController : Controller
@@ -16,40 +17,40 @@ public class OrderController : Controller
     private readonly IPromotionService _promotionService;
     private readonly IEmailService _emailService;
     private readonly ILogger<OrderController> _logger;
+    private readonly IShippingService _shippingService; // THÊM DÒNG NÀY
     private const string CART_KEY = "Cart";
     private const string BUYNOW_KEY = "Cart_BuyNow";
-    private const decimal COMMISSION_RATE = 0.10m; // 10% hoa hồng Admin
+    private const decimal COMMISSION_RATE = 0.10m;
     private readonly IServiceScopeFactory _scopeFactory;
 
-    // MÚI GIỜ VIỆT NAM (UTC+7)
     private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 
+    // CẬP NHẬT CONSTRUCTOR
     public OrderController(
         ApplicationDbContext db,
         IPromotionService promotionService,
         IEmailService emailService,
         ILogger<OrderController> logger,
-        IServiceScopeFactory scopeFactory)
+        IServiceScopeFactory scopeFactory,
+        IShippingService shippingService) // THÊM THAM SỐ NÀY
     {
         _db = db;
         _promotionService = promotionService;
         _emailService = emailService;
         _logger = logger;
         _scopeFactory = scopeFactory;
+        _shippingService = shippingService; // THÊM DÒNG NÀY
     }
 
-    // HÀM HỖ TRỢ: Lấy thời gian Việt Nam
     private DateTime GetVietnamTime()
     {
         return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
     }
 
-    // [GET] /Order/Index
+    // [GET] /Order/Index - THÊM PHÍ SHIP VÀO MODEL
     public async Task<IActionResult> Index(int? sellerId, bool isBuyNow = false)
     {
-
         string sessionKey = isBuyNow ? BUYNOW_KEY : CART_KEY;
-        // 1. Lấy giỏ hàng
         var cartAll = HttpContext.Session.GetObject<CartViewModel>(sessionKey) ?? new CartViewModel();
         CartViewModel cartForPayment = sellerId.HasValue
             ? new CartViewModel { Items = cartAll.Items.Where(i => i.SellerId == sellerId.Value).ToList() }
@@ -62,32 +63,40 @@ public class OrderController : Controller
             return RedirectToAction("Index", "Cart");
         }
 
-        // 2. Lấy thông tin khách hàng
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-        // 3. Lấy danh sách địa chỉ đã lưu
         var savedAddresses = await _db.customer_addresses
                                       .Where(a => a.user_id == userId)
                                       .OrderByDescending(a => a.is_default)
                                       .ToListAsync();
+
+        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        decimal shippingFee = 0;
+        var defaultAddress = savedAddresses.FirstOrDefault(a => a.is_default)
+                          ?? savedAddresses.FirstOrDefault();
+
+        if (defaultAddress != null)
+        {
+            shippingFee = _shippingService.CalculateShippingFee(defaultAddress.province_city);
+        }
+        // ====================================
 
         var model = new CheckoutViewModel
         {
             Cart = cartForPayment,
             SellerId = sellerId,
             SavedAddresses = savedAddresses,
-            FinalAmount = cartForPayment.GrandTotal,
-            SelectedAddressId = savedAddresses.FirstOrDefault(a => a.is_default)?.id
-                            ?? savedAddresses.FirstOrDefault()?.id,
+            ShippingFee = shippingFee, // THÊM DÒNG NÀY
+            FinalAmount = cartForPayment.GrandTotal + shippingFee, // CẬP NHẬT: Cộng phí ship
+            SelectedAddressId = defaultAddress?.id,
             IsBuyNow = isBuyNow
         };
 
         return View(model);
     }
 
-    // [POST] /Order/ApplyPromotion (Dùng cho AJAX)
+    // [POST] /Order/ApplyPromotion - CẬP NHẬT ĐỂ TÍNH PHÍ SHIP
     [HttpPost]
-    public async Task<IActionResult> ApplyPromotion(string code, int? sellerId,bool isBuyNow = false)
+    public async Task<IActionResult> ApplyPromotion(string code, int? sellerId, bool isBuyNow = false)
     {
         string sessionKey = isBuyNow ? BUYNOW_KEY : CART_KEY;
         var cartAll = HttpContext.Session.GetObject<CartViewModel>(sessionKey) ?? new CartViewModel();
@@ -111,7 +120,20 @@ public class OrderController : Controller
             return Json(new { success = false, message = result.ErrorMessage });
         }
 
-        decimal finalAmount = cartForPayment.GrandTotal - result.DiscountAmount;
+        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        decimal shippingFee = 0;
+        var defaultAddress = await _db.customer_addresses
+            .Where(a => a.user_id == userId)
+            .OrderByDescending(a => a.is_default)
+            .FirstOrDefaultAsync();
+
+        if (defaultAddress != null)
+        {
+            shippingFee = _shippingService.CalculateShippingFee(defaultAddress.province_city);
+        }
+        // ====================================
+
+        decimal finalAmount = cartForPayment.GrandTotal + shippingFee - result.DiscountAmount; // CẬP NHẬT
 
         return Json(new
         {
@@ -119,20 +141,21 @@ public class OrderController : Controller
             message = "Áp dụng mã thành công!",
             discountAmount = result.DiscountAmount,
             discountAmountDisplay = result.DiscountAmount.ToString("N0") + " VNĐ",
+            shippingFee = shippingFee, // THÊM
+            shippingFeeDisplay = shippingFee.ToString("N0") + " VNĐ", // THÊM
             finalAmount = finalAmount,
             finalAmountDisplay = finalAmount.ToString("N0") + " VNĐ",
             promotionCode = result.Promotion.Code
         });
     }
 
-    // [POST] /Order/CreateOrder
+    // [POST] /Order/CreateOrder - THÊM PHÍ SHIP VÀO ĐỐN HÀNG
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
     {
         ModelState.Remove(nameof(model.Cart));
 
-        // 1. Lấy giỏ hàng và thông tin user
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
         var user = await _db.users.FindAsync(userId);
         string sessionKey = model.IsBuyNow ? BUYNOW_KEY : CART_KEY;
@@ -164,7 +187,15 @@ public class OrderController : Controller
             }
         }
 
-        // 3. Xử lý khuyến mãi (Validate lại)
+        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        decimal shippingFee = 0;
+        if (selectedAddress != null)
+        {
+            shippingFee = _shippingService.CalculateShippingFee(selectedAddress.province_city);
+        }
+        // ====================================
+
+        // 3. Xử lý khuyến mãi
         decimal finalDiscountAmount = 0;
         promotion? appliedPromo = null;
         if (!string.IsNullOrEmpty(model.PromotionCode))
@@ -189,10 +220,11 @@ public class OrderController : Controller
                                           .Where(a => a.user_id == userId)
                                           .OrderByDescending(a => a.is_default)
                                           .ToListAsync();
+            model.ShippingFee = shippingFee; // THÊM
             return View("Index", model);
         }
 
-        // 5. Tạo đơn hàng (Order) với trạng thái Pending
+        // 5. Tạo đơn hàng
         string shippingAddressString = $"{selectedAddress.full_address}, {selectedAddress.ward_commune}, {selectedAddress.district}, {selectedAddress.province_city}";
         DateTime orderDateTime = GetVietnamTime();
 
@@ -203,10 +235,11 @@ public class OrderController : Controller
             customerphone = selectedAddress.phone_number,
             shippingaddress = shippingAddressString,
             orderdate = DateTime.SpecifyKind(orderDateTime, DateTimeKind.Unspecified),
-            status = "Pending", // ← THAY ĐỔI: Chờ thanh toán thay vì "Chờ duyệt"
+            status = "Pending",
             totalamount = model.Cart.GrandTotal,
+            ShippingFee = shippingFee, // ===== THÊM PHÍ SHIP =====
             discountamount = finalDiscountAmount,
-            FinalAmount = model.Cart.GrandTotal - finalDiscountAmount,
+            FinalAmount = model.Cart.GrandTotal + shippingFee - finalDiscountAmount, // ===== CẬP NHẬT CÔNG THỨC =====
             promotionid = appliedPromo?.PromotionId,
             PromotionCode = appliedPromo?.Code,
             ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
@@ -246,22 +279,19 @@ public class OrderController : Controller
         _db.orders.Add(order);
         await _db.SaveChangesAsync();
 
-        // Tạo mã đơn hàng chính thức
         order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(order.orderid, orderDateTime);
         _db.orders.Update(order);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation($"Order {order.ordercode} created with status Pending, waiting for payment");
+        _logger.LogInformation($"Order {order.ordercode} created with status Pending, ShippingFee: {shippingFee}");
 
         // 9. Cập nhật lại Session Cart
         if (model.IsBuyNow)
         {
-            // Nếu là Mua Ngay -> Xóa luôn session Mua Ngay (vì mỗi lần chỉ mua 1 loại)
             HttpContext.Session.Remove(BUYNOW_KEY);
         }
         else
         {
-            // Nếu là Giỏ hàng thường -> Chỉ xóa những món đã thanh toán (theo SellerId)
             var remainingItems = cartAll.Items
                                         .Where(i => !model.SellerId.HasValue || i.SellerId != model.SellerId.Value)
                                         .ToList();
@@ -287,7 +317,6 @@ public class OrderController : Controller
 
             case "COD":
             default:
-                // 1. Tạo Payment Pending
                 var payment = new Payment
                 {
                     OrderId = order.orderid,
@@ -301,7 +330,6 @@ public class OrderController : Controller
 
                 int orderIdForMail = order.orderid;
 
-                // 3. Gửi Email chạy ngầm (Background Task)
                 _ = Task.Run(async () =>
                 {
                     using (var scope = _scopeFactory.CreateScope())
@@ -319,13 +347,11 @@ public class OrderController : Controller
 
                             if (orderInScope != null)
                             {
-                                // A. Gửi cho Khách
                                 if (orderInScope.customer != null && !string.IsNullOrEmpty(orderInScope.customer.email))
                                 {
                                     await emailService.SendOrderConfirmationEmailAsync(orderInScope, orderInScope.customer.email);
                                 }
 
-                                // B. Gửi cho Farmer (Nhóm theo người bán)
                                 var farmerGroups = orderInScope.orderdetails.GroupBy(od => od.sellerid);
                                 foreach (var group in farmerGroups)
                                 {
@@ -351,7 +377,7 @@ public class OrderController : Controller
         }
     }
 
-    // [GET] /Order/OrderConfirmation
+    // [GET] /Order/OrderConfirmation - GIỮ NGUYÊN
     [Authorize]
     public async Task<IActionResult> OrderConfirmation(int orderId)
     {
@@ -367,7 +393,6 @@ public class OrderController : Controller
             return NotFound();
         }
 
-        // XỬ LÝ ĐƠN HÀNG CŨ CHƯA CÓ MÃ
         if (string.IsNullOrEmpty(order.ordercode))
         {
             order.ordercode = OrderCodeGenerator.GenerateOrderCode_DateId(
@@ -378,7 +403,6 @@ public class OrderController : Controller
             await _db.SaveChangesAsync();
         }
 
-        // LẤY THÔNG TIN HỦY ĐƠN NẾU CÓ
         if (order.status == "Cancelled")
         {
             ViewBag.Cancellation = await _db.order_cancellations
@@ -389,14 +413,13 @@ public class OrderController : Controller
         return View(order);
     }
 
-    // [POST] Hủy đơn hàng - CẬP NHẬT: Chỉ cho phép hủy khi Pending hoặc Chờ duyệt
+    // [POST] Hủy đơn hàng - GIỮ NGUYÊN
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelOrder(int orderId, string cancelReason, string returnUrl = null)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        // Lấy đơn hàng
         var order = await _db.orders
             .Include(o => o.orderdetails)
             .Include(o => o.Payments)
@@ -421,11 +444,9 @@ public class OrderController : Controller
             return RedirectBasedOnReturnUrl(returnUrl, orderId);
         }
 
-        // Cập nhật trạng thái
         order.status = "Cancelled";
         var vnTime = GetVietnamTime();
 
-        // LƯU LỊCH SỬ HỦY ĐƠN
         var cancellation = new order_cancellation
         {
             OrderId = orderId,
@@ -437,7 +458,6 @@ public class OrderController : Controller
         };
         _db.order_cancellations.Add(cancellation);
 
-        // Hoàn lại promotion nếu có
         if (order.promotionid.HasValue)
         {
             var promotion = await _db.promotions.FindAsync(order.promotionid.Value);
@@ -463,7 +483,6 @@ public class OrderController : Controller
         return RedirectBasedOnReturnUrl(returnUrl, orderId);
     }
 
-    // HÀM HỖ TRỢ: Redirect dựa trên returnUrl
     private IActionResult RedirectBasedOnReturnUrl(string returnUrl, int orderId)
     {
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -24,18 +25,14 @@ public partial class order
     public string customername { get; set; }
     public string customerphone { get; set; }
 
-    // --- BỔ SUNG CÁC TRƯỜNG KHUYẾN MÃI ---
-
-    // Số tiền đã giảm
+    [Column("shipping_fee", TypeName = "decimal(18,2)")]
+    public decimal ShippingFee { get; set; }
     public decimal discountamount { get; set; }
 
-    // Tiền cuối cùng phải trả
-    // Ánh xạ 'FinalAmount' (C#) tới cột 'finalamount' (CSDL)
+
     [Column("finalamount", TypeName = "decimal(18,2)")]
     public decimal FinalAmount { get; set; }
 
-    // Mã code đã sử dụng
-    // Ánh xạ 'PromotionCode' (C#) tới cột 'promotioncode' (CSDL)
     [Column("promotioncode")]
     [StringLength(50)]
     public string? PromotionCode { get; set; }
@@ -45,7 +42,6 @@ public partial class order
 
     [ForeignKey("promotionid")]
     public virtual promotion? promotion { get; set; }
-    // --- (Kết thúc bổ sung) ---
 
     public virtual user customer { get; set; } = null!;
     public virtual ICollection<orderdetail> orderdetails { get; set; } = new List<orderdetail>();

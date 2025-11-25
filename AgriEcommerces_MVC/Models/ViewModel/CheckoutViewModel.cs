@@ -25,6 +25,7 @@ namespace AgriEcommerces_MVC.Models.ViewModel
 
         public bool IsBuyNow { get; set; }
         public string PaymentMethod { get; set; } = "COD"; // Mặc định là COD
+        public decimal ShippingFee { get; set; }
 
     }
 }
