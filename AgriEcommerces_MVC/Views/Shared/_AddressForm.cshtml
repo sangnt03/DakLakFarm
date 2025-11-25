@@ -11,7 +11,12 @@
 
 <div class="mb-3">
     <label asp-for="PhoneNumber" class="form-label"></label>
-    <input asp-for="PhoneNumber" class="form-control" />
+    <input asp-for="PhoneNumber"
+           class="form-control"
+           type="text"
+           maxlength="10"
+           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+           placeholder="Nhập số điện thoại (10 số)" />
     <span asp-validation-for="PhoneNumber" class="text-danger"></span>
 </div>
 
@@ -74,7 +79,9 @@
     <label asp-for="IsDefault" class="form-check-label"></label>
 </div>
 
+@section Scripts {
 <script>
+    
     (function() {
         'use strict';
 
@@ -320,7 +327,7 @@
 
     })();
 </script>
-
+}
 <style>
     @@keyframes fadeIn {
         from

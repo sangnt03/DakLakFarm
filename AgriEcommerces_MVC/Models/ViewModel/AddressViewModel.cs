@@ -20,6 +20,7 @@ namespace AgriEcommerces_MVC.Models.ViewModel
         [Display(Name = "Địa chỉ chi tiết")]
         [Required(ErrorMessage = "Vui lòng nhập địa chỉ chi tiết (số nhà, tên đường)")]
         [StringLength(500)]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10 chữ số)")]
         public string FullAddress { get; set; }
 
         [Display(Name = "Tỉnh/Thành phố")]

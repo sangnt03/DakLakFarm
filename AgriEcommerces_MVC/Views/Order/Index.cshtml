@@ -239,7 +239,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="modalPhoneNumber" required>
+
+                            <input type="text"
+                                   class="form-control"
+                                   id="modalPhoneNumber"
+                                   maxlength="10"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                   placeholder="Nhập số điện thoại (10 số)"
+                                   required>
                         </div>
                     </div>
                     <div class="row mb-3">
