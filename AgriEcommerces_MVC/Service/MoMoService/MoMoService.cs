@@ -55,11 +55,8 @@ namespace AgriEcommerces_MVC.Service.MoMoService
                 var response = await client.PostAsync(endpoint, new StringContent(JsonConvert.SerializeObject(message), Encoding.UTF8, "application/json"));
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                // --- DEBUG LOGGING (Xem lỗi ở đây) ---
                 var jsonResponse = JObject.Parse(responseContent);
-                Console.WriteLine("--- MOMO RESPONSE ---");
-                Console.WriteLine(responseContent);
-                // -------------------------------------
+                
 
                 if (jsonResponse["resultCode"]?.ToString() != "0")
                 {
