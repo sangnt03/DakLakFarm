@@ -1,15 +1,17 @@
 ﻿using AgriEcommerces_MVC.Areas.Farmer.Services;
-using AgriEcommerces_MVC.Areas.Farmer.ViewModel;
 using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Service;
+using AgriEcommerces_MVC.Service.ChatService;
 using AgriEcommerces_MVC.Service.EmailService;
 using AgriEcommerces_MVC.Service.MoMoService;
 using AgriEcommerces_MVC.Service.ShipService;
 using AgriEcommerces_MVC.Service.VnPayService;
 using AgriEcommerces_MVC.Service.WalletService;
+using AgriEcommerces_MVC.Utilities;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.HttpOverrides; 
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -40,14 +42,29 @@ builder.Services.AddHostedService<UnpaidOrderCleanupService>();
 builder.Services.AddScoped<MoMoService>();
 // Đăng ký ShippingService
 builder.Services.AddScoped<IShippingService, ShippingService>();
+// Đăng ký ChatService
+builder.Services.AddScoped<IChatService, ChatService>();
 
+// SignalR với cấu hình tối ưu
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true; // Bật detailed errors để debug dễ hơn
+    options.MaximumReceiveMessageSize = 102400; // 100KB cho mỗi tin nhắn
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+})
+.AddMessagePackProtocol(); // Tối ưu hiệu suất truyền tải
 
-// 2) MVC + Razor Runtime Compilation
+// Đăng ký CustomUserIdProvider để SignalR nhận diện user
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
+// MVC + Razor Runtime Compilation
 builder.Services
     .AddControllersWithViews()
     .AddRazorRuntimeCompilation();
 
-// 3) Session
+// Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -69,13 +86,29 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "DynamicScheme";
     options.DefaultChallengeScheme = "DynamicScheme";
-
     options.DefaultSignInScheme = "External";
 })
 .AddPolicyScheme("DynamicScheme", "Dynamic authentication scheme", options =>
 {
     options.ForwardDefaultSelector = context =>
     {
+        // *** QUAN TRỌNG: XỬ LÝ SIGNALR AUTHENTICATION ***
+        // SignalR Hub cần xác định đúng scheme dựa trên cookie
+        if (context.Request.Path.StartsWithSegments("/chathub", StringComparison.OrdinalIgnoreCase))
+        {
+            // Kiểm tra cookie theo thứ tự ưu tiên
+            if (context.Request.Cookies.ContainsKey(".AgriEcomCustomerAuth"))
+                return "Customer";
+            if (context.Request.Cookies.ContainsKey(".AgriEcomFarmerAuth"))
+                return "FarmerAuth";
+            if (context.Request.Cookies.ContainsKey(".AgriEcomManagerAuth"))
+                return "ManagerAuth";
+
+            // Mặc định nếu không có cookie nào
+            return "Customer";
+        }
+
+        // Logic routing cho các controller thông thường
         if (context.Request.Path.StartsWithSegments("/Farmer", StringComparison.OrdinalIgnoreCase))
             return "FarmerAuth";
         if (context.Request.Path.StartsWithSegments("/Management", StringComparison.OrdinalIgnoreCase))
@@ -92,8 +125,10 @@ builder.Services.AddAuthentication(options =>
     opts.LoginPath = "/Account/Login";
     opts.LogoutPath = "/Account/Logout";
     opts.AccessDeniedPath = "/Account/AccessDenied";
+    opts.ExpireTimeSpan = TimeSpan.FromHours(12); // Session timeout
+    opts.SlidingExpiration = true; // Tự động gia hạn khi người dùng active
 
-    // Giữ nguyên logic xử lý Ajax quan trọng của bạn
+    //  logic xử lý Ajax 
     opts.Events = new CookieAuthenticationEvents
     {
         OnRedirectToLogin = context =>
@@ -130,13 +165,15 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 3) Scheme "FarmerAuth" cho Farmer area (Giữ nguyên)
+// 3) Scheme "FarmerAuth" cho Farmer area
 .AddCookie("FarmerAuth", opts =>
 {
     opts.Cookie.Name = ".AgriEcomFarmerAuth";
     opts.LoginPath = "/Farmer/FarmerAccount/Login";
     opts.LogoutPath = "/Farmer/FarmerAccount/Logout";
     opts.AccessDeniedPath = "/Farmer/FarmerAccount/AccessDenied";
+    opts.ExpireTimeSpan = TimeSpan.FromHours(12);
+    opts.SlidingExpiration = true;
 
     // Xử lý Ajax requests cho Farmer area
     opts.Events = new CookieAuthenticationEvents
@@ -157,13 +194,15 @@ builder.Services.AddAuthentication(options =>
     };
 })
 
-// 4) Scheme "ManagerAuth" cho Management area (Giữ nguyên)
+// 4) Scheme "ManagerAuth" cho Management area
 .AddCookie("ManagerAuth", opts =>
 {
     opts.Cookie.Name = ".AgriEcomManagerAuth";
     opts.LoginPath = "/Management/Account/Login";
     opts.LogoutPath = "/Management/Account/Logout";
     opts.AccessDeniedPath = "/Management/Account/AccessDenied";
+    opts.ExpireTimeSpan = TimeSpan.FromHours(12);
+    opts.SlidingExpiration = true;
 
     // Xử lý Ajax requests cho Management area
     opts.Events = new CookieAuthenticationEvents
@@ -185,11 +224,13 @@ builder.Services.AddAuthentication(options =>
 })
 
 // 5) Thêm Cookie "External" tạm thời (cho Google)
-// (Đây là phần được thêm vào chuỗi)
-.AddCookie("External")
+.AddCookie("External", opts =>
+{
+    opts.Cookie.Name = ".AgriEcomExternalAuth";
+    opts.ExpireTimeSpan = TimeSpan.FromMinutes(10); // Cookie tạm thời
+})
 
-// 6) Thêm cấu hình Google
-// (Đây là phần được thêm vào chuỗi)
+// cấu hình Google
 .AddGoogle(options =>
 {
     if (string.IsNullOrEmpty(googleClientId) || string.IsNullOrEmpty(googleClientSecret))
@@ -200,7 +241,6 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = googleClientSecret;
     // Đường dẫn /signin-google được middleware xử lý tự động
 });
-
 
 builder.Services.AddAuthorization();
 
@@ -241,23 +281,38 @@ app.UseSession();
 
 // 8) Routing + Auth
 app.UseRouting();
-app.UseAuthentication(); // Đảm bảo middleware xác thực được gọi
-app.UseAuthorization(); // Đảm bảo middleware ủy quyền được gọi
+app.UseAuthentication();
+app.UseAuthorization();
 
-// 9) Map area routes trước route default
+// Map các route cho Areas
 app.MapAreaControllerRoute(
     name: "farmer_area",
     areaName: "Farmer",
     pattern: "Farmer/{controller=FarmerAccount}/{action=Login}/{id?}"
 );
+
 app.MapAreaControllerRoute(
     name: "manager_area",
     areaName: "Management",
     pattern: "Management/{controller=Account}/{action=Login}/{id?}"
 );
+
+// Default route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+
+// *** QUAN TRỌNG: Map SignalR Hub ***
+// Đảm bảo route này được khai báo SAU khi UseAuthentication và UseAuthorization
+app.MapHub<ChatHub>("/chathub", options =>
+{
+    // Cấu hình cho WebSocket
+    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+                        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+
+    // Cấu hình CORS nếu cần (cho development)
+    options.AllowStatefulReconnects = true;
+});
 
 app.Run();

@@ -1,5 +1,6 @@
 ﻿using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Models;
+using AgriEcommerces_MVC.Models.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,6 +82,30 @@ namespace AgriEcommerces_MVC.Controllers
             ViewBag.SoldCount = soldCount;
 
             return View("Details", product);
+        }
+
+        [HttpGet]
+        // Action này được gọi bằng AJAX khi người dùng click vào "Chat ngay"
+        public IActionResult GetChatModal(int productId, string receiverId, string receiverName)
+        {
+            
+            if (!User.Identity.IsAuthenticated)
+            {
+               return Unauthorized("Vui lòng đăng nhập để sử dụng chat.");
+            }
+
+            var product = _db.products.FirstOrDefault(p => p.productid == productId);
+
+            var viewModel = new ChatViewModel
+            {
+                ReceiverId = receiverId,
+                ReceiverName = receiverName,
+                ProductId = productId,
+                ProductName = product?.productname ?? "Sản phẩm không xác định"
+            };
+
+            // Trả về Partial View
+            return PartialView("_ChatModal", viewModel);
         }
     }
 }

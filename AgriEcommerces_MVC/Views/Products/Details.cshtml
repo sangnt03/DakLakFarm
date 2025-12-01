@@ -574,12 +574,31 @@
                             <button class="btn-buy-now">
                                 Mua ngay
                             </button>
+                            <a href="@Url.Action("Index", "Chat", new { receiverId = Model.userid, productId = Model.productid })"
+                               class="btn btn-chat-now">
+                                <i class="fas fa-comment-dots"></i> Chat ngay
+                            </a>
                         </div>
+                        
                     </div>
                 </div>
             </div>
         </div>
     </div> <div class="row mt-3">
+        @* <div class="col-12">
+            <div class="product-description-panel">
+                <div class="product-details">                  
+                        <div class="detail-row">
+                            <div class="detail-label"></div>
+                            <div class="detail-value">@Model.user.shop_avatar</div>
+                        </div>
+                    
+                        <div class="detail-row">
+                            <div class="detail-value">@Model.user.shop_name</div>
+                        </div>
+                </div>
+            </div>
+        </div> *@
         <div class="col-12">
             <div class="product-description-panel">
                 <h3 class="panel-header">CHI TIẾT SẢN PHẨM</h3>
@@ -687,13 +706,15 @@
         </div>
     </div>
 </div>
+<div id="chatModalContainer"></div>
 
 @section Scripts {
     <script>
+        const isAuthenticated = @User.Identity.IsAuthenticated.ToString().ToLower();
         // === CÁC HÀM HỖ TRỢ ===
 
         function handleUnauthorized() {
-            if (confirm('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng! Bạn có muốn đến trang đăng nhập không?')) {
+            if (confirm('Vui lòng đăng nhập để sử dụng chức năng này! Bạn có muốn đến trang đăng nhập không?')) {
                 const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
                 window.location.href = '/Account/Login?returnUrl=' + returnUrl;
             }
@@ -708,19 +729,18 @@
                     }
                 });
 
+                // Xử lý 401: Vui lòng đăng nhập
                 if (resp.status === 401) {
                     handleUnauthorized();
                     return null;
                 }
 
-                // --- ĐOẠN SỬA ĐỔI ---
+                // Xử lý lỗi server hoặc lỗi logic (400, 500, v.v.)
                 if (!resp.ok) {
-                    // Lấy nội dung lỗi từ Controller (BadRequest)
                     const errorMsg = await resp.text();
-                    alert(errorMsg); // Hiển thị: "Kho chỉ còn 10 sản phẩm..."
+                    alert(errorMsg);
                     return null;
                 }
-                // --------------------
 
                 return await resp.text();
             } catch (error) {
@@ -730,6 +750,8 @@
             }
         }
 
+                // Hàm Tải Modal Chat
+        
         // === BỘ LẮNG NGHE SỰ KIỆN ===
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -773,7 +795,8 @@
                     input.value = value;
                     return;
                 }
-
+                // BẮT SỰ KIỆN NÚT 
+               
                 // Nút THÊM GIỎ HÀNG (của trang Details)
                 const addBtn = e.target.closest('.btn-add-cart');
                 if (addBtn) {

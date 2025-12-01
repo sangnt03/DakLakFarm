@@ -71,6 +71,15 @@
 
             <div class="col-sm-8 col-lg-4 d-flex justify-content-end gap-5 align-items-center mt-4 mt-sm-0 justify-content-center justify-content-sm-end">
                 <ul class="d-flex list-unstyled m-0 align-items-center gap-2">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Chat")">
+                                <i class="fas fa-comment-dots"></i> Tin nhắn
+                                @* Bạn có thể thêm badge số tin nhắn chưa đọc ở đây *@
+                            </a>
+                        </li>
+                    }
                     @if (!User.Identity.IsAuthenticated)
                     {
                         <li><a class="btn btn-primary" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>

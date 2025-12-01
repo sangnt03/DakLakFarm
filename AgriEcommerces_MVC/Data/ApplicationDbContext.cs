@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AgriEcommerces_MVC.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgriEcommerces_MVC.Data;
@@ -45,7 +46,7 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Payment> Payments { get; set; }
     public virtual DbSet<WalletTransaction> WalletTransaction { get; set; }
     public virtual DbSet<PayoutRequest> PayoutRequests { get; set; }
-
+    public virtual DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,0 +1,228 @@
+﻿@using AgriEcommerces_MVC.Controllers
+@* Đảm bảo using đúng namespace chứa ConversationViewModel *@
+@model List<ConversationViewModel>
+
+@{
+    ViewData["Title"] = "Tin nhắn khách hàng";
+
+    var selectedUserId = ViewBag.SelectedUserId as string;
+    var selectedProductId = ViewBag.SelectedProductId as int?;
+}
+
+<style>
+    /* CSS CHO LAYOUT CHIA ĐÔI */
+    .inbox-wrapper {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        height: 600px;
+        display: flex;
+        border: 1px solid #e0e0e0;
+    }
+
+    /* CỘT TRÁI: DANH SÁCH */
+    .inbox-list-panel {
+        width: 350px;
+        border-right: 1px solid #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+    }
+
+    .inbox-header {
+        /* ĐỔI MÀU: Gradient Xanh lá */
+        background: linear-gradient(135deg, #00C853 0%, #009624 100%);
+        padding: 15px 20px;
+        color: #fff; /* Chữ trắng cho nổi trên nền xanh */
+        flex-shrink: 0;
+    }
+
+    .conversation-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .conversation-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s;
+    }
+
+        .conversation-item:hover {
+            background: #e8f5e9; /* Màu xanh nhạt khi hover */
+        }
+
+        .conversation-item.active {
+            background: #fff;
+            /* ĐỔI MÀU: Border active xanh lá */
+            border-left: 4px solid #00C853; 
+        }
+
+    .conversation-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        /* ĐỔI MÀU: Avatar xanh lá */
+        background: #00C853; 
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .conversation-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-name {
+        font-weight: 600;
+        margin-bottom: 2px;
+        color: #333;
+    }
+
+    .last-msg {
+        font-size: 13px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* CỘT PHẢI: KHUNG CHAT */
+    .inbox-chat-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    #chatBoxContainer {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Trạng thái chờ */
+    .empty-state {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+    }
+
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+</style>
+
+<div class="container-fluid px-4"> <div class="inbox-wrapper">
+
+        <div class="inbox-list-panel">
+            <div class="inbox-header">
+                <h5 class="m-0"><i class="fas fa-comments"></i> Chat khách hàng</h5>
+            </div>
+
+            @if (Model == null || !Model.Any())
+            {
+                <div class="p-4 text-center text-muted">
+                    <small>Chưa có tin nhắn nào</small>
+                </div>
+            }
+            else
+            {
+                <ul class="conversation-list">
+                    @foreach (var conv in Model)
+                    {
+                        var activeClass = (conv.UserId == selectedUserId) ? "active" : "";
+
+                        <li class="conversation-item @activeClass"
+                            id="conv-@conv.UserId"
+                            onclick="loadChatBox('@conv.UserId', @selectedProductId)">
+
+                            <div class="conversation-avatar">
+                                @conv.AvatarChar
+                            </div>
+                            <div class="conversation-info">
+                                <div class="d-flex justify-content-between">
+                                    <div class="user-name">@conv.UserName</div>
+                                    @if (conv.Timestamp.HasValue)
+                                    {
+                                        <small class="text-muted" style="font-size: 11px;">
+                                            @conv.Timestamp.Value.ToString("HH:mm dd/MM")
+                                        </small>
+                                    }
+                                </div>
+                                <div class="last-msg">
+                                    @(conv.LastMessage ?? "...")
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="inbox-chat-panel">
+            <div id="chatBoxContainer">
+                <div class="empty-state">
+                    <i class="far fa-comments"></i>
+                    <p>Chọn một khách hàng để bắt đầu trò chuyện</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const preSelectedUserId = '@selectedUserId';
+        const preSelectedProductId = '@selectedProductId';
+
+        $(document).ready(function() {
+            if (preSelectedUserId) {
+                loadChatBox(preSelectedUserId, preSelectedProductId);
+            }
+        });
+
+        function loadChatBox(userId, productId) {
+            $('.conversation-item').removeClass('active');
+            $(`#conv-${userId}`).addClass('active');
+
+            $('#chatBoxContainer').html(`
+                <div class="empty-state">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="mt-2">Đang tải tin nhắn...</p>
+                </div>
+            `);
+
+            const pId = productId ? productId : 0;
+            // Gọi về Controller trong Area Farmer
+            const url = '@Url.Action("GetChatBoxPartial", "ChatShop", new { area = "Farmer" })';
+
+            $.get(`${url}?receiverId=${userId}&productId=${pId}`, function(data) {
+                $('#chatBoxContainer').html(data);
+            })
+            .fail(function() {
+                $('#chatBoxContainer').html('<p class="text-center mt-5 text-danger">Lỗi tải tin nhắn.</p>');
+            });
+        }
+    </script>
+}

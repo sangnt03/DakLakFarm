@@ -31,6 +31,8 @@
 
     @* Các script chung (Bootstrap bundle, jQuery, validation…) *@
     @await Html.PartialAsync("_Scripts")
+    @* SignalR *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.25/signalr.min.js"></script>
     
 
     @* Cho phép mỗi view thêm JS riêng nếu cần *@

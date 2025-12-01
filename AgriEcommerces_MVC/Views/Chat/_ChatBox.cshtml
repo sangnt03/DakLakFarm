@@ -1,0 +1,199 @@
+﻿@using AgriEcommerces_MVC.Models.ViewModel
+@using System.Security.Claims
+@model ChatViewModel
+
+@{
+    var currentUserId = Context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+}
+
+<input type="hidden" id="hdCurrentUserId" value="@currentUserId" />
+<input type="hidden" id="hdReceiverId" value="@Model.ReceiverId" />
+<input type="hidden" id="hdProductId" value="@Model.ProductId" />
+
+<style>
+    .chat-box-body {
+        height: 400px;
+        overflow-y: auto;
+        background: #fdfdfd;
+        padding: 15px;
+    }
+
+    .message-item {
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .message-item.sent {
+            align-items: flex-end;
+        }
+
+        .message-item.received {
+            align-items: flex-start;
+        }
+
+    .message-bubble {
+        max-width: 75%;
+        padding: 8px 12px;
+        border-radius: 15px;
+        background: #eee;
+    }
+
+    .message-item.sent .message-bubble {
+        background: #FFC800;
+        color: #333;
+    }
+</style>
+
+<div class="chat-box-header p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+    <div>
+        <h6 class="m-0 font-weight-bold">@Model.ReceiverName</h6>
+        @if (Model.ProductId > 0)
+        {
+            <small class="text-muted"><i class="fas fa-tag"></i> Sản phẩm: <strong>@Model.ProductName</strong></small>
+        }
+    </div>
+</div>
+
+<div id="divMessagesList" class="chat-box-body">
+    <div class="text-center text-muted mt-5"><i class="fas fa-spinner fa-spin"></i> Đang tải tin nhắn...</div>
+</div>
+
+<div class="chat-box-footer p-3 bg-white border-top">
+    <div class="input-group">
+        <input type="text" id="txtMessageInput" class="form-control" placeholder="Nhập tin nhắn..." autocomplete="off">
+        <button class="btn btn-warning" type="button" id="btnSend_Inbox" disabled>
+            <i class="fas fa-paper-plane"></i> Gửi
+        </button>
+    </div>
+</div>
+
+<script>
+    // Dùng IIFE để tạo scope riêng
+    (function () {
+        // Lấy Value ngay tại thời điểm hàm chạy
+        const userId = $("#hdCurrentUserId").val();
+        const receiverId = $("#hdReceiverId").val();
+        const productId = $("#hdProductId").val();
+
+        let connection = null;
+
+        // --- 1. HÀM KẾT NỐI SIGNALR ---
+        async function startChat() {
+            try {
+                if (connection && connection.state !== signalR.HubConnectionState.Disconnected) {
+                    await connection.stop();
+                }
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/chathub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on("ReceiveMessage", function (data) {
+                    console.log("🔥 DATA VỀ:", data);
+                    appendMessage(data);
+                });
+
+                await connection.start();
+                console.log("✅ SignalR Connected!");
+                $("#btnSend_Inbox").prop("disabled", false);
+                loadHistory();
+
+            } catch (err) {
+                console.error("❌ SignalR Error:", err);
+            }
+        }
+
+        // --- 2. HÀM GỬI TIN ---
+        async function sendMessage() {
+            const msg = $("#txtMessageInput").val().trim();
+            if (!msg) {
+                console.warn("Tin nhắn rỗng");
+                return;
+            }
+
+            console.log("🚀 Đang gửi tin:", msg); // Log kiểm tra
+            const pId = productId ? parseInt(productId) : null;
+
+            try {
+                await connection.invoke("SendMessageToUser", receiverId, msg, pId);
+                $("#txtMessageInput").val('').focus();
+            } catch (err) {
+                console.error("❌ Send Error:", err);
+                alert("Lỗi gửi tin!");
+            }
+        }
+
+        // --- 3. HÀM UI ---
+        function appendMessage(data) {
+            const sender = String(data.senderId || "");
+            const current = String(userId || "");
+            const boxReceiver = String(receiverId || "");
+
+            // Chỉ hiện tin nhắn của đúng cặp đôi này
+            if (sender !== boxReceiver && sender !== current) return;
+
+            const isMe = sender === current;
+            const time = new Date(data.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+            const html = `
+                <div class="message-item ${isMe ? 'sent' : 'received'}">
+                    <div class="message-bubble">
+                        ${data.productId ? `<small class="d-block text-muted">SP #${data.productId}</small>` : ''}
+                        <span>${escapeHtml(data.content)}</span>
+                    </div>
+                    <small class="text-muted mt-1" style="font-size: 10px;">${time}</small>
+                </div>`;
+
+            $("#divMessagesList .text-center").remove();
+            $("#divMessagesList").append(html);
+            scrollToBottom();
+        }
+
+        function loadHistory() {
+            $.get(`/Chat/GetChatHistory?targetUserId=${receiverId}&skip=0&take=50`, function(data) {
+                $("#divMessagesList").empty();
+                if(data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => appendMessage(msg));
+                } else {
+                    $("#divMessagesList").html('<div class="text-center text-muted mt-5">Hãy bắt đầu trò chuyện!</div>');
+                }
+            });
+        }
+
+        function scrollToBottom() {
+            const el = document.getElementById("divMessagesList");
+            if(el) el.scrollTop = el.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+        }
+
+        // --- 4. BẮT SỰ KIỆN (QUAN TRỌNG NHẤT) ---
+        // Sử dụng $(document).on(...) để "Ủy quyền sự kiện".
+        // Dù nút #btnSend_Inbox có bị xóa đi tạo lại 100 lần, sự kiện này vẫn sống.
+
+        // Xóa sự kiện cũ (nếu có) để tránh gửi đúp
+        $(document).off('click', '#btnSend_Inbox');
+        $(document).off('keypress', '#txtMessageInput');
+
+        // Gán sự kiện Click
+        $(document).on('click', '#btnSend_Inbox', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+
+        // Gán sự kiện Enter
+        $(document).on('keypress', '#txtMessageInput', function(e) {
+            if(e.which === 13) { // 13 là mã phím Enter
+                e.preventDefault(); // Chặn xuống dòng
+                sendMessage();
+            }
+        });
+
+        // Chạy khởi tạo
+        startChat();
+    })();
+</script>
