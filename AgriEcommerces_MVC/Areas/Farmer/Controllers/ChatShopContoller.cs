@@ -22,38 +22,40 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             _chatService = chatService;
         }
 
-        // 1. DANH SÁCH TIN NHẮN (INBOX CỦA FARMER)
         public async Task<IActionResult> Index()
         {
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(currentUserId)) return RedirectToAction("Login", "FarmerAccount");
 
-            // Lấy danh sách các cuộc trò chuyện (Logic giống hệt bên Customer)
-            var conversations = await _db.Messages
+            // Lấy tất cả tin nhắn liên quan
+            var allMessages = await _db.Messages
                 .Where(m => m.SenderId == currentUserId || m.ReceiverId == currentUserId)
+                .ToListAsync();
+
+            // Group theo người chat (không phân biệt sender/receiver)
+            var conversations = allMessages
                 .GroupBy(m => m.SenderId == currentUserId ? m.ReceiverId : m.SenderId)
                 .Select(g => new
                 {
                     UserId = g.Key,
                     LastMessage = g.OrderByDescending(m => m.Timestamp).FirstOrDefault()
                 })
-                .ToListAsync();
+                .ToList();
 
-            var userIds = conversations.Select(c => c.UserId).ToList();
+            var userIds = conversations.Select(c => c.UserId).Distinct().ToList();
 
             // Lấy thông tin KHÁCH HÀNG (người chat với Farmer)
             var users = await _db.users
                 .Where(u => userIds.Contains(u.userid.ToString()))
-                .Select(u => new { u.userid, u.fullname, u.shop_name }) // Lấy fullname là chính
+                .Select(u => new { u.userid, u.fullname, u.shop_name })
                 .ToListAsync();
 
             var result = conversations.Select(c =>
             {
                 var user = users.FirstOrDefault(u => u.userid.ToString() == c.UserId);
-                return new ConversationViewModel // Tái sử dụng ViewModel cũ
+                return new ConversationViewModel
                 {
                     UserId = c.UserId,
-                    // Ưu tiên hiển thị Tên Khách Hàng
                     UserName = user?.fullname ?? user?.shop_name ?? "Khách hàng",
                     LastMessage = c.LastMessage?.Content,
                     Timestamp = c.LastMessage?.Timestamp,
@@ -66,20 +68,22 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
 
         // 2. LOAD KHUNG CHAT (PARTIAL)
         [HttpGet]
-        public IActionResult GetChatBoxPartial(string receiverId, int? productId)
+        public async Task<IActionResult> GetChatBoxPartial(string receiverId, int? productId)
         {
             // Tìm tên Khách hàng để hiển thị trên header khung chat
             string receiverName = "Khách hàng";
             if (int.TryParse(receiverId, out int idInt))
             {
-                var user = _db.users.FirstOrDefault(u => u.userid == idInt);
+                // Dùng FirstOrDefaultAsync thay vì FirstOrDefault
+                var user = await _db.users.FirstOrDefaultAsync(u => u.userid == idInt);
                 if (user != null) receiverName = user.fullname ?? user.shop_name;
             }
 
             string productName = null;
             if (productId.HasValue && productId > 0)
             {
-                var product = _db.products.FirstOrDefault(p => p.productid == productId);
+                // Dùng FirstOrDefaultAsync
+                var product = await _db.products.FirstOrDefaultAsync(p => p.productid == productId);
                 productName = product?.productname;
             }
 
@@ -92,7 +96,7 @@ namespace AgriEcommerces_MVC.Areas.Farmer.Controllers
             };
 
             // Trả về View nằm trong Area Farmer
-            return PartialView("_ChatBox", viewModel);
+            return PartialView("_ChatBoxShop", viewModel);
         }
 
         // 3. API LẤY LỊCH SỬ (Gọi từ JS)

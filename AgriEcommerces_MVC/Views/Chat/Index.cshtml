@@ -230,5 +230,52 @@
                 $('#chatBoxContainer').html('<p class="text-center mt-5">Lỗi tải tin nhắn.</p>');
             });
         }
+
+        var listConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub?userType=Customer") // Quan trọng: Thêm userType để tránh lỗi authen cũ
+            .withAutomaticReconnect()
+            .build();
+
+        listConnection.on("ReceiveMessage", function (data) {
+            // Xác định ID của "người kia" trong cuộc trò chuyện
+            var currentUserId = '@selectedUserId';
+
+            var targetId = data.senderId;
+            // Tìm thẻ li có id chứa sender hoặc receiver
+            var $itemSender = $("#conv-" + data.senderId);
+            var $itemReceiver = $("#conv-" + data.receiverId);
+            var $targetItem = $itemSender.length ? $itemSender : $itemReceiver;
+
+            if ($targetItem.length > 0) {
+                // 1. Cập nhật nội dung tin nhắn cuối
+                var content = data.content;
+                if(data.productId) content = "[Sản phẩm] " + content;
+                $targetItem.find(".last-msg").text(content);
+
+                // 2. Cập nhật thời gian (Format HH:mm dd/MM)
+                var date = new Date(data.timestamp);
+                var timeStr = date.getHours().toString().padStart(2, '0') + ":" +
+                              date.getMinutes().toString().padStart(2, '0') + " " +
+                              date.getDate().toString().padStart(2, '0') + "/" +
+                              (date.getMonth() + 1).toString().padStart(2, '0');
+
+                $targetItem.find("small.text-muted").text(timeStr);
+
+                // 3. Hiệu ứng: Đưa dòng này lên đầu danh sách
+                var $parent = $targetItem.parent();
+                $targetItem.prependTo($parent);
+
+                // 4. (Tùy chọn) Thêm class đậm nếu chưa đọc
+                $targetItem.find(".last-msg").css("font-weight", "bold");
+                $targetItem.find(".user-name").css("color", "#000");
+            } else {
+                // Nếu là shop mới chưa có trong list thì reload lại trang để load list mới
+                // location.reload();
+            }
+        });
+
+        listConnection.start().catch(function (err) {
+            console.error("List SignalR Error: ", err.toString());
+        });
     </script>
 }

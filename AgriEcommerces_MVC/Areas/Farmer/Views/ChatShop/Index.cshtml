@@ -224,5 +224,50 @@
                 $('#chatBoxContainer').html('<p class="text-center mt-5 text-danger">Lỗi tải tin nhắn.</p>');
             });
         }
+        var listConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub?userType=Customer") // Quan trọng: Thêm userType để tránh lỗi authen cũ
+            .withAutomaticReconnect()
+            .build();
+        var shopListConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub?userType=Farmer") // Quan trọng: userType=Farmer
+            .withAutomaticReconnect()
+            .build();
+
+        shopListConnection.on("ReceiveMessage", function (data) {
+
+            var $itemSender = $("#conv-" + data.senderId);
+            var $itemReceiver = $("#conv-" + data.receiverId);
+            var $targetItem = $itemSender.length ? $itemSender : $itemReceiver;
+
+            if ($targetItem.length > 0) {
+                // 1. Update nội dung
+                var content = data.content;
+                if(data.productId) content = "SP #" + data.productId + ": " + content;
+                $targetItem.find(".last-msg").text(content);
+
+                // 2. Update thời gian
+                var date = new Date(data.timestamp);
+                var timeStr = date.getHours().toString().padStart(2, '0') + ":" +
+                              date.getMinutes().toString().padStart(2, '0') + " " +
+                              date.getDate().toString().padStart(2, '0') + "/" +
+                              (date.getMonth() + 1).toString().padStart(2, '0');
+
+                $targetItem.find("small.text-muted").text(timeStr);
+
+                // 3. Đưa lên đầu
+                $targetItem.prependTo($targetItem.parent());
+
+                // 4. Nếu là tin nhắn từ khách (không phải mình gửi), làm đậm lên
+                // Bạn có thể check senderId khác currentUserId
+                $targetItem.css("background-color", "#f0fff4"); // Highlight nhẹ màu xanh
+                setTimeout(function() {
+                     if(!$targetItem.hasClass('active')) $targetItem.css("background-color", "");
+                }, 2000);
+            }
+        });
+
+        shopListConnection.start().catch(function (err) {
+            console.error("Shop List SignalR Error: ", err.toString());
+        });
     </script>
 }

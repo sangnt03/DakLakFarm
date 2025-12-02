@@ -36,7 +36,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<VNPayService>();
 // Đăng ký WalletService
 builder.Services.AddScoped<WalletService>();
-// Đăng ký UnpaidOrderCleanupService chạy nền tự động xóa đơn hàng chưa thanh toán sau 5 phút với phương thức VNPAY,...
+// Đăng ký UnpaidOrderCleanupService chạy nền tự động xóa đơn hàng chưa thanh toán sau 5 phút với phương thức VNPAY, MOMO
 builder.Services.AddHostedService<UnpaidOrderCleanupService>();
 // Đăng ký MoMoService
 builder.Services.AddScoped<MoMoService>();
@@ -45,7 +45,7 @@ builder.Services.AddScoped<IShippingService, ShippingService>();
 // Đăng ký ChatService
 builder.Services.AddScoped<IChatService, ChatService>();
 
-// SignalR với cấu hình tối ưu
+// SignalR
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true; // Bật detailed errors để debug dễ hơn
@@ -92,19 +92,29 @@ builder.Services.AddAuthentication(options =>
 {
     options.ForwardDefaultSelector = context =>
     {
-        // *** QUAN TRỌNG: XỬ LÝ SIGNALR AUTHENTICATION ***
-        // SignalR Hub cần xác định đúng scheme dựa trên cookie
         if (context.Request.Path.StartsWithSegments("/chathub", StringComparison.OrdinalIgnoreCase))
         {
-            // Kiểm tra cookie theo thứ tự ưu tiên
+            // 1. Kiểm tra tham số userType từ Client gửi lên
+            var userType = context.Request.Query["userType"].ToString();
+
+            if (userType == "Farmer" && context.Request.Cookies.ContainsKey(".AgriEcomFarmerAuth"))
+            {
+                return "FarmerAuth";
+            }
+
+            if (userType == "Manager" && context.Request.Cookies.ContainsKey(".AgriEcomManagerAuth"))
+            {
+                return "ManagerAuth";
+            }
+
+            // 2. Nếu không chỉ định hoặc là Customer, kiểm tra cookie Customer
             if (context.Request.Cookies.ContainsKey(".AgriEcomCustomerAuth"))
                 return "Customer";
+
+            // Fallback: Nếu không có userType nhưng có cookie Farmer (trường hợp hiếm)
             if (context.Request.Cookies.ContainsKey(".AgriEcomFarmerAuth"))
                 return "FarmerAuth";
-            if (context.Request.Cookies.ContainsKey(".AgriEcomManagerAuth"))
-                return "ManagerAuth";
 
-            // Mặc định nếu không có cookie nào
             return "Customer";
         }
 
@@ -239,7 +249,7 @@ builder.Services.AddAuthentication(options =>
     }
     options.ClientId = googleClientId;
     options.ClientSecret = googleClientSecret;
-    // Đường dẫn /signin-google được middleware xử lý tự động
+    
 });
 
 builder.Services.AddAuthorization();
@@ -303,7 +313,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 
-// *** QUAN TRỌNG: Map SignalR Hub ***
+// Map SignalR Hub
 // Đảm bảo route này được khai báo SAU khi UseAuthentication và UseAuthorization
 app.MapHub<ChatHub>("/chathub", options =>
 {

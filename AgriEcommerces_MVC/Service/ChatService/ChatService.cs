@@ -1,6 +1,7 @@
 ﻿using AgriEcommerces_MVC.Data;
 using AgriEcommerces_MVC.Models;
 using Microsoft.EntityFrameworkCore;
+using AgriEcommerces_MVC.Helpers;
 
 namespace AgriEcommerces_MVC.Service.ChatService
 {
@@ -21,7 +22,7 @@ namespace AgriEcommerces_MVC.Service.ChatService
                 ReceiverId = receiverId,
                 Content = content,
                 ProductId = productId,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTimeHelper.GetVietnamTime()
             };
 
             _db.Messages.Add(message);

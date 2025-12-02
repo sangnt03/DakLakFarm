@@ -3,6 +3,7 @@ using AgriEcommerces_MVC.Models;
 using AgriEcommerces_MVC.Models.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.ProjectModel;
 
 namespace AgriEcommerces_MVC.Controllers
 {
@@ -71,13 +72,15 @@ namespace AgriEcommerces_MVC.Controllers
                 .Include(p => p.category)
                 .Include(p => p.reviews)
                     .ThenInclude(r => r.customer)
+                .Include(p => p.user)
                 .FirstOrDefaultAsync(p => p.productid == id);
 
             if (product == null) return NotFound();
+
             var soldCount = await _db.orderdetails
                 .Include(od => od.order)
                 .Where(od => od.productid == id && od.order.status != "Cancelled")
-                .SumAsync(od => (int?)od.quantity) ?? 0; 
+                .SumAsync(od => (int?)od.quantity) ?? 0;
 
             ViewBag.SoldCount = soldCount;
 

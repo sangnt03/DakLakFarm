@@ -556,7 +556,12 @@
                                 <span class="price-unit">/@Model.unit</span>
                             </div>
                         </div>
-
+                        <div class="mb-3">
+                            <a href="@Url.Action("Index", "Chat", new { receiverId = Model.userid, productId = Model.productid })"
+                               class="btn btn-chat-now btn-primary fw-bold shadow-sm">
+                                <i class="fas fa-comment-dots"></i> Chat ngay
+                            </a>
+                        </div>
                         <div class="quantity-section">
                             <div class="section-label">Số lượng</div>
                             <div class="quantity-wrapper">
@@ -574,28 +579,48 @@
                             <button class="btn-buy-now">
                                 Mua ngay
                             </button>
-                            <a href="@Url.Action("Index", "Chat", new { receiverId = Model.userid, productId = Model.productid })"
-                               class="btn btn-chat-now">
-                                <i class="fas fa-comment-dots"></i> Chat ngay
-                            </a>
                         </div>
                         
                     </div>
                 </div>
             </div>
         </div>
-    </div> <div class="row mt-3">
+    </div> 
+    <div class="row mt-3">
+        
         @* <div class="col-12">
             <div class="product-description-panel">
-                <div class="product-details">                  
-                        <div class="detail-row">
-                            <div class="detail-label"></div>
-                            <div class="detail-value">@Model.user.shop_avatar</div>
+                <h3 class="panel-header">THÔNG TIN SHOP</h3>
+                <div class="product-details">
+                    @if (Model.user != null)
+                    {
+                    <div class="detail-row align-items-center" style="border-bottom: none; padding: 0;">
+                        
+
+                        <div class="detail-value d-flex align-items-center">
+                            @{
+                                var avatarUrl = !string.IsNullOrEmpty(Model.user.shop_avatar)
+                                ? Url.Content(Model.user.shop_avatar)
+                                : Url.Content("~/images/default-avatar.png");
+
+                                var shopName = !string.IsNullOrEmpty(Model.user.shop_name)
+                                ? Model.user.shop_name
+                                : Model.user.fullname;
+                            }
+
+                            <img src="@avatarUrl" alt="@shopName"
+                                 style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 1px solid #e0e0e0;">
+
+                            <div class="d-flex flex-column justify-content-center">
+                                <span style="font-weight: 500; font-size: 16px; color: #333; line-height: 1.2;">@shopName</span>
+
+                                <a href="#" style="font-size: 14px; text-decoration: none; color: #ffce3d; margin-top: 4px;">
+                                    <i class="fas fa-store me-1"></i> Xem Shop
+                                </a>
+                            </div>
                         </div>
-                    
-                        <div class="detail-row">
-                            <div class="detail-value">@Model.user.shop_name</div>
-                        </div>
+                    </div>
+                    }
                 </div>
             </div>
         </div> *@
@@ -614,13 +639,14 @@
                     {
                         <div class="detail-row">
                             <div class="detail-label">Mô tả</div>
-                            <div class="detail-value">@Model.description</div>
+                            <div class="detail-value" style="white-space: pre-line;">@Model.description</div>
                         </div>
                     }
                 </div>
             </div>
         </div>
-    </div> <div class="row mt-3">
+    </div>
+    <div class="row mt-3">
         <div class="col-12">
             <div class="reviews-panel">
                 <h3 class="reviews-header">

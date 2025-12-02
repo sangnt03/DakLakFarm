@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-[Authorize] 
+[Authorize]
 public class ChatHub : Hub
 {
     private readonly IChatService _chatService;
@@ -20,7 +20,6 @@ public class ChatHub : Hub
 
         if (string.IsNullOrEmpty(senderId))
         {
-            // Trường hợp này không nên xảy ra nếu có [Authorize]
             throw new HubException("Người dùng chưa được xác thực.");
         }
 
@@ -31,18 +30,17 @@ public class ChatHub : Hub
         var messageData = new
         {
             senderId = senderId,
+            receiverId = receiverId,
             content = content,
             productId = productId,
             timestamp = message.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
-        // 3. GỬI TIN NHẮN
-        // Gửi đến người nhận cụ thể
-        //await Clients.User(receiverId).SendAsync("ReceiveMessage", messageData);
+        // 3. GỬI TIN NHẮN CHỈ ĐẾN 2 NGƯỜI LIÊN QUAN
+        // Gửi đến người nhận
+        await Clients.User(receiverId).SendAsync("ReceiveMessage", messageData);
 
         // Gửi về chính người gửi (để cập nhật UI)
-        //wait Clients.Caller.SendAsync("ReceiveMessage", messageData);
-
-        await Clients.All.SendAsync("ReceiveMessage", messageData);
+        await Clients.Caller.SendAsync("ReceiveMessage", messageData);
     }
 }

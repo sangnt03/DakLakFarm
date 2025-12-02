@@ -36,17 +36,21 @@
         max-width: 75%;
         padding: 8px 12px;
         border-radius: 15px;
-        background: #eee;
+        word-wrap: break-word;
     }
 
-    /* Đổi màu bong bóng tin nhắn gửi đi */
     .message-item.sent .message-bubble {
-        background: #00C853; /* Xanh lá */
-        color: #fff; /* Chữ trắng cho dễ đọc */
+        background: #00C853;
+        color: #fff;
         border-bottom-right-radius: 2px;
     }
 
-    /* Đổi màu nút Gửi */
+    .message-item.received .message-bubble {
+        background: #eee;
+        color: #333;
+        border-bottom-left-radius: 2px;
+    }
+
     #btnSend_Inbox {
         background-color: #00C853;
         border-color: #00C853;
@@ -75,23 +79,20 @@
 <div class="chat-box-footer p-3 bg-white border-top">
     <div class="input-group">
         <input type="text" id="txtMessageInput" class="form-control" placeholder="Nhập tin nhắn..." autocomplete="off">
-        <button class="btn btn-warning" type="button" id="btnSend_Inbox" disabled>
+        <button class="btn" type="button" id="btnSend_Inbox" disabled>
             <i class="fas fa-paper-plane"></i> Gửi
         </button>
     </div>
 </div>
 
 <script>
-    // Dùng IIFE để tạo scope riêng
     (function () {
-        // Lấy Value ngay tại thời điểm hàm chạy
         const userId = $("#hdCurrentUserId").val();
         const receiverId = $("#hdReceiverId").val();
         const productId = $("#hdProductId").val();
 
         let connection = null;
 
-        // --- 1. HÀM KẾT NỐI SIGNALR ---
         async function startChat() {
             try {
                 if (connection && connection.state !== signalR.HubConnectionState.Disconnected) {
@@ -99,7 +100,7 @@
                 }
 
                 connection = new signalR.HubConnectionBuilder()
-                    .withUrl("/chathub")
+                    .withUrl("/chathub?userType=Farmer") // <--- THÊM ?userType=Farmer
                     .withAutomaticReconnect()
                     .build();
 
@@ -118,7 +119,6 @@
             }
         }
 
-        // --- 2. HÀM GỬI TIN ---
         async function sendMessage() {
             const msg = $("#txtMessageInput").val().trim();
             if (!msg) {
@@ -126,7 +126,7 @@
                 return;
             }
 
-            console.log("🚀 Đang gửi tin:", msg); // Log kiểm tra
+            console.log("🚀 Đang gửi tin:", msg);
             const pId = productId ? parseInt(productId) : null;
 
             try {
@@ -138,22 +138,34 @@
             }
         }
 
-        // --- 3. HÀM UI ---
         function appendMessage(data) {
-            const sender = String(data.senderId || "");
-            const current = String(userId || "");
-            const boxReceiver = String(receiverId || "");
+            const sender = String(data.senderId || "").trim();
+            const receiver = String(data.receiverId || "").trim();
+            const current = String(userId || "").trim();
+            const boxReceiver = String(receiverId || "").trim();
 
-            // Chỉ hiện tin nhắn của đúng cặp đôi này
-            if (sender !== boxReceiver && sender !== current) return;
+            console.log("📨 AppendMessage - Sender:", sender, "Receiver:", receiver, "Current:", current, "BoxReceiver:", boxReceiver);
 
+            // Chỉ hiển thị tin nhắn giữa 2 người đang chat
+            const isRelevant =
+                (sender === current && receiver === boxReceiver) ||
+                (sender === boxReceiver && receiver === current);
+
+            if (!isRelevant) {
+                console.log("❌ Tin nhắn không liên quan, bỏ qua");
+                return;
+            }
+
+            console.log("✅ Tin nhắn hợp lệ, đang thêm vào UI...");
+
+            // Xác định tin nhắn của mình hay người khác
             const isMe = sender === current;
             const time = new Date(data.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
             const html = `
                 <div class="message-item ${isMe ? 'sent' : 'received'}">
                     <div class="message-bubble">
-                        ${data.productId ? `<small class="d-block text-muted">SP #${data.productId}</small>` : ''}
+                        ${data.productId ? `<small class="d-block mb-1" style="opacity: 0.8;">SP #${data.productId}</small>` : ''}
                         <span>${escapeHtml(data.content)}</span>
                     </div>
                     <small class="text-muted mt-1" style="font-size: 10px;">${time}</small>
@@ -163,13 +175,13 @@
             $("#divMessagesList").append(html);
             scrollToBottom();
         }
-        // hàm loadHistory lấy lịch sử tin nhắn
+
         function loadHistory() {
             const baseUrl = '@Url.Action("GetChatHistory", "ChatShop", new { area = "Farmer" })';
             const url = `${baseUrl}?targetUserId=${receiverId}&skip=0&take=50`;
 
             $.get(url, function(data) {
-                $("#divMessagesList").empty(); // Xóa icon loading đi
+                $("#divMessagesList").empty();
 
                 if (data.messages && data.messages.length > 0) {
                     data.messages.forEach(msg => appendMessage(msg));
@@ -190,29 +202,21 @@
             return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
         }
 
-        // --- 4. BẮT SỰ KIỆN (QUAN TRỌNG NHẤT) ---
-        // Sử dụng $(document).on(...) để "Ủy quyền sự kiện".
-        // Dù nút #btnSend_Inbox có bị xóa đi tạo lại 100 lần, sự kiện này vẫn sống.
-
-        // Xóa sự kiện cũ (nếu có) để tránh gửi đúp
         $(document).off('click', '#btnSend_Inbox');
         $(document).off('keypress', '#txtMessageInput');
 
-        // Gán sự kiện Click
         $(document).on('click', '#btnSend_Inbox', function(e) {
             e.preventDefault();
             sendMessage();
         });
 
-        // Gán sự kiện Enter
         $(document).on('keypress', '#txtMessageInput', function(e) {
-            if(e.which === 13) { // 13 là mã phím Enter
-                e.preventDefault(); // Chặn xuống dòng
+            if(e.which === 13) {
+                e.preventDefault();
                 sendMessage();
             }
         });
 
-        // Chạy khởi tạo
         startChat();
     })();
 </script>
