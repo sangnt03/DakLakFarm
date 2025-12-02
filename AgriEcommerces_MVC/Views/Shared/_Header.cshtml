@@ -3,164 +3,232 @@
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
-    // --- PHẦN 1: LOGIC C# ĐỂ BẮT ACTIVE ---
-
-    // Lấy giỏ hàng
     const string CART_KEY = "Cart";
     var cart = Context.Session.GetObject<CartViewModel>(CART_KEY) ?? new CartViewModel();
     var totalQty = cart.Items.Sum(i => i.Quantity);
 
-    // Lấy Controller và Action hiện tại
     var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
 
-    // Hàm kiểm tra Active (So sánh không phân biệt hoa thường)
     string ActiveClass(string controller, string action = null)
     {
         if (string.IsNullOrEmpty(currentController)) return "";
-
-        // Nếu check cả Action (Dùng cho trang chủ)
         if (!string.IsNullOrEmpty(action))
         {
             bool isCtrl = string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase);
             bool isAct = string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase);
             return (isCtrl && isAct) ? "active-custom" : "";
         }
-
-        // Nếu chỉ check Controller (Dùng cho trang con)
         return string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase) ? "active-custom" : "";
     }
 }
 
 <style>
+    /* Style cho Menu (Giữ nguyên) */
     .menu-list .navbar-brand.active-custom {
-        color: #ffc43f !important; 
+        color: #ffc43f !important;
         border-bottom: 3px solid #ffc43f !important;
         font-weight: bold !important;
         opacity: 1 !important;
     }
 
-    /* Hiệu ứng khi di chuột vào */
     .menu-list .navbar-brand:hover {
         color: #ffc43f !important;
+    }
+
+    /* Style cho Icon User (Chỉ hiện khi đã đăng nhập) */
+    .icon-user-custom {
+        font-size: 35px;
+        color: #ffc43f; /* Màu mặc định */
+        transition: color 0.3s;
+    }
+
+        .icon-user-custom:hover {
+            color: #ffc43f;
+        }
+
+    /* Style cho nút Đăng nhập / Đăng ký (Khi chưa đăng nhập) */
+    .auth-link {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        text-decoration: none;
+        white-space: nowrap; /* Giữ chữ trên 1 dòng */
+        transition: color 0.2s;
+    }
+
+        .auth-link:hover {
+            color: #ffc43f;
+            font-weight: bold;
+        }
+
+    .auth-separator {
+        color: #ccc;
+        margin: 0 8px;
+    }
+
+    /* Style cho Giỏ hàng chuẩn mẫu Cart.jpg */
+    .cart-btn-wrapper {
+        background-color: #ffc43f;
+        width: 45px; /* Tăng kích thước chút cho đẹp */
+        height: 45px;
+        border-radius: 50%; /* Bo tròn hoàn toàn */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s;
+    }
+
+        .cart-btn-wrapper:hover {
+            transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi di chuột */
+            background-color: #e0ac37;
+        }
+
+    /* Search bar styles */
+    .search-bar-custom {
+        height: 50px;
+    }
+
+    .search-input-custom {
+        height: 100%;
+        background-color: #f8f9fa;
+    }
+
+    .search-btn-custom {
+        background-color: #ffc43f;
+        border: none;
+        width: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .search-btn-custom:hover {
+            background-color: #e0ac37;
+        }
+
+    /* Mobile Responsive Adjustments */
+    @@media (max-width: 991px) {
+        .search-container-mobile
+
+    {
+        margin-top: 15px;
+    }
+    /* Trên mobile, giảm cỡ chữ Đăng nhập/Đăng ký để đỡ chật */
+    .auth-link {
+        font-size: 13px;
+    }
+
+    .auth-separator {
+        margin: 0 4px;
+    }
+
     }
 </style>
 
 <header>
     <div class="container-fluid">
-        <div class="row py-3 border-bottom">
-            <div class="col-sm-4 col-lg-3 text-center text-sm-start">
+        <div class="row align-items-center py-3 border-bottom">
+
+            <div class="col-6 col-lg-3 text-start order-1">
                 <a class="navbar-brand" href="@Url.Action("Index", "Home")">
-                    <img src="@(Url.Content("~/images/logo.png"))" alt="logo" />
+                    <img src="@(Url.Content("~/images/logo.png"))" alt="logo" style="max-height: 60px;" />
                 </a>
             </div>
 
-            <div class="col-sm-6 offset-sm-2 offset-md-0 col-lg-5 d-none d-lg-block">
+            <div class="col-6 col-lg-4 text-end d-flex justify-content-end align-items-center gap-2 gap-lg-3 order-2 order-lg-3">
+
+                @if (!User.Identity.IsAuthenticated)
+                {
+                    /* --- TRƯỜNG HỢP 1: CHƯA ĐĂNG NHẬP (Hiển thị text Đăng nhập | Đăng ký) --- */
+                    <div class="d-flex align-items-center">
+                        <a class="auth-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                        <span class="auth-separator">|</span>
+                        <a class="auth-link" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                    </div>
+                }
+                else
+                {
+                    /* --- TRƯỜNG HỢP 2: ĐÃ ĐĂNG NHẬP (Hiển thị Icon User & Tin nhắn) --- */
+
+                    /* Nút Tin nhắn (Chỉ hiện trên PC cho gọn) */
+                    <a class="nav-link text-primary d-none d-md-block me-2" href="@Url.Action("Index", "Chat")">
+                        <i class="fas fa-comment-dots"></i> Tin nhắn
+                    </a>
+
+                    /* Dropdown User Icon */
+                    <div class="dropdown">
+                        <a href="#" class="icon-user-custom p-1" id="userDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                            <li class="dropdown-header">Xin chào, <strong>@User.Identity.Name</strong></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" asp-controller="Home" asp-action="Profile"><i class="bi bi-person me-2"></i>Trang cá nhân</a></li>
+                            <li><a class="dropdown-item" asp-controller="Home" asp-action="MyOrders"><i class="bi bi-bag-check me-2"></i>Đơn mua</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item" style="-webkit-text-fill-color:red"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+
+                <div class="cart ms-2">
+                    <button class="btn position-relative p-0 border-0" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart">
+                        <div class="cart-btn-wrapper">
+                            <i class="fas fa-shopping-cart text-white fs-5"></i>
+                        </div>
+
+                        @if (totalQty > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">
+                                @totalQty
+                            </span>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-5 order-3 order-lg-2 search-container-mobile">
                 <form id="search-form" action="@Url.Action("Index", "Search")" method="get">
-                    <div class="search-bar d-flex align-items-center bg-light p-2 my-2 rounded-4">
-                        <input type="text" name="q" class="form-control border-0 bg-transparent me-3" placeholder="Tìm kiếm sản phẩm bạn cần" />
-                        <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center" style="padding: 0.5rem 1rem;">
-                            <svg width="25" height="25" viewBox="0 0 24 24">
-                                <path fill="currentColor" d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a1 1 0 0 0 1.42 0a1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 7-7a7 7 0 0 1-7 7Z" />
-                            </svg>
+                    <div class="d-flex align-items-center bg-light rounded-4 overflow-hidden search-bar-custom border">
+                        <input type="text" name="q" class="form-control border-0 bg-transparent shadow-none h-100 ps-3"
+                               placeholder="Tìm kiếm sản phẩm bạn cần" />
+                        <button type="submit" class="search-btn-custom text-white h-100">
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </form>
             </div>
 
-
-            <div class="col-sm-8 col-lg-4 d-flex justify-content-end gap-5 align-items-center mt-4 mt-sm-0 justify-content-center justify-content-sm-end">
-                <ul class="d-flex list-unstyled m-0 align-items-center gap-2">
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("Index", "Chat")">
-                                <i class="fas fa-comment-dots"></i> Tin nhắn
-                                @* Bạn có thể thêm badge số tin nhắn chưa đọc ở đây *@
-                            </a>
-                        </li>
-                    }
-                    @if (!User.Identity.IsAuthenticated)
-                    {
-                        <li><a class="btn btn-primary" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
-                        <li><a class="btn btn-primary" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
-                    }
-                    else
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="rounded-circle bg-light p-2 dropdown-toggle nav-link" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="@(Url.Content("~/images/LogoInformation.jpg"))" width="30" height="30" alt="Avatar" class="rounded-circle" />
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li class="dropdown-header"><strong>@User.Identity.Name</strong></li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Profile"><i class="bi bi-person me-2"></i>Trang cá nhân</a></li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li>
-                                    <form asp-controller="Account" asp-action="Logout" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    }
-                </ul>
-
-                <div class="cart text-end d-none d-lg-block">
-                    <button class="btn position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart">
-                        <img src="@(Url.Content("~/images/Cart.jpg"))" width="40" height="40" />
-                        @if (totalQty > 0)
-                        {
-                            <span style="color:#ffc43f" class="badge bg-danger position-absolute top-0 start-100 translate-middle">@totalQty</span>
-                        }
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
     <div class="container-fluid">
-        <div class="row py-3">
-            <div class="d-flex justify-content-center justify-content-sm-between align-items-center">
-                <nav class="main-menu navbar navbar-expand-lg">
-                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+        <div class="row py-2">
+            <div class="col-12">
+                <nav class="main-menu navbar navbar-expand-lg w-100">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
                         <span class="navbar-toggler-icon"></span>
                     </button>
 
-                    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                        <div class="offcanvas-header justify-content-center">
-                            <button class="btn-close" type="button" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
+                    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title">Menu</h5>
+                            <button class="btn-close" type="button" data-bs-dismiss="offcanvas"></button>
                         </div>
 
                         <div class="offcanvas-body">
-                            <ul class="navbar-nav menu-list list-unstyled d-flex gap-md-3 mb-0">
-                                <li class="nav-link"></li>
-
-                                <li class="nav-item">
-                                    <a class="navbar-brand @ActiveClass("Home", "Index")"
-                                       href="@Url.Action("Index", "Home")">Shop</a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a class="navbar-brand @ActiveClass("Products")"
-                                       asp-controller="Products" asp-action="Index">Sản phẩm</a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a class="navbar-brand @ActiveClass("Home", "GioiThieu")"
-                                       asp-controller="Home" asp-action="GioiThieu">Giới Thiệu</a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a class="navbar-brand @ActiveClass("Home", "ThuongHieu")"
-                                       asp-controller="Home" asp-action="ThuongHieu">Thương hiệu</a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a class="navbar-brand @ActiveClass("Home", "Blog")"
-                                       asp-controller="Home" asp-action="Blog">Blog</a>
-                                </li>
+                            <ul class="navbar-nav menu-list list-unstyled d-flex gap-4 mb-0">
+                                <li class="nav-item"><a class="navbar-brand @ActiveClass("Home", "Index")" href="@Url.Action("Index", "Home")">Shop</a></li>
+                                <li class="nav-item"><a class="navbar-brand @ActiveClass("Products")" asp-controller="Products" asp-action="Index">Sản phẩm</a></li>
+                                <li class="nav-item"><a class="navbar-brand @ActiveClass("Home", "GioiThieu")" asp-controller="Home" asp-action="GioiThieu">Giới Thiệu</a></li>
+                                <li class="nav-item"><a class="navbar-brand @ActiveClass("Home", "ThuongHieu")" asp-controller="Home" asp-action="ThuongHieu">Thương hiệu</a></li>
+                                <li class="nav-item"><a class="navbar-brand @ActiveClass("Home", "Blog")" asp-controller="Home" asp-action="Blog">Blog</a></li>
                             </ul>
                         </div>
                     </div>
