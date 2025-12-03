@@ -1,5 +1,4 @@
 ﻿@using AgriEcommerces_MVC.Controllers
-@* Đảm bảo using đúng namespace chứa ConversationViewModel *@
 @model List<ConversationViewModel>
 
 @{
@@ -10,7 +9,7 @@
 }
 
 <style>
-    /* CSS CHO LAYOUT CHIA ĐÔI */
+    /* LAYOUT CƠ BẢN */
     .inbox-wrapper {
         background: #fff;
         border-radius: 8px;
@@ -33,10 +32,9 @@
     }
 
     .inbox-header {
-        /* ĐỔI MÀU: Gradient Xanh lá */
         background: linear-gradient(135deg, #00C853 0%, #009624 100%);
         padding: 15px 20px;
-        color: #fff; /* Chữ trắng cho nổi trên nền xanh */
+        color: #fff;
         flex-shrink: 0;
     }
 
@@ -59,21 +57,19 @@
     }
 
         .conversation-item:hover {
-            background: #e8f5e9; /* Màu xanh nhạt khi hover */
+            background: #e8f5e9;
         }
 
         .conversation-item.active {
             background: #fff;
-            /* ĐỔI MÀU: Border active xanh lá */
-            border-left: 4px solid #00C853; 
+            border-left: 4px solid #00C853;
         }
 
     .conversation-avatar {
         width: 45px;
         height: 45px;
         border-radius: 50%;
-        /* ĐỔI MÀU: Avatar xanh lá */
-        background: #00C853; 
+        background: #00C853;
         color: #fff;
         display: flex;
         align-items: center;
@@ -115,7 +111,6 @@
         flex-direction: column;
     }
 
-    /* Trạng thái chờ */
     .empty-state {
         height: 100%;
         display: flex;
@@ -130,9 +125,94 @@
             margin-bottom: 15px;
             color: #ddd;
         }
+
+    @@media (max-width: 767px) {
+        .container-fluid
+
+    {
+        padding: 0 !important;
+    }
+
+    .inbox-wrapper {
+        height: calc(100vh - 60px);
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* Mặc định: Hiện danh sách, ẩn chat */
+    .inbox-list-panel {
+        width: 100%;
+        border-right: none;
+    }
+
+    .inbox-chat-panel {
+        display: none;
+        width: 100%;
+    }
+
+    /* Khi có class "show-chat" -> Ẩn danh sách, hiện chat */
+    .inbox-wrapper.show-chat .inbox-list-panel {
+        display: none;
+    }
+
+    .inbox-wrapper.show-chat .inbox-chat-panel {
+        display: flex;
+    }
+
+    /* Điều chỉnh kích thước */
+    .conversation-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .conversation-item {
+        padding: 12px 15px;
+    }
+
+    .inbox-header h5 {
+        font-size: 18px;
+    }
+
+    .user-name {
+        font-size: 15px;
+    }
+
+    .last-msg {
+        font-size: 12px;
+    }
+
+    }
+
+    /* Tablet */
+    @@media (min-width: 768px) and (max-width: 991px) {
+        .inbox-list-panel
+
+    {
+        width: 300px;
+    }
+
+    .conversation-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    }
+
+    /* Desktop lớn */
+    @@media (min-width: 1200px) {
+        .inbox-list-panel
+
+    {
+        width: 380px;
+    }
+
+    }
 </style>
 
-<div class="container-fluid px-4"> <div class="inbox-wrapper">
+<div class="container-fluid px-4">
+    <div class="inbox-wrapper" id="inboxWrapper">
 
         <div class="inbox-list-panel">
             <div class="inbox-header">
@@ -206,6 +286,11 @@
             $('.conversation-item').removeClass('active');
             $(`#conv-${userId}`).addClass('active');
 
+            // Trên mobile: chuyển sang hiển thị chat
+            if (window.innerWidth < 768) {
+                $('#inboxWrapper').addClass('show-chat');
+            }
+
             $('#chatBoxContainer').html(`
                 <div class="empty-state">
                     <div class="spinner-border text-success" role="status"></div>
@@ -214,7 +299,6 @@
             `);
 
             const pId = productId ? productId : 0;
-            // Gọi về Controller trong Area Farmer
             const url = '@Url.Action("GetChatBoxPartial", "ChatShop", new { area = "Farmer" })';
 
             $.get(`${url}?receiverId=${userId}&productId=${pId}`, function(data) {
@@ -224,28 +308,32 @@
                 $('#chatBoxContainer').html('<p class="text-center mt-5 text-danger">Lỗi tải tin nhắn.</p>');
             });
         }
-        var listConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub?userType=Customer") // Quan trọng: Thêm userType để tránh lỗi authen cũ
-            .withAutomaticReconnect()
-            .build();
+
+        // Hàm quay lại danh sách (gọi từ _ChatBoxShop)
+        window.backToConversationList = function() {
+            $('#inboxWrapper').removeClass('show-chat');
+        };
+
         var shopListConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub?userType=Farmer") // Quan trọng: userType=Farmer
+            .withUrl("/chathub?userType=Farmer")
             .withAutomaticReconnect()
             .build();
 
         shopListConnection.on("ReceiveMessage", function (data) {
+            console.log("📨 Shop List nhận tin:", data);
 
+            // Tìm item trong danh sách (khách hàng)
             var $itemSender = $("#conv-" + data.senderId);
             var $itemReceiver = $("#conv-" + data.receiverId);
             var $targetItem = $itemSender.length ? $itemSender : $itemReceiver;
 
             if ($targetItem.length > 0) {
-                // 1. Update nội dung
+                // 1. Cập nhật nội dung tin nhắn cuối
                 var content = data.content;
                 if(data.productId) content = "SP #" + data.productId + ": " + content;
                 $targetItem.find(".last-msg").text(content);
 
-                // 2. Update thời gian
+                // 2. Cập nhật thời gian (Format HH:mm dd/MM)
                 var date = new Date(data.timestamp);
                 var timeStr = date.getHours().toString().padStart(2, '0') + ":" +
                               date.getMinutes().toString().padStart(2, '0') + " " +
@@ -254,20 +342,28 @@
 
                 $targetItem.find("small.text-muted").text(timeStr);
 
-                // 3. Đưa lên đầu
+                // 3. Đưa item lên đầu danh sách
                 $targetItem.prependTo($targetItem.parent());
 
-                // 4. Nếu là tin nhắn từ khách (không phải mình gửi), làm đậm lên
-                // Bạn có thể check senderId khác currentUserId
-                $targetItem.css("background-color", "#f0fff4"); // Highlight nhẹ màu xanh
-                setTimeout(function() {
-                     if(!$targetItem.hasClass('active')) $targetItem.css("background-color", "");
-                }, 2000);
+                // 4. Highlight tin nhắn mới nếu không active
+                if (!$targetItem.hasClass('active')) {
+                    $targetItem.css("background-color", "#f0fff4");
+                    $targetItem.find(".last-msg").css("font-weight", "bold");
+
+                    // Bỏ highlight sau 2 giây
+                    setTimeout(function() {
+                        $targetItem.css("background-color", "");
+                    }, 2000);
+                }
+            } else {
+                console.log("⚠️ Không tìm thấy conversation item cho:", data.senderId, data.receiverId);
             }
         });
 
-        shopListConnection.start().catch(function (err) {
-            console.error("Shop List SignalR Error: ", err.toString());
+        shopListConnection.start().then(function() {
+            console.log("✅ Shop List SignalR Connected!");
+        }).catch(function (err) {
+            console.error("❌ Shop List SignalR Error: ", err.toString());
         });
     </script>
 }

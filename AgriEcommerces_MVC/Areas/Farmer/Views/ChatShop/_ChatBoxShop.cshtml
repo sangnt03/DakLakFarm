@@ -4,9 +4,12 @@
 
 @{
     var currentUserId = Context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    // Lấy role hiện tại, nếu không có thì mặc định là Farmer (do view này có vẻ thuộc area Farmer)
+    var currentUserRole = Context.User.FindFirst(ClaimTypes.Role)?.Value ?? "Farmer";
 }
 
 <input type="hidden" id="hdCurrentUserId" value="@currentUserId" />
+<input type="hidden" id="hdCurrentUserRole" value="@currentUserRole" />
 <input type="hidden" id="hdReceiverId" value="@Model.ReceiverId" />
 <input type="hidden" id="hdProductId" value="@Model.ProductId" />
 
@@ -60,14 +63,43 @@
         #btnSend_Inbox:hover {
             background-color: #009624;
         }
+
+    /* RESPONSIVE cho mobile */
+    @@media (max-width: 767px) {
+        .chat-box-body {
+            height: calc(100vh - 280px);
+            min-height: 300px;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+        }
+
+        .chat-box-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .chat-box-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+    }
 </style>
 
 <div class="chat-box-header p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
-    <div>
-        <h6 class="m-0 font-weight-bold">@Model.ReceiverName</h6>
+    <div class="flex-grow-1">
+        <button class="btn btn-link p-0 me-2 d-md-none" onclick="backToConversationList()" type="button">
+            <i class="fas fa-arrow-left text-success"></i>
+        </button>
+        <h6 class="m-0 font-weight-bold d-inline">@Model.ReceiverName</h6>
         @if (Model.ProductId > 0)
         {
-            <small class="text-muted"><i class="fas fa-tag"></i> Sản phẩm: <strong>@Model.ProductName</strong></small>
+            <div>
+                <small class="text-muted"><i class="fas fa-tag"></i> Sản phẩm: <strong>@Model.ProductName</strong></small>
+            </div>
         }
     </div>
 </div>
@@ -80,7 +112,9 @@
     <div class="input-group">
         <input type="text" id="txtMessageInput" class="form-control" placeholder="Nhập tin nhắn..." autocomplete="off">
         <button class="btn" type="button" id="btnSend_Inbox" disabled>
-            <i class="fas fa-paper-plane"></i> Gửi
+            <i class="fas fa-paper-plane d-none d-md-inline"></i>
+            <span class="d-none d-md-inline ms-1">Gửi</span>
+            <i class="fas fa-paper-plane d-md-none"></i>
         </button>
     </div>
 </div>
@@ -88,6 +122,7 @@
 <script>
     (function () {
         const userId = $("#hdCurrentUserId").val();
+        const userRole = $("#hdCurrentUserRole").val();
         const receiverId = $("#hdReceiverId").val();
         const productId = $("#hdProductId").val();
 
@@ -100,41 +135,36 @@
                 }
 
                 connection = new signalR.HubConnectionBuilder()
-                    .withUrl("/chathub?userType=Farmer") // <--- THÊM ?userType=Farmer
+                    .withUrl("/chathub?userType=" + encodeURIComponent(userRole))
                     .withAutomaticReconnect()
                     .build();
 
                 connection.on("ReceiveMessage", function (data) {
-                    console.log("🔥 DATA VỀ:", data);
                     appendMessage(data);
                 });
 
                 await connection.start();
-                console.log("✅ SignalR Connected!");
                 $("#btnSend_Inbox").prop("disabled", false);
                 loadHistory();
 
             } catch (err) {
-                console.error("❌ SignalR Error:", err);
+                // Log removed
             }
         }
 
         async function sendMessage() {
             const msg = $("#txtMessageInput").val().trim();
             if (!msg) {
-                console.warn("Tin nhắn rỗng");
                 return;
             }
 
-            console.log("🚀 Đang gửi tin:", msg);
             const pId = productId ? parseInt(productId) : null;
 
             try {
                 await connection.invoke("SendMessageToUser", receiverId, msg, pId);
                 $("#txtMessageInput").val('').focus();
             } catch (err) {
-                console.error("❌ Send Error:", err);
-                alert("Lỗi gửi tin!");
+                alert("Lỗi gửi tin nhắn!");
             }
         }
 
@@ -144,21 +174,14 @@
             const current = String(userId || "").trim();
             const boxReceiver = String(receiverId || "").trim();
 
-            console.log("📨 AppendMessage - Sender:", sender, "Receiver:", receiver, "Current:", current, "BoxReceiver:", boxReceiver);
-
-            // Chỉ hiển thị tin nhắn giữa 2 người đang chat
             const isRelevant =
                 (sender === current && receiver === boxReceiver) ||
                 (sender === boxReceiver && receiver === current);
 
             if (!isRelevant) {
-                console.log("❌ Tin nhắn không liên quan, bỏ qua");
                 return;
             }
 
-            console.log("✅ Tin nhắn hợp lệ, đang thêm vào UI...");
-
-            // Xác định tin nhắn của mình hay người khác
             const isMe = sender === current;
             const time = new Date(data.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -177,6 +200,7 @@
         }
 
         function loadHistory() {
+            // Lưu ý: Đảm bảo Controller ChatShop trong Area Farmer tồn tại
             const baseUrl = '@Url.Action("GetChatHistory", "ChatShop", new { area = "Farmer" })';
             const url = `${baseUrl}?targetUserId=${receiverId}&skip=0&take=50`;
 

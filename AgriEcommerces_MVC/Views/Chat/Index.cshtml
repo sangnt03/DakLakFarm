@@ -1,18 +1,16 @@
 ﻿@using AgriEcommerces_MVC.Controllers
-@* Sử dụng Model chuẩn thay vì dynamic để dễ code *@
 @model List<ConversationViewModel>
 
 @{
     ViewData["Title"] = "Tin nhắn của tôi";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    // Lấy dữ liệu truyền từ Controller (khi bấm Chat Ngay)
     var selectedUserId = ViewBag.SelectedUserId as string;
     var selectedProductId = ViewBag.SelectedProductId as int?;
 }
 
 <style>
-    /* CSS CHO LAYOUT CHIA ĐÔI */
+    /* LAYOUT CƠ BẢN */
     .inbox-wrapper {
         background: #fff;
         border-radius: 8px;
@@ -20,7 +18,7 @@
         overflow: hidden;
         margin-top: 20px;
         margin-bottom: 20px;
-        height: 600px; /* Chiều cao cố định cho khung chat */
+        height: 600px;
         display: flex;
     }
 
@@ -44,7 +42,7 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        overflow-y: auto; /* Cho phép cuộn danh sách */
+        overflow-y: auto;
         flex: 1;
     }
 
@@ -82,7 +80,7 @@
 
     .conversation-info {
         flex: 1;
-        min-width: 0; /* Giúp text-overflow hoạt động */
+        min-width: 0;
     }
 
     .user-name {
@@ -113,7 +111,6 @@
         flex-direction: column;
     }
 
-    /* Trạng thái chờ */
     .empty-state {
         height: 100%;
         display: flex;
@@ -128,10 +125,72 @@
             margin-bottom: 15px;
             color: #ddd;
         }
+
+
+    @@media (max-width: 767px) {
+        .inbox-wrapper
+
+    {
+        height: calc(100vh - 80px); /* Chiếm gần toàn màn hình */
+        margin: 10px;
+        border-radius: 0;
+    }
+
+    /* Mặc định: Hiện danh sách, ẩn chat */
+    .inbox-list-panel {
+        width: 100%;
+        border-right: none;
+    }
+
+    .inbox-chat-panel {
+        display: none; /* Ẩn chat panel ban đầu */
+        width: 100%;
+    }
+
+    /* Khi có class "show-chat" -> Ẩn danh sách, hiện chat */
+    .inbox-wrapper.show-chat .inbox-list-panel {
+        display: none;
+    }
+
+    .inbox-wrapper.show-chat .inbox-chat-panel {
+        display: flex;
+    }
+
+    /* Điều chỉnh avatar và text */
+    .conversation-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .conversation-item {
+        padding: 12px 15px;
+    }
+
+    .inbox-header h5 {
+        font-size: 18px;
+    }
+
+    }
+
+    /* Tablet */
+    @@media (min-width: 768px) and (max-width: 991px) {
+        .inbox-list-panel
+
+    {
+        width: 300px;
+    }
+
+    .conversation-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    }
 </style>
 
 <div class="container">
-    <div class="inbox-wrapper">
+    <div class="inbox-wrapper" id="inboxWrapper">
 
         <div class="inbox-list-panel">
             <div class="inbox-header">
@@ -149,7 +208,6 @@
                 <ul class="conversation-list">
                     @foreach (var conv in Model)
                     {
-                        // Kiểm tra active nếu đang chọn người này
                         var activeClass = (conv.UserId == selectedUserId) ? "active" : "";
 
                         <li class="conversation-item @activeClass"
@@ -193,12 +251,10 @@
 
 @section Scripts {
     <script>
-        // Các biến lấy từ Server
         const preSelectedUserId = '@selectedUserId';
         const preSelectedProductId = '@selectedProductId';
 
         $(document).ready(function() {
-            // Nếu có userId được truyền xuống (từ nút Chat Ngay), tự động load chat luôn
             if (preSelectedUserId) {
                 loadChatBox(preSelectedUserId, preSelectedProductId);
             }
@@ -209,7 +265,12 @@
             $('.conversation-item').removeClass('active');
             $(`#conv-${userId}`).addClass('active');
 
-            // 2. Hiển thị loading bên phải
+            // 2. Trên mobile: chuyển sang hiển thị chat
+            if (window.innerWidth < 768) {
+                $('#inboxWrapper').addClass('show-chat');
+            }
+
+            // 3. Hiển thị loading
             $('#chatBoxContainer').html(`
                 <div class="empty-state">
                     <div class="spinner-border text-warning" role="status"></div>
@@ -217,13 +278,11 @@
                 </div>
             `);
 
-            // 3. Gọi AJAX lấy PartialView _ChatBox
-            // Lưu ý: productId có thể rỗng nếu click từ danh sách bên trái
+            // 4. Load chat box
             const pId = productId ? productId : 0;
             const url = '@Url.Action("GetChatBoxPartial", "Chat")';
 
             $.get(`${url}?receiverId=${userId}&productId=${pId}`, function(data) {
-                // 4. Đổ HTML vào cột phải
                 $('#chatBoxContainer').html(data);
             })
             .fail(function() {
@@ -231,17 +290,20 @@
             });
         }
 
+        // Hàm quay lại danh sách (gọi từ _ChatBox)
+        window.backToConversationList = function() {
+            $('#inboxWrapper').removeClass('show-chat');
+        };
+
         var listConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/chathub?userType=Customer") // Quan trọng: Thêm userType để tránh lỗi authen cũ
+            .withUrl("/chathub?userType=Customer")
             .withAutomaticReconnect()
             .build();
 
         listConnection.on("ReceiveMessage", function (data) {
-            // Xác định ID của "người kia" trong cuộc trò chuyện
-            var currentUserId = '@selectedUserId';
+            console.log("📨 List nhận tin:", data);
 
-            var targetId = data.senderId;
-            // Tìm thẻ li có id chứa sender hoặc receiver
+            // Tìm item trong danh sách dựa vào senderId hoặc receiverId
             var $itemSender = $("#conv-" + data.senderId);
             var $itemReceiver = $("#conv-" + data.receiverId);
             var $targetItem = $itemSender.length ? $itemSender : $itemReceiver;
@@ -261,21 +323,24 @@
 
                 $targetItem.find("small.text-muted").text(timeStr);
 
-                // 3. Hiệu ứng: Đưa dòng này lên đầu danh sách
+                // 3. Đưa item lên đầu danh sách
                 var $parent = $targetItem.parent();
                 $targetItem.prependTo($parent);
 
-                // 4. (Tùy chọn) Thêm class đậm nếu chưa đọc
-                $targetItem.find(".last-msg").css("font-weight", "bold");
-                $targetItem.find(".user-name").css("color", "#000");
+                // 4. Làm đậm tin nhắn mới (nếu không phải đang active)
+                if (!$targetItem.hasClass('active')) {
+                    $targetItem.find(".last-msg").css("font-weight", "bold");
+                    $targetItem.find(".user-name").css("color", "#000");
+                }
             } else {
-                // Nếu là shop mới chưa có trong list thì reload lại trang để load list mới
-                // location.reload();
+                console.log("⚠️ Không tìm thấy conversation item cho:", data.senderId, data.receiverId);
             }
         });
 
-        listConnection.start().catch(function (err) {
-            console.error("List SignalR Error: ", err.toString());
+        listConnection.start().then(function() {
+            console.log("✅ List SignalR Connected!");
+        }).catch(function (err) {
+            console.error("❌ List SignalR Error: ", err.toString());
         });
     </script>
 }

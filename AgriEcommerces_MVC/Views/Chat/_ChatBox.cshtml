@@ -4,9 +4,12 @@
 
 @{
     var currentUserId = Context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    // Lấy Role hiện tại của người dùng (Customer/Farmer/Admin)
+    var currentUserRole = Context.User.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
 }
 
 <input type="hidden" id="hdCurrentUserId" value="@currentUserId" />
+<input type="hidden" id="hdCurrentUserRole" value="@currentUserRole" />
 <input type="hidden" id="hdReceiverId" value="@Model.ReceiverId" />
 <input type="hidden" id="hdProductId" value="@Model.ProductId" />
 <input type="hidden" id="hdProductName" value="@Model.ProductName" />
@@ -51,14 +54,43 @@
         color: #333;
         border-bottom-left-radius: 2px;
     }
+
+    /* RESPONSIVE cho mobile */
+    @@media (max-width: 767px) {
+        .chat-box-body {
+            height: calc(100vh - 280px); /* Tăng chiều cao trên mobile */
+            min-height: 300px;
+        }
+
+        .message-bubble {
+            max-width: 85%; /* Rộng hơn trên mobile */
+        }
+
+        .chat-box-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .chat-box-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+    }
 </style>
 
 <div class="chat-box-header p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
-    <div>
-        <h6 class="m-0 font-weight-bold">@Model.ReceiverName</h6>
+    <div class="flex-grow-1">
+        <button class="btn btn-link p-0 me-2 d-md-none" onclick="backToConversationList()" type="button">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h6 class="m-0 font-weight-bold d-inline">@Model.ReceiverName</h6>
         @if (Model.ProductId > 0)
         {
-            <small class="text-muted"><i class="fas fa-tag"></i> Sản phẩm: <strong>@Model.ProductName</strong></small>
+            <div>
+                <small class="text-muted"><i class="fas fa-tag"></i> Sản phẩm: <strong>@Model.ProductName</strong></small>
+            </div>
         }
     </div>
 </div>
@@ -71,7 +103,9 @@
     <div class="input-group">
         <input type="text" id="txtMessageInput" class="form-control" placeholder="Nhập tin nhắn..." autocomplete="off">
         <button class="btn btn-warning" type="button" id="btnSend_Inbox" disabled>
-            <i class="fas fa-paper-plane"></i> Gửi
+            <i class="fas fa-paper-plane d-none d-md-inline"></i>
+            <span class="d-none d-md-inline ms-1">Gửi</span>
+            <i class="fas fa-paper-plane d-md-none"></i>
         </button>
     </div>
 </div>
@@ -79,6 +113,7 @@
 <script>
     (function () {
         const userId = $("#hdCurrentUserId").val();
+        const userRole = $("#hdCurrentUserRole").val();
         const receiverId = $("#hdReceiverId").val();
         const productId = $("#hdProductId").val();
 
@@ -90,42 +125,38 @@
                     await connection.stop();
                 }
 
+                // Truyền Dynamic Role vào query string thay vì fix cứng 'Customer'
                 connection = new signalR.HubConnectionBuilder()
-                    .withUrl("/chathub?userType=Customer")
+                    .withUrl("/chathub?userType=" + encodeURIComponent(userRole))
                     .withAutomaticReconnect()
                     .build();
 
                 connection.on("ReceiveMessage", function (data) {
-                    console.log("🔥 DATA VỀ:", data);
                     appendMessage(data);
                 });
 
                 await connection.start();
-                console.log("✅ SignalR Connected!");
                 $("#btnSend_Inbox").prop("disabled", false);
                 loadHistory();
 
             } catch (err) {
-                console.error("❌ SignalR Error:", err);
+                // Đã bỏ log lỗi
             }
         }
 
         async function sendMessage() {
             const msg = $("#txtMessageInput").val().trim();
             if (!msg) {
-                console.warn("Tin nhắn rỗng");
                 return;
             }
 
-            console.log("🚀 Đang gửi tin:", msg);
             const pId = productId ? parseInt(productId) : null;
 
             try {
                 await connection.invoke("SendMessageToUser", receiverId, msg, pId);
                 $("#txtMessageInput").val('').focus();
             } catch (err) {
-                console.error("❌ Send Error:", err);
-                alert("Lỗi gửi tin!");
+                alert("Lỗi gửi tin nhắn, vui lòng thử lại sau.");
             }
         }
 
@@ -135,17 +166,17 @@
             const current = String(userId || "");
             const boxReceiver = String(receiverId || "");
 
-            // Chỉ hiển thị tin nhắn giữa 2 người đang chat
+            // Logic hiển thị:
+            // 1. Tin nhắn mình gửi cho người này
+            // 2. Tin nhắn người này gửi cho mình
             const isRelevant =
                 (sender === current && receiver === boxReceiver) ||
                 (sender === boxReceiver && receiver === current);
 
             if (!isRelevant) {
-                console.log("❌ Tin nhắn không liên quan, bỏ qua");
                 return;
             }
 
-            // Xác định tin nhắn của mình hay người khác
             const isMe = sender === current;
             const time = new Date(data.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
@@ -182,14 +213,13 @@
                     }
                 }
             }).fail(function() {
-                $("#divMessagesList").html('<div class="text-center text-danger mt-5">Lỗi kết nối Server khi tải lịch sử.</div>');
+                $("#divMessagesList").html('<div class="text-center text-danger mt-5">Không thể tải lịch sử tin nhắn.</div>');
             });
         }
 
         function showWelcomeMessage(productName) {
             const time = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
-            // Tạo HTML giả lập tin nhắn từ Shop (người nhận) gửi cho mình
             const html = `
                 <div class="message-item received">
                     <div class="message-bubble">
@@ -212,6 +242,7 @@
             return text ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
         }
 
+        // Clean up events cũ để tránh duplicate events nếu view được load lại qua Ajax
         $(document).off('click', '#btnSend_Inbox');
         $(document).off('keypress', '#txtMessageInput');
 
