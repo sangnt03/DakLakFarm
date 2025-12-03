@@ -5,52 +5,9 @@
             <div class="col-lg-3 col-md-6 col-sm-6">
                 <div class="footer-menu">
                     <a class="navbar-brand" href="@Url.Action("Index","Home")">
-                        <img src="@(Url.Content("~/images/logonew.png"))" alt="logo" />
+                        <img src="@(Url.Content("~/images/logo.png"))" alt="logo" />
                     </a>
-                    <div class="social-links mt-5">
-                        <ul class="d-flex list-unstyled gap-2">
-                            <li>
-                                <a class="btn btn-outline-light" href="#">
-                                    <!-- Facebook SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M15.12 5.32H17V2.14A26.11..."></path>
-                                    </svg>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="btn btn-outline-light" href="#">
-                                    <!-- Twitter SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M22.991 3.95a1 1 0..."></path>
-                                    </svg>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="btn btn-outline-light" href="#">
-                                    <!-- YouTube SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M23 9.71a8.5 8.5 0..."></path>
-                                    </svg>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="btn btn-outline-light" href="#">
-                                    <!-- Instagram SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M17.34 5.46a1.2 1.2..."></path>
-                                    </svg>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="btn btn-outline-light" href="#">
-                                    <!-- LinkedIn SVG -->
-                                    <svg width="16" height="16" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M1.04 17.52q.1-.16..."></path>
-                                    </svg>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -59,8 +16,8 @@
                 <div class="footer-menu">
                     <h5 class="widget-title">Về chúng tôi</h5>
                     <ul class="menu-list list-unstyled">
-                        <li class="menu-item"><a class="nav-link" href="#">Giới thiệu</a></li>                       
-                        <li class="menu-item"><a class="nav-link" href="#">Blog</a></li>
+                        <li class="menu-item"><a class="nav-link" asp-controller="Home" asp-action="GioiThieu">Giới thiệu</a></li>
+                        <li class="menu-item"><a class="nav-link" asp-controller="Home" asp-action="Blog">Blog</a></li>
                     </ul>
                 </div>
             </div>
@@ -70,7 +27,7 @@
                 <div class="footer-menu">
                     <h5 class="widget-title">Dịch vụ khách hàng</h5>
                     <ul class="menu-list list-unstyled">
-                        <li class="menu-item"><a class="nav-link" href="#">Câu hỏi thường gặp</a></li>
+                        <li class="menu-item"><a class="nav-link">Câu hỏi thường gặp</a></li>
                         <li class="menu-item"><a class="nav-link" href="#">Liên hệ</a></li>                       
                         <li class="menu-item"><a class="nav-link" href="#">Đổi trả & hoàn tiền</a></li>                       
                     </ul>
@@ -93,13 +50,6 @@
                 <div class="footer-menu">
                     <h5 class="widget-title">Đăng ký nhận tin</h5>
                     <p>Đăng ký nhận bản tin để cập nhật các ưu đãi đặc biệt.</p>
-                    <form class="d-flex mt-3 gap-0" role="newsletter">
-                        <input type="email"
-                               class="form-control rounded-start bg-light"
-                               placeholder="Địa chỉ email"
-                               aria-label="Địa chỉ email" />
-                        <button class="btn btn-dark rounded-end" type="submit">Đăng ký</button>
-                    </form>
                 </div>
             </div>
         </div>
