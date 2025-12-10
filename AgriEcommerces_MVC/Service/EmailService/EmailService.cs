@@ -142,7 +142,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 <h3>📋 Thông tin đơn hàng</h3>
                 <p><strong>Mã đơn hàng:</strong> <span style='font-family: monospace; font-size: 18px; color: #667eea;'>{order.ordercode}</span></p>
                 <p><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
-                <p><strong>Trạng thái:</strong> <span style='color: #ff9800;'>{order.status}</span></p>
                 <p><strong>Địa chỉ giao hàng:</strong> {order.shippingaddress}</p>
                 <p><strong>Số điện thoại:</strong> {order.customerphone}</p>
             </div>
@@ -154,6 +153,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                         <th>Sản phẩm</th>
                         <th>Số lượng</th>
                         <th>Đơn giá</th>
+                        <th>Tiền Ship</th>
                         <th>Thành tiền</th>
                     </tr>
                 </thead>
@@ -166,6 +166,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                         <td>{item.product?.productname ?? "Sản phẩm"}</td>
                         <td>{item.quantity}</td>
                         <td>{item.unitprice:N0} VNĐ</td>
+                        <td>{order.ShippingFee:N0} VNĐ</td>
                         <td>{(item.quantity * item.unitprice):N0} VNĐ</td>
                     </tr>");
             }
