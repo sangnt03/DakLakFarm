@@ -14,7 +14,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
             _context = context;
         }
 
-        // 1. TÍNH SỐ DƯ (Chuẩn xác nhất: Cộng tổng lịch sử)
+        // 1. TÍNH SỐ DƯ
         public async Task<decimal> GetAvailableBalance(int farmerId)
         {
             // Cộng tất cả dòng tiền (Dương là thu nhập, Âm là rút tiền)

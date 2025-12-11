@@ -48,10 +48,9 @@
                                 <strong>Lưu ý:</strong> Đơn hàng sẽ hủy sau 5 phút nếu chưa thanh toán.
                             </div>
 
-                            <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
-                               class="btn btn-primary mt-2">
+                            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#retryPaymentModal">
                                 <i class="fas fa-credit-card"></i> Thanh toán ngay
-                            </a>
+                            </button>
                         </div>
                     }
                 }
@@ -194,7 +193,6 @@
                             <div class="col-12 mb-1">
                                 <strong>Thời gian:</strong>
                                 @{
-                                    // Xử lý múi giờ
                                     DateTime vnTime = payment.CreateDate.AddHours(7);
                                 }
                                 @vnTime.ToString("dd/MM/yyyy HH:mm:ss")
@@ -219,10 +217,9 @@
 
                 @if (Model.status == "Pending" && (payment == null || payment.PaymentMethod != "COD"))
                 {
-                    <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
-                       class="btn btn-outline-success">
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#retryPaymentModal">
                         <i class="fas fa-credit-card"></i> Thanh toán ngay
-                    </a>
+                    </button>
                 }
 
                 <button onclick="window.print()" class="btn btn-outline-info">
@@ -269,6 +266,43 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.status == "Pending" && (payment == null || payment.PaymentMethod != "COD"))
+{
+    <div class="modal fade no-print" id="retryPaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Chọn phương thức thanh toán</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Vui lòng chọn cổng thanh toán để tiếp tục:</p>
+                    <div class="d-grid gap-3">
+                        <a asp-controller="Payment" asp-action="CreatePayment" asp-route-orderId="@Model.orderid"
+                           class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 border-2">
+                            <span class="fw-bold">
+                                <i class="fas fa-qrcode me-2"></i> Ví VNPAY / Thẻ ngân hàng
+                            </span>
+                            <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087.png" height="30" alt="VNPay">
+                        </a>
+
+                        <a asp-controller="Payment" asp-action="CreateMoMoPayment" asp-route-orderId="@Model.orderid"
+                           class="btn btn-outline-danger d-flex align-items-center justify-content-between p-3 border-2">
+                            <span class="fw-bold">
+                                <i class="fas fa-wallet me-2"></i> Ví MoMo
+                            </span>
+                            <img src="https://developers.momo.vn/v3/assets/images/logo-custom2-57d6118fe524633b89befe8cb63a3956.png" height="30" alt="MoMo">
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
