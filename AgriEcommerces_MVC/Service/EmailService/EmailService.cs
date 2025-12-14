@@ -152,8 +152,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
                     <tr>
                         <th>Sản phẩm</th>
                         <th>Số lượng</th>
-                        <th>Đơn giá</th>
-                        <th>Tiền Ship</th>
+                        <th>Đơn giá</th
                         <th>Thành tiền</th>
                     </tr>
                 </thead>
@@ -166,18 +165,23 @@ namespace AgriEcommerces_MVC.Service.EmailService
                         <td>{item.product?.productname ?? "Sản phẩm"}</td>
                         <td>{item.quantity}</td>
                         <td>{item.unitprice:N0} VNĐ</td>
-                        <td>{order.ShippingFee:N0} VNĐ</td>
                         <td>{(item.quantity * item.unitprice):N0} VNĐ</td>
                     </tr>");
             }
 
             sb.Append($@"
-                    
                     <tr>
                         <td colspan='3' style='text-align: right;'><strong>Tạm tính:</strong></td>
                         <td>{order.totalamount:N0} VNĐ</td>
-                    </tr>");
-
+                    </tr>
+            ");
+            sb.Append($@"
+                    
+                    <tr>
+                        <td colspan='3' style='text-align: right;'><strong>Tạm tính:</strong></td>
+                        <td>{{order.totalamount:N0}} VNĐ</td>
+                    </tr>
+            ");
             if (order.discountamount > 0)
             {
                 sb.Append($@"
