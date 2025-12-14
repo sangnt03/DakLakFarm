@@ -320,7 +320,7 @@ namespace AgriEcommerces_MVC.Service.EmailService
             </div>
 
             <center>
-                <a href='#' style='display: inline-block; padding: 10px 20px; background: #0d6efd; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Truy cập trang quản lý</a>
+                <a href='https://daklakfarm.onrender.com/Farmer/FarmerAccount/Login' style='display: inline-block; padding: 10px 20px; background: #0d6efd; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Truy cập trang quản lý</a>
             </center>
             
             <p style='margin-top: 20px;'>Trân trọng,<br><strong>Ban quản trị DakLakFarm</strong></p>
