@@ -1,7 +1,12 @@
 ﻿using AgriEcommerces_MVC.Models;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
-using System.Text.Json; // Thư viện xử lý JSON có sẵn của .NET
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace AgriEcommerces_MVC.Service.EmailService
 {
@@ -10,7 +15,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        // Inject thêm IHttpClientFactory
         public EmailService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
@@ -38,9 +42,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
             await SendEmailViaBrevoApi(email, email, subject, htmlContent);
         }
 
-        // ==============================================================================
-        // CORE: HÀM GỬI MAIL QUA API (KHÔNG DÙNG SMTP) - CHẠY 100% TRÊN RENDER FREE
-        // ==============================================================================
         private async Task SendEmailViaBrevoApi(string toEmail, string toName, string subject, string htmlContent)
         {
             var emailSettings = _configuration.GetSection("EmailSettings");
@@ -53,19 +54,14 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 throw new Exception("Chưa cấu hình BrevoApiKey trong Environment Variables");
             }
 
-            // 1. Tạo Payload JSON theo chuẩn của Brevo API
             var payload = new
             {
                 sender = new { email = senderEmail, name = senderName },
-                to = new[]
-                {
-                    new { email = toEmail, name = toName }
-                },
+                to = new[] { new { email = toEmail, name = toName } },
                 subject = subject,
                 htmlContent = htmlContent
             };
 
-            // 2. Chuẩn bị Request HTTP
             var client = _httpClientFactory.CreateClient();
             var jsonContent = new StringContent(
                 JsonSerializer.Serialize(payload),
@@ -73,24 +69,14 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 "application/json"
             );
 
-            // Thêm Header API Key
             client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("api-key", apiKey);
 
             try
             {
-                Console.WriteLine($"[Email API] Đang gửi mail tới {toEmail} qua Brevo...");
-
-                // 3. Gọi API (Cổng 443 - Không bao giờ bị chặn)
                 var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", jsonContent);
-
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine("[Email API] Gửi thành công!");
-                }
-                else
-                {
-                    // Đọc lỗi trả về nếu thất bại
                     var error = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"[Email API Error]: {response.StatusCode} - {error}");
                     throw new Exception($"Lỗi gửi mail API: {error}");
@@ -104,128 +90,147 @@ namespace AgriEcommerces_MVC.Service.EmailService
         }
 
 
-
-
-
         private string GenerateOrderConfirmationHtml(order order)
         {
             var sb = new StringBuilder();
+
             sb.Append($@"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
     <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: #28a745; color: white; padding: 20px; text-align: center; }}
-        .content {{ background: #f9f9f9; padding: 20px; }}
-        .order-info {{ background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; }}
-        table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
-        th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
-        th {{ background: #f5f5f5; }}
-        .total {{ font-size: 18px; font-weight: bold; color: #28a745; }}
-        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }}
+        .header {{ background: #28a745; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #ffffff; padding: 20px; }}
+        .order-info {{ background: #f8f9fa; padding: 15px; margin: 15px 0; border-left: 5px solid #28a745; border-radius: 4px; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th, td {{ padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }}
+        th {{ background-color: #f1f1f1; text-align: left; font-weight: bold; }}
+        .text-right {{ text-align: right; }}
+        .text-center {{ text-align: center; }}
+        .total-row td {{ font-weight: bold; font-size: 16px; color: #28a745; border-top: 2px solid #28a745; }}
+        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; border-top: 1px solid #eee; margin-top: 20px; }}
     </style>
 </head>
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>🎉 Đặt hàng thành công!</h1>
+            <h1 style='margin:0;'>🎉 Đặt hàng thành công!</h1>
         </div>
         
         <div class='content'>
             <p>Xin chào <strong>{order.customername}</strong>,</p>
-            <p>Cảm ơn bạn đã đặt hàng tại <strong>DakLakFarm</strong>. Đơn hàng của bạn đã được tiếp nhận và đang chờ xử lý.</p>
+            <p>Cảm ơn bạn đã đặt hàng tại <strong>DakLakFarm</strong>.</p>
             
             <div class='order-info'>
-                <h3>📋 Thông tin đơn hàng</h3>
-                <p><strong>Mã đơn hàng:</strong> <span style='font-family: monospace; font-size: 18px; color: #667eea;'>{order.ordercode}</span></p>
-                <p><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
-                <p><strong>Địa chỉ giao hàng:</strong> {order.shippingaddress}</p>
-                <p><strong>Số điện thoại:</strong> {order.customerphone}</p>
+                <h3 style='margin-top:0;'>📋 Thông tin đơn hàng</h3>
+                <p style='margin: 5px 0;'><strong>Mã đơn hàng:</strong> <span style='font-family: monospace; font-size: 16px; color: #d63384; font-weight:bold;'>#{order.ordercode}</span></p>
+                <p style='margin: 5px 0;'><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
+                <p style='margin: 5px 0;'><strong>Số điện thoại:</strong> {order.customerphone}</p>
+                <p style='margin: 5px 0;'><strong>Địa chỉ giao hàng:</strong> {order.shippingaddress}</p>
             </div>
 
-            <h3>🛒 Chi tiết đơn hàng</h3>
+            <h3>🛒 Chi tiết sản phẩm</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Sản phẩm</th>
-                        <th>Số lượng</th>
-                        <th>Đơn giá</th
-                        <th>Thành tiền</th>
+                        <th style='width: 40%;'>Sản phẩm</th>
+                        <th class='text-center' style='width: 15%;'>SL</th>
+                        <th class='text-right' style='width: 20%;'>Đơn giá</th>
+                        <th class='text-right' style='width: 25%;'>Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody>");
 
-            foreach (var item in order.orderdetails)
+            if (order.orderdetails != null)
+            {
+                foreach (var item in order.orderdetails)
+                {
+                    // Dùng SumPrice có sẵn trong Model
+                    sb.Append($@"
+                    <tr>
+                        <td>{item.product?.productname ?? "Sản phẩm nông sản"}</td>
+                        <td class='text-center'>{item.quantity}</td>
+                        <td class='text-right'>{item.unitprice:N0} đ</td>
+                        <td class='text-right'>{item.SumPrice:N0} đ</td>
+                    </tr>");
+                }
+            }
+
+            sb.Append("</tbody>");
+            sb.Append("<tfoot>");
+
+            // 1. Tạm tính (Subtotal)
+            sb.Append($@"
+                    <tr>
+                        <td colspan='3' class='text-right'><strong>Tạm tính:</strong></td>
+                        <td class='text-right'>{order.totalamount:N0} đ</td>
+                    </tr>");
+
+            // 2. Phí vận chuyển (ShippingFee) - Mới thêm
+            if (order.ShippingFee > 0)
             {
                 sb.Append($@"
                     <tr>
-                        <td>{item.product?.productname ?? "Sản phẩm"}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unitprice:N0} VNĐ</td>
-                        <td>{(item.quantity * item.unitprice):N0} VNĐ</td>
+                        <td colspan='3' class='text-right'><strong>Phí vận chuyển:</strong></td>
+                        <td class='text-right'>{order.ShippingFee:N0} đ</td>
+                    </tr>");
+            }
+            else
+            {
+                sb.Append($@"
+                    <tr>
+                        <td colspan='3' class='text-right'><strong>Phí vận chuyển:</strong></td>
+                        <td class='text-right'>Miễn phí</td>
                     </tr>");
             }
 
-            sb.Append($@"
-                    <tr>
-                        <td colspan='3' style='text-align: right;'><strong>Tạm tính:</strong></td>
-                        <td>{order.totalamount:N0} VNĐ</td>
-                    </tr>
-            ");
-            sb.Append($@"
-                    
-                    <tr>
-                        <td colspan='3' style='text-align: right;'><strong>Tạm tính:</strong></td>
-                        <td>{{order.totalamount:N0}} VNĐ</td>
-                    </tr>
-            ");
+            // 3. Giảm giá (Discount)
             if (order.discountamount > 0)
             {
                 sb.Append($@"
-                    <tr style='color: #28a745;'>
-                        <td colspan='3' style='text-align: right;'><strong>Giảm giá ({order.PromotionCode}):</strong></td>
-                        <td>-{order.discountamount:N0} VNĐ</td>
+                    <tr style='color: #dc3545;'>
+                        <td colspan='3' class='text-right'><strong>Giảm giá ({order.PromotionCode}):</strong></td>
+                        <td class='text-right'>-{order.discountamount:N0} đ</td>
                     </tr>");
             }
 
+            // 4. Tổng thanh toán (FinalAmount)
             sb.Append($@"
-                    <tr style='background: #f0f8f0;'>
-                        <td colspan='3' style='text-align: right;'><strong>Tổng cộng:</strong></td>
-                        <td class='total'>{order.FinalAmount:N0} VNĐ</td>
+                    <tr class='total-row'>
+                        <td colspan='3' class='text-right'>TỔNG CỘNG:</td>
+                        <td class='text-right'>{order.FinalAmount:N0} đ</td>
                     </tr>
                 </tfoot>
             </table>
 
-            <div style='background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+            <div style='background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 14px;'>
                 <p style='margin: 0;'><strong>ℹ️ Lưu ý:</strong></p>
-                <ul style='margin: 10px 0;'>
-                    <li>Đơn hàng sẽ được xử lý trong vòng 1-2 ngày làm việc</li>
-                    <li>Bạn có thể theo dõi trạng thái đơn hàng trong tài khoản của mình</li>
-                    <li>Nếu có thắc mắc, vui lòng liên hệ hotline: 0999999999</li>
+                <ul style='margin: 5px 0 0 20px; padding: 0;'>
+                    <li>Đơn hàng sẽ được xử lý trong vòng 1-2 ngày làm việc.</li>
+                    <li>Vui lòng giữ điện thoại để nhân viên giao hàng liên hệ.</li>
                 </ul>
             </div>
-
             <p>Trân trọng,<br><strong>Đội ngũ DakLakFarm</strong></p>
         </div>
-
         <div class='footer'>
-            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
             <p>&copy; 2025 DakLakFarm. All rights reserved.</p>
         </div>
     </div>
 </body>
 </html>");
-
             return sb.ToString();
         }
+
 
         private string GenerateFarmerNotificationHtml(order order, List<orderdetail> farmerProducts)
         {
             var sb = new StringBuilder();
-            decimal farmerTotal = farmerProducts.Sum(p => p.quantity * p.unitprice);
+
+            // Tính tổng doanh thu cho Farmer bằng SumPrice
+            decimal farmerTotal = farmerProducts.Sum(p => p.SumPrice);
 
             sb.Append($@"
 <!DOCTYPE html>
@@ -241,7 +246,6 @@ namespace AgriEcommerces_MVC.Service.EmailService
         table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
         th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
         th {{ background: #f5f5f5; }}
-        .action-btn {{ display: inline-block; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }}
     </style>
 </head>
 <body>
@@ -252,23 +256,22 @@ namespace AgriEcommerces_MVC.Service.EmailService
         
         <div class='content'>
             <p>Xin chào,</p>
-            <p>Bạn có một đơn hàng mới cần xử lý:</p>
+            <p>Bạn có sản phẩm trong đơn hàng mới <strong>#{order.ordercode}</strong>:</p>
             
             <div class='order-info'>
-                <h3>📋 Thông tin đơn hàng</h3>
-                <p><strong>Mã đơn hàng:</strong> <span style='font-family: monospace; font-size: 18px; color: #2196F3;'>{order.ordercode}</span></p>
-                <p><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
+                <h3>📋 Thông tin giao hàng</h3>
                 <p><strong>Khách hàng:</strong> {order.customername}</p>
-                <p><strong>Số điện thoại:</strong> {order.customerphone}</p>
-                <p><strong>Địa chỉ giao hàng:</strong> {order.shippingaddress}</p>
+                <p><strong>SĐT:</strong> {order.customerphone}</p>
+                <p><strong>Địa chỉ:</strong> {order.shippingaddress}</p>
+                <p><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
             </div>
 
-            <h3>📦 Sản phẩm của bạn trong đơn hàng</h3>
+            <h3>📦 Sản phẩm cần chuẩn bị</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Sản phẩm</th>
-                        <th>Số lượng</th>
+                        <th>SL</th>
                         <th>Đơn giá</th>
                         <th>Thành tiền</th>
                     </tr>
@@ -281,8 +284,8 @@ namespace AgriEcommerces_MVC.Service.EmailService
                     <tr>
                         <td>{item.product?.productname ?? "Sản phẩm"}</td>
                         <td>{item.quantity}</td>
-                        <td>{item.unitprice:N0} VNĐ</td>
-                        <td>{(item.quantity * item.unitprice):N0} VNĐ</td>
+                        <td>{item.unitprice:N0} đ</td>
+                        <td>{item.SumPrice:N0} đ</td>
                     </tr>");
             }
 
@@ -291,90 +294,46 @@ namespace AgriEcommerces_MVC.Service.EmailService
                 <tfoot>
                     <tr style='background: #e3f2fd;'>
                         <td colspan='3' style='text-align: right;'><strong>Tổng doanh thu:</strong></td>
-                        <td><strong>{farmerTotal:N0} VNĐ</strong></td>
+                        <td><strong>{farmerTotal:N0} đ</strong></td>
                     </tr>
                 </tfoot>
             </table>
 
             <div style='background: #fff3e0; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                <p style='margin: 0;'><strong>⚠️ Vui lòng:</strong></p>
-                <ul style='margin: 10px 0;'>
-                    <li>Chuẩn bị sản phẩm trong vòng 24h</li>
-                    <li>Cập nhật trạng thái đơn hàng kịp thời</li>
-                    <li>Liên hệ khách hàng nếu có vấn đề</li>
-                </ul>
+                <p><strong>⚠️ Lưu ý:</strong> Vui lòng chuẩn bị hàng sớm để shipper đến lấy.</p>
             </div>
-
-            <center>
-                <a href='#' class='action-btn'>Xem chi tiết đơn hàng</a>
-            </center>
-
             <p>Trân trọng,<br><strong>Hệ thống DakLakFarm</strong></p>
         </div>
     </div>
 </body>
 </html>");
-
             return sb.ToString();
         }
 
         private string GeneratePasswordResetOtpHtml(string email, string otpCode)
         {
-            var sb = new StringBuilder();
-            sb.Append($@"
+            return $@"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='utf-8'>
     <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: #007bff; color: white; padding: 20px; text-align: center; }}
-        .content {{ background: #f9f9f9; padding: 20px; }}
-        .otp-code {{ 
-            font-size: 28px; 
-            font-weight: bold; 
-            color: #007bff; 
-            text-align: center; 
-            margin: 20px 0; 
-            letter-spacing: 5px;
-            padding: 15px;
-            background: #e7f3ff;
-            border-radius: 5px;
-            font-family: monospace;
-        }}
-        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+        body {{ font-family: Arial, sans-serif; text-align: center; color: #333; }}
+        .container {{ max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }}
+        .otp {{ font-size: 32px; font-weight: bold; color: #007bff; letter-spacing: 5px; margin: 20px 0; }}
     </style>
 </head>
 <body>
     <div class='container'>
-        <div class='header'>
-            <h1>🔑 Yêu cầu Đặt lại Mật khẩu</h1>
-        </div>
-        
-        <div class='content'>
-            <p>Xin chào <strong>{email}</strong>,</p>
-            <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn tại <strong>DakLakFarm</strong>.</p>
-            <p>Mã OTP của bạn là:</p>
-            
-            <div class='otp-code'>
-                {otpCode}
-            </div>
-            
-            <p>Mã này sẽ hết hạn trong 5 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
-            <p>Nếu bạn không yêu cầu, vui lòng bỏ qua email này.</p>
-            
-            <p>Trân trọng,<br><strong>Đội ngũ DakLakFarm</strong></p>
-        </div>
-
-        <div class='footer'>
-            <p>Email này được gửi tự động, vui lòng không trả lời.</p>
-            <p>&copy; 2025 DakLakFarm. All rights reserved.</p>
-        </div>
+        <h2>🔑 Đặt lại Mật khẩu</h2>
+        <p>Xin chào <strong>{email}</strong>,</p>
+        <p>Mã OTP xác thực của bạn là:</p>
+        <div class='otp'>{otpCode}</div>
+        <p>Mã có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này.</p>
+        <p>&copy; 2025 DakLakFarm</p>
     </div>
 </body>
-</html>");
-            return sb.ToString();
+</html>";
         }
     }
 }
