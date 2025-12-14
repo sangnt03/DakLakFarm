@@ -17,7 +17,7 @@ public class OrderController : Controller
     private readonly IPromotionService _promotionService;
     private readonly IEmailService _emailService;
     private readonly ILogger<OrderController> _logger;
-    private readonly IShippingService _shippingService; // THÊM DÒNG NÀY
+    private readonly IShippingService _shippingService;
     private const string CART_KEY = "Cart";
     private const string BUYNOW_KEY = "Cart_BuyNow";
     private const decimal COMMISSION_RATE = 0.10m;
@@ -25,21 +25,21 @@ public class OrderController : Controller
 
     private static readonly TimeZoneInfo VietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
 
-    // CẬP NHẬT CONSTRUCTOR
+    //  CONSTRUCTOR
     public OrderController(
         ApplicationDbContext db,
         IPromotionService promotionService,
         IEmailService emailService,
         ILogger<OrderController> logger,
         IServiceScopeFactory scopeFactory,
-        IShippingService shippingService) // THÊM THAM SỐ NÀY
+        IShippingService shippingService) 
     {
         _db = db;
         _promotionService = promotionService;
         _emailService = emailService;
         _logger = logger;
         _scopeFactory = scopeFactory;
-        _shippingService = shippingService; // THÊM DÒNG NÀY
+        _shippingService = shippingService;
     }
 
     private DateTime GetVietnamTime()
@@ -47,7 +47,7 @@ public class OrderController : Controller
         return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone);
     }
 
-    // [GET] /Order/Index - THÊM PHÍ SHIP VÀO MODEL
+    // [GET] /Order/Index 
     public async Task<IActionResult> Index(int? sellerId, bool isBuyNow = false)
     {
         string sessionKey = isBuyNow ? BUYNOW_KEY : CART_KEY;
@@ -69,7 +69,7 @@ public class OrderController : Controller
                                       .OrderByDescending(a => a.is_default)
                                       .ToListAsync();
 
-        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        // TÍNH PHÍ SHIP
         decimal shippingFee = 0;
         var defaultAddress = savedAddresses.FirstOrDefault(a => a.is_default)
                           ?? savedAddresses.FirstOrDefault();
@@ -78,15 +78,15 @@ public class OrderController : Controller
         {
             shippingFee = _shippingService.CalculateShippingFee(defaultAddress.province_city);
         }
-        // ====================================
+        
 
         var model = new CheckoutViewModel
         {
             Cart = cartForPayment,
             SellerId = sellerId,
             SavedAddresses = savedAddresses,
-            ShippingFee = shippingFee, // THÊM DÒNG NÀY
-            FinalAmount = cartForPayment.GrandTotal + shippingFee, // CẬP NHẬT: Cộng phí ship
+            ShippingFee = shippingFee,
+            FinalAmount = cartForPayment.GrandTotal + shippingFee,
             SelectedAddressId = defaultAddress?.id,
             IsBuyNow = isBuyNow
         };
@@ -94,7 +94,7 @@ public class OrderController : Controller
         return View(model);
     }
 
-    // [POST] /Order/ApplyPromotion - CẬP NHẬT ĐỂ TÍNH PHÍ SHIP
+    // [POST] /Order/ApplyPromotion 
     [HttpPost]
     public async Task<IActionResult> ApplyPromotion(string code, int? sellerId, bool isBuyNow = false)
     {
@@ -120,7 +120,7 @@ public class OrderController : Controller
             return Json(new { success = false, message = result.ErrorMessage });
         }
 
-        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        
         decimal shippingFee = 0;
         var defaultAddress = await _db.customer_addresses
             .Where(a => a.user_id == userId)
@@ -131,9 +131,9 @@ public class OrderController : Controller
         {
             shippingFee = _shippingService.CalculateShippingFee(defaultAddress.province_city);
         }
-        // ====================================
+       
 
-        decimal finalAmount = cartForPayment.GrandTotal + shippingFee - result.DiscountAmount; // CẬP NHẬT
+        decimal finalAmount = cartForPayment.GrandTotal + shippingFee - result.DiscountAmount;
 
         return Json(new
         {
@@ -141,15 +141,15 @@ public class OrderController : Controller
             message = "Áp dụng mã thành công!",
             discountAmount = result.DiscountAmount,
             discountAmountDisplay = result.DiscountAmount.ToString("N0") + " VNĐ",
-            shippingFee = shippingFee, // THÊM
-            shippingFeeDisplay = shippingFee.ToString("N0") + " VNĐ", // THÊM
+            shippingFee = shippingFee, 
+            shippingFeeDisplay = shippingFee.ToString("N0") + " VNĐ", 
             finalAmount = finalAmount,
             finalAmountDisplay = finalAmount.ToString("N0") + " VNĐ",
             promotionCode = result.Promotion.Code
         });
     }
 
-    // [POST] /Order/CreateOrder - THÊM PHÍ SHIP VÀO ĐỐN HÀNG
+    // [POST] /Order/CreateOrder 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder(CheckoutViewModel model)
@@ -187,13 +187,13 @@ public class OrderController : Controller
             }
         }
 
-        // ===== THÊM LOGIC TÍNH PHÍ SHIP =====
+        
         decimal shippingFee = 0;
         if (selectedAddress != null)
         {
             shippingFee = _shippingService.CalculateShippingFee(selectedAddress.province_city);
         }
-        // ====================================
+        
 
         // 3. Xử lý khuyến mãi
         decimal finalDiscountAmount = 0;
@@ -237,9 +237,9 @@ public class OrderController : Controller
             orderdate = DateTime.SpecifyKind(orderDateTime, DateTimeKind.Unspecified),
             status = "Pending",
             totalamount = model.Cart.GrandTotal,
-            ShippingFee = shippingFee, // ===== THÊM PHÍ SHIP =====
+            ShippingFee = shippingFee,
             discountamount = finalDiscountAmount,
-            FinalAmount = model.Cart.GrandTotal + shippingFee - finalDiscountAmount, // ===== CẬP NHẬT CÔNG THỨC =====
+            FinalAmount = model.Cart.GrandTotal + shippingFee - finalDiscountAmount,
             promotionid = appliedPromo?.PromotionId,
             PromotionCode = appliedPromo?.Code,
             ordercode = "TEMP-" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()
@@ -413,7 +413,7 @@ public class OrderController : Controller
         return View(order);
     }
 
-    // [POST] Hủy đơn hàng - GIỮ NGUYÊN
+    // [POST] Hủy đơn hàng
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelOrder(int orderId, string cancelReason, string returnUrl = null)

@@ -162,8 +162,7 @@ namespace AgriEcommerces_MVC.Controllers
 
             if (order == null) return NotFound();
 
-            // --- CẬP NHẬT LOGIC TRẠNG THÁI SANG TIẾNG ANH ---
-            // Cho phép xác nhận khi đơn là "Shipped", "Processing", hoặc "Pending" (nếu cấu hình lỏng)
+            
             if (order.status != "Shipped" && order.status != "Processing" && order.status != "Pending")
             {
                 TempData["Error"] = "Trạng thái đơn hàng không hợp lệ để xác nhận.";

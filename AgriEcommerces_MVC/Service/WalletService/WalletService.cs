@@ -63,7 +63,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
             return true;
         }
 
-        // 4. Admin DUYỆT yêu cầu (Đã sửa: Bỏ code trừ cột Balance)
+        // 4. Admin DUYỆT yêu cầu 
         public async Task<(bool Success, string Message)> ApprovePayoutRequest(int payoutRequestId, int adminId, string transactionProof)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -134,7 +134,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
                 .ToListAsync();
         }
 
-        // 7. Cộng tiền doanh thu (Đã sửa: Bỏ code cộng cột Balance)
+        // 7. Cộng tiền doanh thu 
         public async Task ProcessOrderRevenue(int orderId)
         {
             var order = await _context.orders
@@ -161,7 +161,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
 
                 if (!alreadyProcessed)
                 {
-                    // Chỉ cần thêm log giao dịch là đủ
+                    
                     var walletTx = new WalletTransaction
                     {
                         FarmerId = item.FarmerId,
@@ -173,7 +173,7 @@ namespace AgriEcommerces_MVC.Service.WalletService
                     };
                     _context.WalletTransaction.Add(walletTx);
 
-                    // Đã XÓA đoạn: farmer.balance += ...
+                    
                 }
             }
             await _context.SaveChangesAsync();

@@ -225,12 +225,13 @@ namespace AgriEcommerces_MVC.Service.EmailService
         }
 
 
+
+        // 3. EMAIL FARMER
         private string GenerateFarmerNotificationHtml(order order, List<orderdetail> farmerProducts)
         {
             var sb = new StringBuilder();
 
-            // Tính tổng doanh thu cho Farmer bằng SumPrice
-            decimal farmerTotal = farmerProducts.Sum(p => p.SumPrice);
+            decimal totalRealIncome = farmerProducts.Sum(p => p.FarmerRevenue);
 
             sb.Append($@"
 <!DOCTYPE html>
@@ -239,74 +240,95 @@ namespace AgriEcommerces_MVC.Service.EmailService
     <meta charset='utf-8'>
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: #2196F3; color: white; padding: 20px; text-align: center; }}
-        .content {{ background: #f9f9f9; padding: 20px; }}
-        .order-info {{ background: white; padding: 15px; margin: 15px 0; border-left: 4px solid #2196F3; }}
-        table {{ width: 100%; border-collapse: collapse; margin: 15px 0; }}
-        th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
-        th {{ background: #f5f5f5; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }}
+        .header {{ background: #0d6efd; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #ffffff; padding: 20px; }}
+        .order-info {{ background: #f0f8ff; padding: 15px; margin: 15px 0; border-left: 5px solid #0d6efd; border-radius: 4px; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }}
+        th {{ background: #f1f1f1; }}
+        .text-right {{ text-align: right; }}
+        .text-center {{ text-align: center; }}
+        .highlight {{ color: #198754; font-weight: bold; }} /* Màu xanh lá cho tiền thực nhận */
     </style>
 </head>
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>🔔 Đơn hàng mới</h1>
+            <h1 style='margin:0;'>🔔 Bạn có đơn hàng mới!</h1>
         </div>
         
         <div class='content'>
-            <p>Xin chào,</p>
-            <p>Bạn có sản phẩm trong đơn hàng mới <strong>#{order.ordercode}</strong>:</p>
+            <p>Xin chào Nhà cung cấp,</p>
+            <p>Sản phẩm của bạn vừa được đặt mua trong đơn hàng <strong>#{order.ordercode}</strong>. Vui lòng chuẩn bị hàng ngay.</p>
             
             <div class='order-info'>
-                <h3>📋 Thông tin giao hàng</h3>
-                <p><strong>Khách hàng:</strong> {order.customername}</p>
-                <p><strong>SĐT:</strong> {order.customerphone}</p>
-                <p><strong>Địa chỉ:</strong> {order.shippingaddress}</p>
-                <p><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
+                <h3 style='margin-top:0;'>📋 Thông tin giao hàng</h3>
+                <p style='margin: 5px 0;'><strong>Khách hàng:</strong> {order.customername}</p>
+                <p style='margin: 5px 0;'><strong>SĐT:</strong> {order.customerphone}</p>
+                <p style='margin: 5px 0;'><strong>Địa chỉ:</strong> {order.shippingaddress}</p>
+                <p style='margin: 5px 0;'><strong>Ngày đặt:</strong> {order.orderdate?.ToString("dd/MM/yyyy HH:mm")}</p>
             </div>
 
-            <h3>📦 Sản phẩm cần chuẩn bị</h3>
+            <h3>📦 Chi tiết doanh thu</h3>
+            <p><em>(Số liệu dưới đây đã trừ chiết khấu sàn, đây là số tiền bạn thực nhận vào ví)</em></p>
             <table>
                 <thead>
                     <tr>
-                        <th>Sản phẩm</th>
-                        <th>SL</th>
-                        <th>Đơn giá</th>
-                        <th>Thành tiền</th>
+                        <th style='width: 35%;'>Sản phẩm</th>
+                        <th class='text-center' style='width: 15%;'>SL</th>
+                        <th class='text-right' style='width: 25%;'>Giá bán lẻ</th>
+                        <th class='text-right' style='width: 25%;'>Thực nhận</th>
                     </tr>
                 </thead>
                 <tbody>");
 
             foreach (var item in farmerProducts)
             {
+               
                 sb.Append($@"
                     <tr>
                         <td>{item.product?.productname ?? "Sản phẩm"}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unitprice:N0} đ</td>
-                        <td>{item.SumPrice:N0} đ</td>
+                        <td class='text-center'>{item.quantity}</td>
+                        <td class='text-right' style='color: #6c757d; text-decoration: line-through; font-size: 12px;'>
+                            {item.SumPrice:N0} đ
+                        </td>
+                        <td class='text-right highlight'>
+                            {item.FarmerRevenue:N0} đ
+                        </td>
                     </tr>");
             }
 
             sb.Append($@"
                 </tbody>
                 <tfoot>
-                    <tr style='background: #e3f2fd;'>
-                        <td colspan='3' style='text-align: right;'><strong>Tổng doanh thu:</strong></td>
-                        <td><strong>{farmerTotal:N0} đ</strong></td>
+                    <tr style='background: #e9ecef;'>
+                        <td colspan='3' class='text-right'><strong>TỔNG THỰC NHẬN:</strong></td>
+                        <td class='text-right' style='font-size: 16px; color: #198754; font-weight: bold;'>
+                            {totalRealIncome:N0} đ
+                        </td>
                     </tr>
                 </tfoot>
             </table>
 
-            <div style='background: #fff3e0; padding: 15px; border-radius: 5px; margin: 20px 0;'>
-                <p><strong>⚠️ Lưu ý:</strong> Vui lòng chuẩn bị hàng sớm để shipper đến lấy.</p>
+            <div style='background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #ffecb5;'>
+                <p style='margin: 0; color: #856404;'><strong>⚠️ Yêu cầu hành động:</strong></p>
+                <ul style='margin: 5px 0 0 20px; padding: 0; color: #856404;'>
+                    <li>Vui lòng xác nhận và chuẩn bị hàng trong vòng 24h.</li>
+                    <li>Đảm bảo đóng gói đúng quy cách nông sản.</li>
+                </ul>
             </div>
-            <p>Trân trọng,<br><strong>Hệ thống DakLakFarm</strong></p>
+
+            <center>
+                <a href='#' style='display: inline-block; padding: 10px 20px; background: #0d6efd; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Truy cập trang quản lý</a>
+            </center>
+            
+            <p style='margin-top: 20px;'>Trân trọng,<br><strong>Ban quản trị DakLakFarm</strong></p>
         </div>
     </div>
 </body>
 </html>");
+
             return sb.ToString();
         }
 
